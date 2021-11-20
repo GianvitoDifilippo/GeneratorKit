@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GeneratorKit", "src\GeneratorKit\GeneratorKit.csproj", "{D19A9A50-2EB7-4AB8-A907-7E6728A9334F}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "tests", "{47AEE980-8E75-4BCC-B309-5EC0349D396E}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{47AEE980-8E75-4BCC-B309-5EC0349D396E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeneratorKit.Tests", "Tests\GeneratorKit.Tests\GeneratorKit.Tests.csproj", "{E1F1C131-B0CA-47D2-B0FD-69D6A3B771AF}"
 EndProject
