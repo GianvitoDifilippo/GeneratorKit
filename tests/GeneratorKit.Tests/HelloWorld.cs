@@ -7,6 +7,6 @@ public class HelloWorld
   [Fact]
   public void GithubAction_ShouldSucceed()
   {
-
+    System.Console.WriteLine("Hello, World!");
   }
 }
