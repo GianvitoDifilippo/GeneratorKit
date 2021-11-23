@@ -1,17 +1,21 @@
 ﻿using Microsoft.CodeAnalysis;
 using System;
+using System.Reflection;
 
 namespace GeneratorKit.Reflection;
 
-internal sealed class SymbolParameterType : SymbolType
+internal class SymbolParameterType : TypeDelegator
 {
-  private readonly ITypeParameterSymbol _symbol;
+  private readonly IParameterSymbol _symbol;
 
-  public SymbolParameterType(IGeneratorRuntime runtime, Compilation compilation, ITypeParameterSymbol symbol)
-    : base(runtime, compilation)
+  public SymbolParameterType(Type type, IParameterSymbol symbol)
+    : base(type)
   {
     _symbol = symbol;
   }
 
-  public override ITypeSymbol Symbol => _symbol;
+  protected override bool IsByRefImpl()
+  {
+    return _symbol.RefKind is not RefKind.None;
+  }
 }

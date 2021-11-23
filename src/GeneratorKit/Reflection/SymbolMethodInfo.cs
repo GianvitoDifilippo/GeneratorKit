@@ -1,16 +1,16 @@
 ﻿using Microsoft.CodeAnalysis;
-using System.Diagnostics;
 using System;
-using System.Reflection;
 using System.Globalization;
+using System.Linq;
+using System.Reflection;
 
 namespace GeneratorKit.Reflection;
 
-public sealed class SymbolMethodInfo : SymbolMethodInfoBase
+internal sealed class SymbolMethodInfo : MethodInfo
 {
-  private readonly IGeneratorRuntime _runtime;
+  private readonly GeneratorRuntime _runtime;
 
-  internal SymbolMethodInfo(IGeneratorRuntime runtime, IMethodSymbol symbol)
+  public SymbolMethodInfo(GeneratorRuntime runtime, IMethodSymbol symbol)
   {
     _runtime = runtime;
     Symbol = symbol;
@@ -18,16 +18,28 @@ public sealed class SymbolMethodInfo : SymbolMethodInfoBase
 
   public IMethodSymbol Symbol { get; }
 
-
-  // System.Reflection.MethodInfo overrides
-
-  public override ICustomAttributeProvider ReturnTypeCustomAttributes => throw new NotImplementedException();
-
   public override MethodAttributes Attributes => throw new NotImplementedException();
 
   public override RuntimeMethodHandle MethodHandle => throw new NotImplementedException();
 
-  public override string Name => throw new NotImplementedException();
+  public override string Name => Symbol.Name;
+
+  public override ICustomAttributeProvider ReturnTypeCustomAttributes => throw new NotImplementedException();
+
+  public override Type ReturnType => base.ReturnType;
+
+  public override Type DeclaringType => _runtime.CreateTypeDelegator(Symbol.ContainingType);
+
+  public override Module Module => throw new NotImplementedException();
+
+  public override Type ReflectedType => throw new NotImplementedException();
+
+  public override ParameterInfo ReturnParameter => throw new NotImplementedException();
+
+  public override MethodInfo GetBaseDefinition()
+  {
+    throw new NotImplementedException();
+  }
 
   public override object[] GetCustomAttributes(bool inherit)
   {
@@ -39,9 +51,24 @@ public sealed class SymbolMethodInfo : SymbolMethodInfoBase
     throw new NotImplementedException();
   }
 
+  public override Type[] GetGenericArguments()
+  {
+    throw new NotImplementedException();
+  }
+
+  public override MethodInfo GetGenericMethodDefinition()
+  {
+    throw new NotImplementedException();
+  }
+
   public override MethodImplAttributes GetMethodImplementationFlags()
   {
     throw new NotImplementedException();
+  }
+
+  public override ParameterInfo[] GetParameters()
+  {
+    return Symbol.Parameters.Select(x => _runtime.CreateParameterInfoDelegator(x)).ToArray();
   }
 
   public override object Invoke(object obj, BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
@@ -53,93 +80,4 @@ public sealed class SymbolMethodInfo : SymbolMethodInfoBase
   {
     throw new NotImplementedException();
   }
-
-
-  // SymbolMethodInfoBase overrides
-
-  protected override SymbolType DeclaringTypeCore => throw new NotImplementedException();
-
-  protected override SymbolModule ModuleCore => throw new NotImplementedException();
-
-  protected override SymbolType ReturnTypeCore => throw new NotImplementedException();
-
-  protected override SymbolType ReflectedTypeCore => throw new NotImplementedException();
-
-  protected override SymbolParameterInfo ReturnParameterCore => throw new NotImplementedException();
-
-  protected override SymbolMethodInfo GetBaseDefinitionCore()
-  {
-    throw new NotImplementedException();
-  }
-
-  protected override SymbolType[] GetGenericArgumentsCore()
-  {
-    throw new NotImplementedException();
-  }
-
-  protected override SymbolMethodInfo GetGenericMethodDefinitionCore()
-  {
-    throw new NotImplementedException();
-  }
-
-  protected override SymbolParameterInfo[] GetParametersCore()
-  {
-    throw new NotImplementedException();
-  }
 }
-
-#region Base
-
-public abstract class SymbolMethodInfoBase : MethodInfo
-{
-  private protected SymbolMethodInfoBase() { }
-
-
-  // System.Reflection.MethodInfo overrides
-
-  public sealed override Type DeclaringType => DeclaringTypeCore;
-
-  public sealed override Module Module => ModuleCore;
-
-  public sealed override Type ReturnType => ReturnTypeCore;
-
-  public sealed override Type ReflectedType => ReflectedTypeCore;
-
-  public sealed override ParameterInfo ReturnParameter => ReturnParameterCore;
-
-  public sealed override MethodInfo GetBaseDefinition() => GetBaseDefinitionCore();
-
-  public sealed override Type[] GetGenericArguments() => GetGenericArgumentsCore();
-
-  public sealed override MethodInfo GetGenericMethodDefinition() => GetGenericMethodDefinitionCore();
-
-  public sealed override ParameterInfo[] GetParameters() => GetParametersCore();
-
-
-  // Abstract members
-
-  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  protected abstract SymbolType DeclaringTypeCore { get; }
-
-  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  protected abstract SymbolModule ModuleCore { get; }
-
-  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  protected abstract SymbolType ReturnTypeCore { get; }
-
-  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  protected abstract SymbolType ReflectedTypeCore { get; }
-
-  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  protected abstract SymbolParameterInfo ReturnParameterCore { get; }
-
-  protected abstract SymbolMethodInfo GetBaseDefinitionCore();
-
-  protected abstract SymbolType[] GetGenericArgumentsCore();
-
-  protected abstract SymbolMethodInfo GetGenericMethodDefinitionCore();
-
-  protected abstract SymbolParameterInfo[] GetParametersCore();
-}
-
-#endregion

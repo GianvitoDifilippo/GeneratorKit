@@ -4,10 +4,9 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
-    <Version>0.1.0</Version>
     <Authors>Gianvito Difilippo</Authors>
     <Company />
-    <Description>A library for writing C# source generators more easily.</Description>
+    <Description>A library to write C# source generators more easily.</Description>
   </PropertyGroup>
 
   <ItemGroup>

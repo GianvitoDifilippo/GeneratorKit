@@ -1,16 +1,15 @@
 ﻿using Microsoft.CodeAnalysis;
 using System;
-using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 
 namespace GeneratorKit.Reflection;
 
-public sealed class SymbolFieldInfo : SymbolFieldInfoBase
+internal sealed class SymbolFieldInfo : FieldInfo
 {
-  private readonly IGeneratorRuntime _runtime;
+  private readonly GeneratorRuntime _runtime;
 
-  internal SymbolFieldInfo(IGeneratorRuntime runtime, IFieldSymbol symbol)
+  public SymbolFieldInfo(GeneratorRuntime runtime, IFieldSymbol symbol)
   {
     _runtime = runtime;
     Symbol = symbol;
@@ -23,9 +22,17 @@ public sealed class SymbolFieldInfo : SymbolFieldInfoBase
 
   public override FieldAttributes Attributes => throw new NotImplementedException();
 
+  public override Type DeclaringType => _runtime.CreateTypeDelegator(Symbol.ContainingType);
+
   public override RuntimeFieldHandle FieldHandle => throw new NotImplementedException();
 
-  public override string Name => throw new NotImplementedException();
+  public override Type FieldType => throw new NotImplementedException();
+
+  public override Module Module => throw new NotImplementedException();
+
+  public override string Name => Symbol.Name;
+
+  public override Type ReflectedType => throw new NotImplementedException();
 
   public override object[] GetCustomAttributes(bool inherit)
   {
@@ -51,50 +58,4 @@ public sealed class SymbolFieldInfo : SymbolFieldInfoBase
   {
     throw new NotImplementedException();
   }
-
-
-  // SymbolFieldInfoBase overrides
-
-  protected override SymbolType DeclaringTypeCore => throw new NotImplementedException();
-
-  protected override SymbolType FieldTypeCore => throw new NotImplementedException();
-
-  protected override SymbolModule ModuleCore => throw new NotImplementedException();
-
-  protected override SymbolType ReflectedTypeCore => throw new NotImplementedException();
 }
-
-#region Base
-
-public abstract class SymbolFieldInfoBase : FieldInfo
-{
-  private protected SymbolFieldInfoBase() { }
-
-
-  // System.Reflection.FieldInfo overrides
-
-  public sealed override Type DeclaringType => DeclaringTypeCore;
-
-  public sealed override Type FieldType => FieldTypeCore;
-
-  public sealed override Module Module => ModuleCore;
-
-  public sealed override Type ReflectedType => ReflectedTypeCore;
-
-
-  // Abstract members
-
-  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  protected abstract SymbolType DeclaringTypeCore { get; }
-
-  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  protected abstract SymbolType FieldTypeCore { get; }
-
-  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  protected abstract SymbolModule ModuleCore { get; }
-
-  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  protected abstract SymbolType ReflectedTypeCore { get; }
-}
-
-#endregion
