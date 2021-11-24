@@ -308,6 +308,18 @@ namespace " + Namespace + @"
       case TypeCategory.Int:
         symbol = _compilation.GetSpecialType(SpecialType.System_Int32);
         break;
+      case TypeCategory.Float:
+        symbol = _compilation.GetSpecialType(SpecialType.System_Single);
+        break;
+      case TypeCategory.Double:
+        symbol = _compilation.GetSpecialType(SpecialType.System_Double);
+        break;
+      case TypeCategory.Decimal:
+        symbol = _compilation.GetSpecialType(SpecialType.System_Decimal);
+        break;
+      case TypeCategory.String:
+        symbol = _compilation.GetSpecialType(SpecialType.System_String);
+        break;
       case TypeCategory.EnumBase:
         symbol = _compilation.GetSpecialType(SpecialType.System_Enum);
         break;
@@ -418,6 +430,18 @@ namespace " + Namespace + @"
       case TypeCategory.Int:
         type = typeof(int);
         break;
+      case TypeCategory.Float:
+        type = typeof(float);
+        break;
+      case TypeCategory.Double:
+        type = typeof(double);
+        break;
+      case TypeCategory.Decimal:
+        type = typeof(decimal);
+        break;
+      case TypeCategory.String:
+        type = typeof(string);
+        break;
       case TypeCategory.EnumBase:
         type = typeof(Enum);
         break;
@@ -521,6 +545,10 @@ public enum TypeCategory
 {
   Object,
   Int,
+  Float,
+  Double,
+  Decimal,
+  String,
   EnumBase,
 
   OpenGeneric,

@@ -63,11 +63,6 @@ internal sealed class SymbolNamedType : SymbolType
     }
   }
 
-  public override Type[] GenericTypeArguments => _symbol.TypeArguments
-    .Where(x => x.TypeKind is not TypeKind.TypeParameter)
-    .Select(x => _runtime.CreateTypeDelegator(x))
-    .ToArray();
-
   public override bool IsConstructedGenericType => _symbol.TypeArguments.Any(x => x.TypeKind is not TypeKind.TypeParameter);
 
   public override bool IsEnum => _symbol.EnumUnderlyingType is not null;
@@ -129,42 +124,7 @@ internal sealed class SymbolNamedType : SymbolType
         Array.Empty<CustomAttributeNamedArgument>()));
     }
 
-    if (_symbol.Equals(_compilation.GetSpecialType(SpecialType.System_Int32), SymbolEqualityComparer.Default))
-    {
-      AddAttributeData("System.SerializableAttribute");
-      AddAttributeData("System.Runtime.CompilerServices.IsReadOnlyAttribute");
-    }
-    else if (_symbol.Equals(_compilation.GetSpecialType(SpecialType.System_Enum), SymbolEqualityComparer.Default))
-    {
-      AddAttributeData("System.SerializableAttribute");
-    }
-    else if (_symbol.Equals(_compilation.GetSpecialType(SpecialType.System_Object), SymbolEqualityComparer.Default))
-    {
-      AddAttributeData("System.SerializableAttribute");
-    }
-
     return new ReadOnlyCollection<CustomAttributeData>(result);
-
-    void AddAttributeData(string fullyQualifiedMetadataName)
-    {
-      if (_compilation.GetTypeByMetadataName(fullyQualifiedMetadataName) is not INamedTypeSymbol symbol)
-      {
-        throw new ArgumentException($"Cannot find symbol of name {fullyQualifiedMetadataName}", nameof(fullyQualifiedMetadataName));
-      }
-      result.Add(ConstructedCustomAttributeData.CreateParameterlessAttribute(_runtime, symbol));
-    }
-  }
-
-  public override Type? GetElementType()
-  {
-    return null;
-  }
-
-  public override Type[] GetGenericArguments()
-  {
-    return _symbol.TypeArguments
-      .Select(x => _runtime.CreateTypeDelegator(x))
-      .ToArray();
   }
 
   protected override bool HasElementTypeImpl()
@@ -240,5 +200,30 @@ internal sealed class SymbolNamedType : SymbolType
   protected override bool IsValueTypeImpl()
   {
     return Symbol.TypeKind is TypeKind.Enum or TypeKind.Struct;
+  }
+
+
+  // SymbolTypeBase overrides
+
+  protected override SymbolType[] GenericTypeArgumentsCore => _symbol.TypeArguments
+    .Where(x => x.TypeKind is not TypeKind.TypeParameter)
+    .Select(x => _runtime.CreateTypeDelegator(x))
+    .ToArray();
+
+  protected override SymbolType? GetElementTypeCore()
+  {
+    return null;
+  }
+
+  protected override SymbolType[] GetGenericArgumentsCore()
+  {
+    return _symbol.TypeArguments
+      .Select(x => _runtime.CreateTypeDelegator(x))
+      .ToArray();
+  }
+
+  protected override SymbolType[] GetGenericParameterConstraintsCore()
+  {
+    throw new NotImplementedException();
   }
 }

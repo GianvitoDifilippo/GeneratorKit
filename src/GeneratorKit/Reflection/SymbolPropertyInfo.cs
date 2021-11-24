@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace GeneratorKit.Reflection;
 
-internal sealed class SymbolPropertyInfo : PropertyInfo
+internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
 {
   private readonly GeneratorRuntime _runtime;
   private readonly SymbolType? _reflectedType;
@@ -92,4 +92,9 @@ internal sealed class SymbolPropertyInfo : PropertyInfo
   {
     throw new NotImplementedException();
   }
+}
+
+internal abstract class SymbolPropertyInfoBase : PropertyInfo
+{
+
 }
