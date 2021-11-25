@@ -42,9 +42,9 @@ internal class SymbolParameterType : SymbolType
 
   // SymbolTypeBase overrides
 
-  protected override SymbolAssembly AssemblyCore => _runtime.CreateAssemblyDelegator(_symbol.ContainingAssembly);
+  protected override SymbolAssembly AssemblyCore => _type.Assembly;
 
-  protected override SymbolType[] GenericTypeArgumentsCore => throw new System.NotImplementedException();
+  protected override SymbolType[] GenericTypeArgumentsCore => _type.GenericTypeArgumentsCore;
 
   protected override SymbolModule ModuleCore => _runtime.CreateModuleDelegator(_symbol.ContainingModule);
 

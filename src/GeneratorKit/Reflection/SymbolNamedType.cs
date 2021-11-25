@@ -22,17 +22,13 @@ internal sealed class SymbolNamedType : SymbolType
   public override ITypeSymbol Symbol => _symbol;
 
 
+  // System.Type overrides
+
   public override bool ContainsGenericParameters =>
     _symbol.IsGenericType &&
     _symbol.TypeArguments.Any(x => x.TypeKind is TypeKind.TypeParameter);
 
-  protected override SymbolAssembly AssemblyCore => _runtime.CreateAssemblyDelegator(_symbol.ContainingAssembly);
-
-  protected override SymbolModule ModuleCore => _runtime.CreateModuleDelegator(_symbol.ContainingModule);
-
-  public override string Namespace => _symbol.ContainingNamespace.ToDisplayString(s_namespaceFormat);
-
-  public override MethodBase? DeclaringMethod => throw new InvalidOperationException($"Method may only be called on a {nameof(Type)} for which {nameof(Type)}.{nameof(IsGenericParameter)} is true.");
+  public override MethodBase? DeclaringMethod => throw new InvalidOperationException($"Method may only be called on a Type for which Type.IsGenericParameter is true.");
 
   public override string? FullName
   {
@@ -73,11 +69,15 @@ internal sealed class SymbolNamedType : SymbolType
 
   public override bool IsEnum => _symbol.EnumUnderlyingType is not null;
 
+  public override bool IsGenericParameter => false;
+
   public override bool IsGenericType => _symbol.IsGenericType;
 
   public override bool IsGenericTypeDefinition => _symbol.IsGenericType && _symbol.IsDefinition;
 
   public override string Name => Symbol.MetadataName;
+
+  public override string Namespace => _symbol.ContainingNamespace.ToDisplayString(s_namespaceFormat);
 
   protected override TypeAttributes GetAttributeFlagsImpl()
   {
@@ -118,16 +118,14 @@ internal sealed class SymbolNamedType : SymbolType
   {
     List<CustomAttributeData> result = _symbol
       .GetAttributes()
-      .Select(x => (CustomAttributeData)new CompilationCustomAttributeData(_runtime, x))
+      .Select(x => (CustomAttributeData)CompilationCustomAttributeData.FromAttributeData(_runtime, x))
       .ToList();
 
     if (_symbol.MemberNames.Any(x => x is "this[]"))
     {
       INamedTypeSymbol defaultMember = _compilation.GetTypeByMetadataName("System.Reflection.DefaultMemberAttribute")!;
-      result.Add(new ConstructedCustomAttributeData(
-        _runtime.CreateConstructorInfoDelegator(defaultMember.InstanceConstructors[0]),
-        new[] { new CustomAttributeTypedArgument(typeof(string), "Item") },
-        Array.Empty<CustomAttributeNamedArgument>()));
+      CustomAttributeTypedArgument argument = new CustomAttributeTypedArgument(typeof(string), "Item");
+      result.Add(ConstructedCustomAttributeData.FromSymbol(defaultMember.InstanceConstructors[0], new[] { argument }, Array.Empty<CustomAttributeNamedArgument>()));
     }
 
     return new ReadOnlyCollection<CustomAttributeData>(result);
@@ -216,6 +214,10 @@ internal sealed class SymbolNamedType : SymbolType
 
   // SymbolTypeBase overrides
 
+  protected override SymbolAssembly AssemblyCore => _runtime.CreateAssemblyDelegator(_symbol.ContainingAssembly);
+
+  protected override SymbolModule ModuleCore => _runtime.CreateModuleDelegator(_symbol.ContainingModule);
+
   protected override SymbolType[] GenericTypeArgumentsCore => _symbol.TypeArguments
     .Where(x => x.TypeKind is not TypeKind.TypeParameter)
     .Select(x => _runtime.CreateTypeDelegator(x))
@@ -235,6 +237,6 @@ internal sealed class SymbolNamedType : SymbolType
 
   protected override SymbolType[] GetGenericParameterConstraintsCore()
   {
-    throw new NotImplementedException();
+    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
   }
 }

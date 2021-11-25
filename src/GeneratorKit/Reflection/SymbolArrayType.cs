@@ -20,11 +20,10 @@ internal sealed class SymbolArrayType : SymbolType
 
   public override ITypeSymbol Symbol => _symbol;
 
-  protected override SymbolAssembly AssemblyCore => _elementType.Assembly;
 
-  public override MethodBase DeclaringMethod => throw new InvalidOperationException();
+  // System.Type overrides
 
-  protected override SymbolModule ModuleCore => _elementType.Module;
+  public override MethodBase? DeclaringMethod => throw new InvalidOperationException($"Method may only be called on a Type for which Type.IsGenericParameter is true.");
 
   public override string Namespace => _elementType.Namespace;
 
@@ -32,7 +31,15 @@ internal sealed class SymbolArrayType : SymbolType
 
   public override bool IsConstructedGenericType => false;
 
+  public override bool IsGenericParameter => false;
+
+  public override bool IsGenericType => false;
+
+  public override bool IsGenericTypeDefinition => false;
+
   public override bool IsSerializable => true;
+
+  public override bool IsGenericParameter => false;
 
   public override string Name => WithArraySuffix(_elementType.Name);
 
@@ -45,7 +52,7 @@ internal sealed class SymbolArrayType : SymbolType
   {
     List<CustomAttributeData> result = new List<CustomAttributeData>
     {
-      ConstructedCustomAttributeData.CreateParameterlessAttribute(_runtime, _compilation.GetTypeByMetadataName("System.SerializableAttribute")!)
+      CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, _compilation.GetTypeByMetadataName("System.SerializableAttribute")!)
     };
 
     return new ReadOnlyCollection<CustomAttributeData>(result);
@@ -86,7 +93,14 @@ internal sealed class SymbolArrayType : SymbolType
     return false;
   }
 
+
+  // SymbolTypeBase overrides
+
+  protected override SymbolAssembly AssemblyCore => _elementType.Assembly;
+
   protected override SymbolType[] GenericTypeArgumentsCore => Array.Empty<SymbolType>();
+
+  protected override SymbolModule ModuleCore => _elementType.Module;
 
   protected override SymbolType GetElementTypeCore()
   {
@@ -100,16 +114,14 @@ internal sealed class SymbolArrayType : SymbolType
 
   protected override SymbolType[] GetGenericParameterConstraintsCore()
   {
-    throw new NotImplementedException();
+    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
   }
 
   private string WithArraySuffix(string name)
   {
     int rank = GetArrayRank();
-    if (rank == 1)
-    {
-      return $"{name}[]";
-    }
-    return $"{name}[{new string(',', rank - 1)}]";
+    return rank == 1
+      ? $"{name}[]"
+      : $"{name}[{new string(',', rank - 1)}]";
   }
 }

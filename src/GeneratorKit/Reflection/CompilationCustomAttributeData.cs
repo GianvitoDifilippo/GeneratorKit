@@ -8,11 +8,13 @@ namespace GeneratorKit.Reflection;
 
 internal class CompilationCustomAttributeData : CustomAttributeData
 {
-  public CompilationCustomAttributeData(GeneratorRuntime runtime, AttributeData data)
+  private CompilationCustomAttributeData(ConstructorInfo constructor,
+    IList<CustomAttributeTypedArgument> constructorArguments,
+    IList<CustomAttributeNamedArgument> namedArguments)
   {
-    Constructor = runtime.CreateConstructorInfoDelegator(data.AttributeConstructor!);
-    ConstructorArguments = CreateConstructorArguments(runtime, data);
-    NamedArguments = CreateNamedArguments(runtime, data);
+    Constructor = constructor;
+    ConstructorArguments = constructorArguments;
+    NamedArguments = namedArguments;
   }
 
   public override ConstructorInfo Constructor { get; }
@@ -21,18 +23,35 @@ internal class CompilationCustomAttributeData : CustomAttributeData
 
   public override IList<CustomAttributeNamedArgument> NamedArguments { get; }
 
-  private static IList<CustomAttributeTypedArgument> CreateConstructorArguments(GeneratorRuntime runtime, AttributeData data)
+  public static CompilationCustomAttributeData FromSymbol(
+    GeneratorRuntime runtime,
+    IConstructorSymbol symbol,
+    IList<CustomAttributeTypedArgument> constructorArguments,
+    IList<CustomAttributeNamedArgument> namedArguments)
   {
-    return data.ConstructorArguments
-      .Select(x => CreateCustomAttributeTypedArgument(runtime, x))
-      .ToList();
+    ConstructorInfo constructor = runtime.CreateConstructorDelegator(symbol);
+    return new CompilationCustomAttributeData(constructor, constructorArguments, namedArguments);
   }
 
-  private static IList<CustomAttributeNamedArgument> CreateNamedArguments(GeneratorRuntime runtime, AttributeData data)
+  public static ConstructedCustomAttributeData FromParameterlessAttribute(GeneratorRuntime runtime, INamedTypeSymbol attribute)
   {
-    return data.NamedArguments
+    if (attribute.InstanceConstructors.Length != 1)
+      throw new ArgumentException("Symbol must contain a single parameterless constructor.", nameof(attribute));
+
+    return FromSymbol(runtime, attribute.InstanceConstructors[0], Array.Empty<CustomAttributeTypedArgument>(), Array.Empty<CustomAttributeNamedArgument>());
+  }
+
+  public static CompilationCustomAttributeData FromAttributeData(GeneratorRuntime runtime, AttributeData data)
+  {
+    ConstructorInfo constructor = runtime.CreateConstructorInfoDelegator(data.AttributeConstructor!);
+    IList<CustomAttributeTypedArgument> constructorArguments = data.ConstructorArguments
+      .Select(x => CreateCustomAttributeTypedArgument(runtime, x))
+      .ToList();
+    IList<CustomAttributeNamedArgument> namedArguments = data.NamedArguments
       .Select(x => new CustomAttributeNamedArgument(GetMember(runtime, data.AttributeClass!, x.Key), CreateCustomAttributeTypedArgument(runtime, x.Value)))
       .ToList();
+
+    return new CompilationCustomAttributeData(constructor, constructorArguments, namedArguments);
 
     static MemberInfo GetMember(GeneratorRuntime runtime, INamedTypeSymbol attributeType, string memberName)
     {
@@ -44,10 +63,10 @@ internal class CompilationCustomAttributeData : CustomAttributeData
         _                   => throw new InvalidOperationException()
       };
     }
-  }
 
-  private static CustomAttributeTypedArgument CreateCustomAttributeTypedArgument(GeneratorRuntime runtime, TypedConstant constant)
-  {
-    return new CustomAttributeTypedArgument(runtime.CreateTypeDelegator(constant.Type!), constant.Value);
+    static CustomAttributeTypedArgument CreateCustomAttributeTypedArgument(GeneratorRuntime runtime, TypedConstant constant)
+    {
+      return new CustomAttributeTypedArgument(runtime.CreateTypeDelegator(constant.Type!), constant.Value);
+    }
   }
 }

@@ -31,7 +31,7 @@ internal sealed class SymbolTypeParameter : SymbolType
 
   protected override TypeAttributes GetAttributeFlagsImpl()
   {
-    throw new NotImplementedException();
+    return TypeAttributes.Public;
   }
 
   protected override bool HasElementTypeImpl()
@@ -87,6 +87,8 @@ internal sealed class SymbolTypeParameter : SymbolType
 
   protected override SymbolType[] GetGenericParameterConstraintsCore()
   {
-    throw new NotImplementedException();
+    return _symbol.ConstraintTypes
+      .Select(x => _runtime.CreateTypeDelegator(x))
+      .ToList();
   }
 }
