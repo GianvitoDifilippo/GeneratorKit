@@ -256,21 +256,21 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().BeEquivalentTo(expected, FieldInfoEqualityComparer.Default);
   }
 
-  // [Theory]
-  // [GetMembersData]
-  // public void GetMembers_ShouldBeCorrect(BindingFlags bindingAttr)
-  // {
-  //   // Arrange
-  //   SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
-  //   Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
-  //   MemberInfo[] expected = reference.GetMembers(bindingAttr);
-  // 
-  //   // Act
-  //   MemberInfo[] actual = sut.GetMembers(bindingAttr);
-  // 
-  //   // Assert
-  //   actual.Should().BeEquivalentTo(expected, MemberInfoEqualityComparer.Default);
-  // }
+  [Theory]
+  [GetMembersData]
+  public void GetMembers_ShouldBeCorrect(BindingFlags bindingAttr)
+  {
+    // Arrange
+    SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
+    Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+    MemberInfo[] expected = reference.GetMembers(bindingAttr);
+  
+    // Act
+    MemberInfo[] actual = sut.GetMembers(bindingAttr);
+  
+    // Assert
+    actual.Should().BeEquivalentTo(expected, MemberInfoEqualityComparer.Default);
+  }
 
   [Theory]
   [GetMembersData]
