@@ -26,6 +26,12 @@ internal sealed class SymbolNamedType : SymbolType
     _symbol.IsGenericType &&
     _symbol.TypeArguments.Any(x => x.TypeKind is TypeKind.TypeParameter);
 
+  protected override SymbolAssembly AssemblyCore => _runtime.CreateAssemblyDelegator(_symbol.ContainingAssembly);
+
+  protected override SymbolModule ModuleCore => _runtime.CreateModuleDelegator(_symbol.ContainingModule);
+
+  public override string Namespace => _symbol.ContainingNamespace.ToDisplayString(s_namespaceFormat);
+
   public override MethodBase? DeclaringMethod => throw new InvalidOperationException($"Method may only be called on a {nameof(Type)} for which {nameof(Type)}.{nameof(IsGenericParameter)} is true.");
 
   public override string? FullName
@@ -153,6 +159,11 @@ internal sealed class SymbolNamedType : SymbolType
       return c.GetInterfaces().Any(x => TypeEqualityComparer.Default.Equals(this, x));
     }
 
+    return false;
+  }
+
+  protected sealed override bool IsByRefImpl()
+  {
     return false;
   }
 

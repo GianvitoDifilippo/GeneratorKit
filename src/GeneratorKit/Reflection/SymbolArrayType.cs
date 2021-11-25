@@ -1,5 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Reflection;
 
 namespace GeneratorKit.Reflection;
@@ -7,34 +9,51 @@ namespace GeneratorKit.Reflection;
 internal sealed class SymbolArrayType : SymbolType
 {
   private readonly IArrayTypeSymbol _symbol;
+  private readonly SymbolType _elementType;
 
   public SymbolArrayType(GeneratorRuntime runtime, Compilation compilation, IArrayTypeSymbol symbol)
     : base(runtime, compilation)
   {
     _symbol = symbol;
+    _elementType = runtime.CreateTypeDelegator(_symbol.ElementType);
   }
 
   public override ITypeSymbol Symbol => _symbol;
 
-  public override Type[] GenericTypeArguments => Array.Empty<Type>();
+  protected override SymbolAssembly AssemblyCore => _elementType.Assembly;
 
-  public override string? FullName => WithArraySuffix(GetElementType().FullName);
+  public override MethodBase DeclaringMethod => throw new InvalidOperationException();
 
-  public override string Name => WithArraySuffix(GetElementType().Name);
+  protected override SymbolModule ModuleCore => _elementType.Module;
+
+  public override string Namespace => _elementType.Namespace;
+
+  public override string? FullName => WithArraySuffix(_elementType.FullName);
+
+  public override bool IsConstructedGenericType => false;
+
+  public override bool IsSerializable => true;
+
+  public override string Name => WithArraySuffix(_elementType.Name);
 
   public override int GetArrayRank()
   {
     return _symbol.Rank;
   }
 
-  public override Type GetElementType()
+  public override IList<CustomAttributeData> GetCustomAttributesData()
   {
-    return _runtime.CreateTypeDelegator(_symbol.ElementType);
+    List<CustomAttributeData> result = new List<CustomAttributeData>
+    {
+      ConstructedCustomAttributeData.CreateParameterlessAttribute(_runtime, _compilation.GetTypeByMetadataName("System.SerializableAttribute")!)
+    };
+
+    return new ReadOnlyCollection<CustomAttributeData>(result);
   }
 
   protected override TypeAttributes GetAttributeFlagsImpl()
   {
-    throw new NotImplementedException();
+    return TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.Serializable;
   }
 
   protected override bool HasElementTypeImpl()
@@ -45,6 +64,11 @@ internal sealed class SymbolArrayType : SymbolType
   protected override bool IsArrayImpl()
   {
     return true;
+  }
+
+  protected sealed override bool IsByRefImpl()
+  {
+    return false;
   }
 
   protected override bool IsPointerImpl()
@@ -60,6 +84,23 @@ internal sealed class SymbolArrayType : SymbolType
   protected override bool IsValueTypeImpl()
   {
     return false;
+  }
+
+  protected override SymbolType[] GenericTypeArgumentsCore => Array.Empty<SymbolType>();
+
+  protected override SymbolType GetElementTypeCore()
+  {
+    return _elementType;
+  }
+
+  protected override SymbolType[] GetGenericArgumentsCore()
+  {
+    return _elementType.GetGenericArguments();
+  }
+
+  protected override SymbolType[] GetGenericParameterConstraintsCore()
+  {
+    throw new NotImplementedException();
   }
 
   private string WithArraySuffix(string name)

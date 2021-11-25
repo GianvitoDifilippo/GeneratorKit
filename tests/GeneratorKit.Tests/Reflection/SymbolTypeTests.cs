@@ -16,7 +16,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     _fixture = fixture;
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void Assembly_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -31,7 +32,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Equal(expected, AssemblyEqualityComparer.Default);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void AssemblyQualifiedName_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -46,7 +48,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, ArraysData]
   public void Attributes_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -61,7 +64,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory, NamedTypesData, ArraysData]
   public void BaseType_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -76,7 +79,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Equal(expected, TypeEqualityComparer.Default);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void ContainsGenericParameters_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -91,7 +95,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, ArraysData]
   public void CustomAttributes_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -106,7 +111,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().BeEquivalentTo(expected, CustomAttributeDataEqualityComparer.Default);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void DeclaringMethod_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -122,7 +128,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().ThrowExactly<InvalidOperationException>();
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void DeclaringType_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -137,7 +144,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Equal(expected, TypeEqualityComparer.Default);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void FullName_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -152,7 +160,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void GenericTypeArguments_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -167,7 +176,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().BeEquivalentTo(expected, TypeEqualityComparer.Default);
   }
 
-  [Theory, AllBindingFlagsData]
+  [Theory]
+  [GetMembersData]
   public void GetConstructors_ShouldBeCorrect(BindingFlags bindingAttr)
   {
     // Arrange
@@ -182,7 +192,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().BeEquivalentTo(expected, ConstructorInfoEqualityComparer.Default);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, ArraysData]
   public void GetCustomAttributeData_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -197,7 +208,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().BeEquivalentTo(expected, CustomAttributeDataEqualityComparer.Default);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, ArraysData]
   public void GetDefaultMembers_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -212,7 +224,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().BeEquivalentTo(expected, MemberInfoEqualityComparer.Default);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void GetElementType_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -227,7 +240,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Equal(expected, TypeEqualityComparer.Default);
   }
 
-  [Theory, AllBindingFlagsData]
+  [Theory]
+  [GetMembersData]
   public void GetFields_ShouldBeCorrect(BindingFlags bindingAttr)
   {
     // Arrange
@@ -242,22 +256,24 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().BeEquivalentTo(expected, FieldInfoEqualityComparer.Default);
   }
 
-  [Theory, AllBindingFlagsData]
-  public void GetMembers_ShouldBeCorrect(BindingFlags bindingAttr)
-  {
-    // Arrange
-    SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
-    Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
-    MemberInfo[] expected = reference.GetMembers(bindingAttr);
+  // [Theory]
+  // [GetMembersData]
+  // public void GetMembers_ShouldBeCorrect(BindingFlags bindingAttr)
+  // {
+  //   // Arrange
+  //   SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
+  //   Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+  //   MemberInfo[] expected = reference.GetMembers(bindingAttr);
+  // 
+  //   // Act
+  //   MemberInfo[] actual = sut.GetMembers(bindingAttr);
+  // 
+  //   // Assert
+  //   actual.Should().BeEquivalentTo(expected, MemberInfoEqualityComparer.Default);
+  // }
 
-    // Act
-    MemberInfo[] actual = sut.GetMembers(bindingAttr);
-
-    // Assert
-    actual.Should().BeEquivalentTo(expected, MemberInfoEqualityComparer.Default);
-  }
-
-  [Theory, AllBindingFlagsData]
+  [Theory]
+  [GetMembersData]
   public void GetMethods_ShouldBeCorrect(BindingFlags bindingAttr)
   {
     // Arrange
@@ -272,7 +288,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().BeEquivalentTo(expected, MethodInfoEqualityComparer.Default);
   }
 
-  [Theory, AllBindingFlagsData]
+  [Theory]
+  [GetMembersData]
   public void GetNestedTypes_ShouldBeCorrect(BindingFlags bindingAttr)
   {
     // Arrange
@@ -287,7 +304,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().BeEquivalentTo(expected, TypeEqualityComparer.Default);
   }
 
-  [Theory, AllBindingFlagsData]
+  [Theory]
+  [GetMembersData]
   public void GetProperties_ShouldBeCorrect(BindingFlags bindingAttr)
   {
     // Arrange
@@ -302,7 +320,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().BeEquivalentTo(expected, PropertyInfoEqualityComparer.Default);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void HasElementType_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -317,7 +336,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsAbstract_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -332,7 +352,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsAnsiClass_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -347,7 +368,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsArray_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -444,7 +466,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsAutoClass_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -459,7 +482,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsAutoLayout_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -474,7 +498,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsByRef_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -489,7 +514,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsClass_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -504,7 +530,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsCOMObject_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -519,7 +546,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsConstructedGenericType_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -534,7 +562,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsContextful_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -549,7 +578,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsEnum_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -564,7 +594,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsGenericType_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -579,7 +610,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsGenericTypeDefinition_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -594,7 +626,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsInterface_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -609,7 +642,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsPrimitive_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -624,7 +658,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsLayoutSequential_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -639,7 +674,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsMarshalByRef_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -654,7 +690,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsNested_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -669,7 +706,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsNestedAssembly_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -684,7 +722,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsNestedFamANDAssem_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -699,7 +738,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsNestedFamily_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -714,7 +754,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsNestedFamORAssem_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -729,7 +770,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsNestedPrivate_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -744,7 +786,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsNestedPublic_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -759,7 +802,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsNotPublic_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -774,7 +818,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsPointer_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -789,7 +834,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsPublic_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -804,7 +850,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsSealed_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -819,7 +866,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsSecurityCritical_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -834,7 +882,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsSecuritySafeCritical_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -849,7 +898,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsSecurityTransparent_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -864,7 +914,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsSerializable_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -879,7 +930,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsSignatureType_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -894,7 +946,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void IsSpecialName_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -948,7 +1001,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void MakeArrayType_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -963,7 +1017,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Equal(expected, TypeEqualityComparer.Default);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void Module_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -978,7 +1033,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Equal(expected, ModuleEqualityComparer.Default);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void Name_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -993,7 +1049,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void Namespace_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1008,7 +1065,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void ReflectedType_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1023,7 +1081,8 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Equal(expected, TypeEqualityComparer.Default);
   }
 
-  [Theory, SymbolTypeTestData]
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArraysData]
   public void UnderlyingSystemType_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange

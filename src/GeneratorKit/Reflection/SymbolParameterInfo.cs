@@ -1,10 +1,11 @@
 ﻿using Microsoft.CodeAnalysis;
 using System;
+using System.Diagnostics;
 using System.Reflection;
 
 namespace GeneratorKit.Reflection;
 
-internal sealed class SymbolParameterInfo : ParameterInfo
+internal sealed class SymbolParameterInfo : SymbolParameterInfoBase
 {
   private readonly GeneratorRuntime _runtime;
 
@@ -17,15 +18,42 @@ internal sealed class SymbolParameterInfo : ParameterInfo
   public IParameterSymbol Symbol { get; }
 
 
-  public override Type ParameterType => _runtime.CreateTypeDelegator(Symbol.Type);
 
-  public override Type[] GetOptionalCustomModifiers()
+  // SymbolParameterInfoBase overrides
+
+  protected override SymbolType ParameterTypeCore => _runtime.CreateTypeDelegator(Symbol.Type);
+
+  protected override SymbolType[] GetOptionalCustomModifiersCore()
   {
     throw new NotImplementedException();
   }
 
-  public override Type[] GetRequiredCustomModifiers()
+  protected override SymbolType[] GetRequiredCustomModifiersCore()
   {
     throw new NotImplementedException();
   }
+}
+
+internal abstract class SymbolParameterInfoBase : ParameterInfo
+{
+  private protected SymbolParameterInfoBase() { }
+
+
+  // System.Reflection.PropertyInfo overrides
+
+  public sealed override Type ParameterType => ParameterTypeCore;
+
+  public sealed override Type[] GetOptionalCustomModifiers() => GetOptionalCustomModifiersCore();
+
+  public sealed override Type[] GetRequiredCustomModifiers() => GetRequiredCustomModifiersCore();
+
+
+  // Abstract members
+
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+  protected abstract SymbolType ParameterTypeCore { get; }
+
+  protected abstract SymbolType[] GetOptionalCustomModifiersCore();
+
+  protected abstract SymbolType[] GetRequiredCustomModifiersCore();
 }

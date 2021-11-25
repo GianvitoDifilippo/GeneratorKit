@@ -296,7 +296,8 @@ namespace " + Namespace + @"
 
   private SymbolType GetSymbolType(TypeCategory category)
   {
-    INamedTypeSymbol symbol;
+    ITypeSymbol symbol;
+    INamedTypeSymbol namedSymbol;
     INamedTypeSymbol typeArg1Symbol;
     INamedTypeSymbol typeArg2Symbol;
 
@@ -308,6 +309,12 @@ namespace " + Namespace + @"
       case TypeCategory.Int:
         symbol = _compilation.GetSpecialType(SpecialType.System_Int32);
         break;
+      case TypeCategory.Short:
+        symbol = _compilation.GetSpecialType(SpecialType.System_Int16);
+        break;
+      case TypeCategory.Long:
+        symbol = _compilation.GetSpecialType(SpecialType.System_Int64);
+        break;
       case TypeCategory.Float:
         symbol = _compilation.GetSpecialType(SpecialType.System_Single);
         break;
@@ -317,26 +324,33 @@ namespace " + Namespace + @"
       case TypeCategory.Decimal:
         symbol = _compilation.GetSpecialType(SpecialType.System_Decimal);
         break;
+      case TypeCategory.Bool:
+        symbol = _compilation.GetSpecialType(SpecialType.System_Boolean);
+        break;
+      case TypeCategory.IntPtr:
+        symbol = _compilation.GetSpecialType(SpecialType.System_IntPtr);
+        break;
       case TypeCategory.String:
         symbol = _compilation.GetSpecialType(SpecialType.System_String);
         break;
       case TypeCategory.EnumBase:
         symbol = _compilation.GetSpecialType(SpecialType.System_Enum);
         break;
+
       case TypeCategory.OpenGeneric:
         symbol = GetSymbolTypeFromCompilation("GenericClass`2");
         break;
       case TypeCategory.ClosedGeneric:
-        symbol = GetSymbolTypeFromCompilation("GenericClass`2");
+        namedSymbol = GetSymbolTypeFromCompilation("GenericClass`2");
         typeArg1Symbol = GetSymbolTypeFromCompilation("TypeArgument1");
         typeArg2Symbol = GetSymbolTypeFromCompilation("TypeArgument2");
-        symbol = symbol.Construct(typeArg1Symbol, typeArg2Symbol);
+        symbol = namedSymbol.Construct(typeArg1Symbol, typeArg2Symbol);
         break;
       case TypeCategory.ClosedGenericWithGenericTypeArguments:
-        symbol = GetSymbolTypeFromCompilation("GenericClass`2");
+        namedSymbol = GetSymbolTypeFromCompilation("GenericClass`2");
         typeArg1Symbol = GetSymbolTypeFromCompilation("TypeArgument1");
         typeArg2Symbol = GetSymbolTypeFromCompilation("TypeArgument2");
-        symbol = symbol.Construct(symbol.Construct(typeArg1Symbol, typeArg2Symbol), typeArg2Symbol);
+        symbol = namedSymbol.Construct(namedSymbol.Construct(typeArg1Symbol, typeArg2Symbol), typeArg2Symbol);
         break;
       case TypeCategory.WithAttributes:
         symbol = GetSymbolTypeFromCompilation("ClassWithAttributes");
@@ -404,11 +418,72 @@ namespace " + Namespace + @"
       case TypeCategory.Serializable:
         symbol = GetSymbolTypeFromCompilation("SerializableClass");
         break;
+
+      case TypeCategory.ObjectArray1:
+        symbol = _compilation.CreateArrayTypeSymbol(_compilation.GetSpecialType(SpecialType.System_Object));
+        break;
+      case TypeCategory.ObjectArray2:
+        symbol = _compilation.CreateArrayTypeSymbol(_compilation.GetSpecialType(SpecialType.System_Object), 2);
+        break;
+      case TypeCategory.IntArray1:
+        symbol = _compilation.CreateArrayTypeSymbol(_compilation.GetSpecialType(SpecialType.System_Int32));
+        break;
+      case TypeCategory.IntArray2:
+        symbol = _compilation.CreateArrayTypeSymbol(_compilation.GetSpecialType(SpecialType.System_Int32), 2);
+        break;
+      case TypeCategory.OpenGenericArray1:
+        symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("GenericClass`2"));
+        break;
+      case TypeCategory.OpenGenericArray2:
+        symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("GenericClass`2"), 2);
+        break;
+      case TypeCategory.ClosedGenericArray1:
+        namedSymbol = GetSymbolTypeFromCompilation("GenericClass`2");
+        typeArg1Symbol = GetSymbolTypeFromCompilation("TypeArgument1");
+        typeArg2Symbol = GetSymbolTypeFromCompilation("TypeArgument2");
+        symbol = _compilation.CreateArrayTypeSymbol(namedSymbol.Construct(typeArg1Symbol, typeArg2Symbol));
+        break;
+      case TypeCategory.ClosedGenericArray2:
+        namedSymbol = GetSymbolTypeFromCompilation("GenericClass`2");
+        typeArg1Symbol = GetSymbolTypeFromCompilation("TypeArgument1");
+        typeArg2Symbol = GetSymbolTypeFromCompilation("TypeArgument2");
+        symbol = _compilation.CreateArrayTypeSymbol(namedSymbol.Construct(typeArg1Symbol, typeArg2Symbol), 2);
+        break;
+      case TypeCategory.ClassArray1:
+        symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("InternalClass"));
+        break;
+      case TypeCategory.ClassArray2:
+        symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("InternalClass"), 2);
+        break;
+      case TypeCategory.InterfaceArray1:
+        symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("IDerivedInterface"));
+        break;
+      case TypeCategory.InterfaceArray2:
+        symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("IDerivedInterface"), 2);
+        break;
+      case TypeCategory.StructArray1:
+        symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("Struct"));
+        break;
+      case TypeCategory.StructArray2:
+        symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("Struct"), 2);
+        break;
+      case TypeCategory.EnumArray1:
+        symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("Enumeration"));
+        break;
+      case TypeCategory.EnumArray2:
+        symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("Enumeration"), 2);
+        break;
+
       default:
         throw new Exception($"Invalid {nameof(TypeCategory)}: {category}.");
     }
 
-    return new SymbolNamedType(_runtime, _compilation, symbol);
+    return symbol switch
+    {
+      INamedTypeSymbol => new SymbolNamedType(_runtime, _compilation, (INamedTypeSymbol)symbol),
+      IArrayTypeSymbol => new SymbolArrayType(_runtime, _compilation, (IArrayTypeSymbol)symbol),
+      _                => throw new InvalidOperationException()
+    };
 
     INamedTypeSymbol GetSymbolTypeFromCompilation(string name)
     {
@@ -430,6 +505,12 @@ namespace " + Namespace + @"
       case TypeCategory.Int:
         type = typeof(int);
         break;
+      case TypeCategory.Short:
+        type = typeof(short);
+        break;
+      case TypeCategory.Long:
+        type = typeof(long);
+        break;
       case TypeCategory.Float:
         type = typeof(float);
         break;
@@ -439,12 +520,19 @@ namespace " + Namespace + @"
       case TypeCategory.Decimal:
         type = typeof(decimal);
         break;
+      case TypeCategory.Bool:
+        type = typeof(bool);
+        break;
+      case TypeCategory.IntPtr:
+        type = typeof(IntPtr);
+        break;
       case TypeCategory.String:
         type = typeof(string);
         break;
       case TypeCategory.EnumBase:
         type = typeof(Enum);
         break;
+
       case TypeCategory.OpenGeneric:
         type = GetTypeFromAssembly("GenericClass`2");
         break;
@@ -526,6 +614,62 @@ namespace " + Namespace + @"
       case TypeCategory.Serializable:
         type = GetTypeFromAssembly("SerializableClass");
         break;
+
+      case TypeCategory.ObjectArray1:
+        type = typeof(object[]);
+        break;
+      case TypeCategory.ObjectArray2:
+        type = typeof(object[,]);
+        break;
+      case TypeCategory.IntArray1:
+        type = typeof(int[]);
+        break;
+      case TypeCategory.IntArray2:
+        type = typeof(int[,]);
+        break;
+      case TypeCategory.OpenGenericArray1:
+        type = GetTypeFromAssembly("GenericClass`2").MakeArrayType();
+        break;
+      case TypeCategory.OpenGenericArray2:
+        type = GetTypeFromAssembly("GenericClass`2").MakeArrayType(2);
+        break;
+      case TypeCategory.ClosedGenericArray1:
+        type = GetTypeFromAssembly("GenericClass`2");
+        typeArg1 = GetTypeFromAssembly("TypeArgument1");
+        typeArg2 = GetTypeFromAssembly("TypeArgument2");
+        type = type.MakeGenericType(typeArg1, typeArg2).MakeArrayType();
+        break;
+      case TypeCategory.ClosedGenericArray2:
+        type = GetTypeFromAssembly("GenericClass`2");
+        typeArg1 = GetTypeFromAssembly("TypeArgument1");
+        typeArg2 = GetTypeFromAssembly("TypeArgument2");
+        type = type.MakeGenericType(typeArg1, typeArg2).MakeArrayType(2);
+        break;
+      case TypeCategory.ClassArray1:
+        type = GetTypeFromAssembly("InternalClass").MakeArrayType();
+        break;
+      case TypeCategory.ClassArray2:
+        type = GetTypeFromAssembly("InternalClass").MakeArrayType(2);
+        break;
+      case TypeCategory.InterfaceArray1:
+        type = GetTypeFromAssembly("IDerivedInterface").MakeArrayType();
+        break;
+      case TypeCategory.InterfaceArray2:
+        type = GetTypeFromAssembly("IDerivedInterface").MakeArrayType(2);
+        break;
+      case TypeCategory.StructArray1:
+        type = GetTypeFromAssembly("Struct").MakeArrayType();
+        break;
+      case TypeCategory.StructArray2:
+        type = GetTypeFromAssembly("Struct").MakeArrayType(2);
+        break;
+      case TypeCategory.EnumArray1:
+        type = GetTypeFromAssembly("Enumeration").MakeArrayType();
+        break;
+      case TypeCategory.EnumArray2:
+        type = GetTypeFromAssembly("Enumeration").MakeArrayType(2);
+        break;
+
       default:
         throw new Exception($"Invalid {nameof(TypeCategory)}: {category}.");
     }
@@ -543,15 +687,19 @@ namespace " + Namespace + @"
 
 public enum TypeCategory
 {
-  Object,
+  Object = 0,
   Int,
+  Short,
+  Long,
   Float,
   Double,
   Decimal,
+  Bool,
+  IntPtr,
   String,
   EnumBase,
 
-  OpenGeneric,
+  OpenGeneric = 64,
   ClosedGeneric,
   ClosedGenericWithGenericTypeArguments,
   WithAttributes,
@@ -573,18 +721,57 @@ public enum TypeCategory
   Enum,
   Abstract,
   Sealed,
-  Serializable
+  Serializable,
+
+  ObjectArray1 = 128,
+  IntArray1,
+  OpenGenericArray1,
+  ClosedGenericArray1,
+  ClassArray1,
+  InterfaceArray1,
+  StructArray1,
+  EnumArray1,
+  ObjectArray2,
+  IntArray2,
+  OpenGenericArray2,
+  ClosedGenericArray2,
+  ClassArray2,
+  InterfaceArray2,
+  StructArray2,
+  EnumArray2
 }
 
-public class SymbolTypeTestDataAttribute : DataAttribute
+public class SpecialTypesDataAttribute : DataAttribute
 {
   public override IEnumerable<object[]> GetData(MethodInfo testMethod)
   {
-    return Enum.GetValues<TypeCategory>().Select(x => new object[1] { x });
+    return Enum.GetValues<TypeCategory>()
+      .Where(x => (int)x < 64)
+      .Select(x => new object[1] { x });
   }
 }
 
-public class AllBindingFlagsDataAttribute : DataAttribute
+public class NamedTypesDataAttribute : DataAttribute
+{
+  public override IEnumerable<object[]> GetData(MethodInfo testMethod)
+  {
+    return Enum.GetValues<TypeCategory>()
+      .Where(x => (int)x >= 64 && (int)x < 128)
+      .Select(x => new object[1] { x });
+  }
+}
+
+public class ArraysDataAttribute : DataAttribute
+{
+  public override IEnumerable<object[]> GetData(MethodInfo testMethod)
+  {
+    return Enum.GetValues<TypeCategory>()
+      .Where(x => (int)x > 128)
+      .Select(x => new object[1] { x });
+  }
+}
+
+public class GetMembersDataAttribute : DataAttribute
 {
   public override IEnumerable<object[]> GetData(MethodInfo testMethod)
   {

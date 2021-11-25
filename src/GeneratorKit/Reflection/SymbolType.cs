@@ -10,10 +10,10 @@ namespace GeneratorKit.Reflection;
 
 internal abstract class SymbolType : SymbolTypeBase
 {
-  private static readonly SymbolDisplayFormat s_namespaceFormat = new SymbolDisplayFormat(typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces);
+  protected static readonly SymbolDisplayFormat s_namespaceFormat = new SymbolDisplayFormat(typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces);
 
-  protected readonly Compilation _compilation;
   protected readonly GeneratorRuntime _runtime;
+  protected readonly Compilation _compilation;
 
   protected SymbolType(GeneratorRuntime runtime, Compilation compilation)
   {
@@ -24,19 +24,21 @@ internal abstract class SymbolType : SymbolTypeBase
   public abstract ITypeSymbol Symbol { get; }
 
 
-  public sealed override string? AssemblyQualifiedName => FullName is null
+  // Systm.Type overrides
+
+  public override string? AssemblyQualifiedName => FullName is null
     ? null
-    : Assembly.CreateQualifiedName(Assembly.FullName, FullName);
+    : System.Reflection.Assembly.CreateQualifiedName(Assembly.FullName, FullName);
 
-  public sealed override Guid GUID => throw new NotImplementedException();
+  public override Guid GUID => throw new NotImplementedException();
 
-  public sealed override bool IsSecurityCritical => true;
+  public override bool IsSecurityCritical => true;
 
-  public sealed override bool IsSecuritySafeCritical => false;
+  public override bool IsSecuritySafeCritical => false;
 
-  public sealed override bool IsSecurityTransparent => false;
+  public override bool IsSecurityTransparent => false;
 
-  public sealed override bool IsSerializable
+  public override bool IsSerializable
   {
     get
     {
@@ -59,11 +61,9 @@ internal abstract class SymbolType : SymbolTypeBase
     }
   }
 
-  public sealed override string Namespace => Symbol.ContainingNamespace.ToDisplayString(s_namespaceFormat);
+  public override Type UnderlyingSystemType => _runtime.GetRuntimeType(this) ?? this;
 
-  public sealed override Type UnderlyingSystemType => _runtime.GetRuntimeType(this) ?? this;
-
-  protected sealed override ConstructorInfo? GetConstructorImpl(BindingFlags bindingAttr, Binder binder, CallingConventions callConvention, Type[] types, ParameterModifier[] modifiers)
+  protected override ConstructorInfo? GetConstructorImpl(BindingFlags bindingAttr, Binder binder, CallingConventions callConvention, Type[] types, ParameterModifier[] modifiers)
   {
     ConstructorInfo[] candidates = GetConstructors(bindingAttr);
 
@@ -84,17 +84,17 @@ internal abstract class SymbolType : SymbolTypeBase
     return (binder ?? DefaultBinder).SelectMethod(bindingAttr, candidates.ToArray(), types, modifiers) as ConstructorInfo;
   }
 
-  public sealed override object[] GetCustomAttributes(bool inherit)
+  public override object[] GetCustomAttributes(bool inherit)
   {
     throw new NotImplementedException();
   }
 
-  public sealed override object[] GetCustomAttributes(Type attributeType, bool inherit)
+  public override object[] GetCustomAttributes(Type attributeType, bool inherit)
   {
     throw new NotImplementedException();
   }
 
-  public sealed override MemberInfo[] GetDefaultMembers()
+  public override MemberInfo[] GetDefaultMembers()
   {
     AttributeData? attribute = Symbol
       .GetAttributes()
@@ -110,42 +110,37 @@ internal abstract class SymbolType : SymbolTypeBase
       .ToArray();
   }
 
-  public sealed override MemberInfo[] GetMember(string name, BindingFlags bindingAttr)
+  public override MemberInfo[] GetMember(string name, BindingFlags bindingAttr)
   {
     return GetMembersEnumerable(bindingAttr).Where(x => x.Name == name).ToArray();
   }
 
-  public sealed override MemberInfo[] GetMembers(BindingFlags bindingAttr)
+  public override MemberInfo[] GetMembers(BindingFlags bindingAttr)
 {
     return GetMembersEnumerable(bindingAttr).ToArray();
   }
 
-  protected sealed override MethodInfo GetMethodImpl(string name, BindingFlags bindingAttr, Binder binder, CallingConventions callConvention, Type[] types, ParameterModifier[] modifiers)
+  protected override MethodInfo GetMethodImpl(string name, BindingFlags bindingAttr, Binder binder, CallingConventions callConvention, Type[] types, ParameterModifier[] modifiers)
   {
     throw new NotImplementedException();
   }
 
-  protected sealed override PropertyInfo GetPropertyImpl(string name, BindingFlags bindingAttr, Binder binder, Type returnType, Type[] types, ParameterModifier[] modifiers)
+  protected override PropertyInfo GetPropertyImpl(string name, BindingFlags bindingAttr, Binder binder, Type returnType, Type[] types, ParameterModifier[] modifiers)
   {
     throw new NotImplementedException();
   }
 
-  public sealed override object InvokeMember(string name, BindingFlags invokeAttr, Binder binder, object target, object[] args, ParameterModifier[] modifiers, CultureInfo culture, string[] namedParameters)
+  public override object InvokeMember(string name, BindingFlags invokeAttr, Binder binder, object target, object[] args, ParameterModifier[] modifiers, CultureInfo culture, string[] namedParameters)
   {
     throw new NotImplementedException();
   }
 
-  protected sealed override bool IsByRefImpl()
+  protected override bool IsCOMObjectImpl()
   {
     return false;
   }
 
-  protected sealed override bool IsCOMObjectImpl()
-  {
-    return false;
-  }
-
-  public sealed override bool IsDefined(Type attributeType, bool inherit)
+  public override bool IsDefined(Type attributeType, bool inherit)
   {
     throw new NotImplementedException();
   }
@@ -153,122 +148,176 @@ internal abstract class SymbolType : SymbolTypeBase
 
   // SymbolTypeBase overrides
 
-  protected sealed override SymbolAssembly AssemblyCore => _runtime.CreateAssemblyDelegator(Symbol.ContainingAssembly);
-
-  protected sealed override SymbolType? BaseTypeCore => Symbol.BaseType is { } baseType
+  protected override SymbolType? BaseTypeCore => Symbol.BaseType is { } baseType
     ? _runtime.CreateTypeDelegator(baseType)
     : null;
 
-  protected sealed override SymbolType? DeclaringTypeCore => Symbol.ContainingType is { } containingType
+  protected override SymbolType? DeclaringTypeCore => Symbol.ContainingType is { } containingType
     ? _runtime.CreateTypeDelegator(containingType)
     : null;
 
-  protected sealed override SymbolModule ModuleCore => _runtime.CreateModuleDelegator(Symbol.ContainingModule);
-
-  protected sealed override SymbolType? ReflectedTypeCore => DeclaringTypeCore;
+  protected override SymbolType? ReflectedTypeCore => DeclaringTypeCore;
 
   protected override SymbolType[] FindInterfacesCore(TypeFilter filter, object filterCriteria)
   {
     throw new NotImplementedException();
   }
 
-  protected sealed override SymbolConstructorInfo[] GetConstructorsCore(BindingFlags bindingAttr)
+  protected override SymbolConstructorInfo[] GetConstructorsCore(BindingFlags bindingAttr)
   {
     return GetConstructorsEnumerable(bindingAttr).ToArray();
   }
 
-  protected sealed override SymbolType GetEnumUnderlyingTypeCore()
+  protected override SymbolType GetEnumUnderlyingTypeCore()
   {
     throw new NotImplementedException();
   }
 
-  protected sealed override SymbolEventInfo GetEventCore(string name, BindingFlags bindingAttr)
+  protected override SymbolEventInfo GetEventCore(string name, BindingFlags bindingAttr)
   {
     throw new NotImplementedException();
   }
 
-  protected sealed override SymbolEventInfo[] GetEventsCore()
+  protected override SymbolEventInfo[] GetEventsCore()
   {
     throw new NotImplementedException();
   }
 
-  protected sealed override SymbolEventInfo[] GetEventsCore(BindingFlags bindingAttr)
+  protected override SymbolEventInfo[] GetEventsCore(BindingFlags bindingAttr)
   {
     return GetEventsEnumerable(bindingAttr).ToArray();
   }
 
-  protected sealed override SymbolFieldInfo GetFieldCore(string name, BindingFlags bindingAttr)
+  protected override SymbolFieldInfo GetFieldCore(string name, BindingFlags bindingAttr)
   {
     throw new NotImplementedException();
   }
 
-  protected sealed override SymbolFieldInfo[] GetFieldsCore(BindingFlags bindingAttr)
+  protected override SymbolFieldInfo[] GetFieldsCore(BindingFlags bindingAttr)
   {
     return GetFieldsEnumerable(bindingAttr).ToArray();
   }
 
-  protected sealed override SymbolType GetGenericTypeDefinitionCore()
+  protected override SymbolType GetGenericTypeDefinitionCore()
   {
     throw new NotImplementedException();
   }
 
-  protected sealed override SymbolType GetInterfaceCore(string name, bool ignoreCase)
+  protected override SymbolType GetInterfaceCore(string name, bool ignoreCase)
   {
     throw new NotImplementedException();
   }
 
-  protected sealed override SymbolType[] GetInterfacesCore()
+  protected override SymbolType[] GetInterfacesCore()
   {
     return Symbol.AllInterfaces.Select(x => _runtime.CreateTypeDelegator(x)).ToArray();
   }
 
-  protected sealed override SymbolMethodInfo[] GetMethodsCore(BindingFlags bindingAttr)
+  protected override SymbolMethodInfo[] GetMethodsCore(BindingFlags bindingAttr)
   {
     return GetMethodsEnumerable(bindingAttr).ToArray();
   }
 
-  protected sealed override SymbolType GetNestedTypeCore(string name, BindingFlags bindingAttr)
+  protected override SymbolType GetNestedTypeCore(string name, BindingFlags bindingAttr)
   {
     throw new NotImplementedException();
   }
 
-  protected sealed override SymbolType[] GetNestedTypesCore(BindingFlags bindingAttr)
+  protected override SymbolType[] GetNestedTypesCore(BindingFlags bindingAttr)
   {
     return GetNestedTypesEnumerable(bindingAttr).ToArray();
   }
 
-  protected sealed override SymbolPropertyInfo[] GetPropertiesCore(BindingFlags bindingAttr)
+  protected override SymbolPropertyInfo[] GetPropertiesCore(BindingFlags bindingAttr)
   {
     return GetPropertiesEnumerable(bindingAttr).ToArray();
   }
 
-  protected sealed override SymbolType MakeArrayTypeCore()
+  protected override SymbolType MakeArrayTypeCore()
   {
     return MakeArrayTypeCore(1);
   }
 
-  protected sealed override SymbolType MakeArrayTypeCore(int rank)
+  protected override SymbolType MakeArrayTypeCore(int rank)
   {
     return _runtime.CreateTypeDelegator(_compilation.CreateArrayTypeSymbol(Symbol, rank));
   }
 
-  protected sealed override SymbolType MakeByRefTypeCore()
+  protected override SymbolType MakeByRefTypeCore()
   {
     throw new NotImplementedException();
   }
 
-  protected sealed override SymbolType MakeGenericTypeCore(params Type[] typeArguments)
+  protected override SymbolType MakeGenericTypeCore(params Type[] typeArguments)
   {
     throw new NotImplementedException();
   }
 
-  protected sealed override SymbolType MakePointerTypeCore()
+  protected override SymbolType MakePointerTypeCore()
   {
     throw new NotImplementedException();
   }
 
 
   // New members
+
+  public new SymbolAssembly Assembly => AssemblyCore;
+
+  public new SymbolType? BaseType => BaseTypeCore;
+
+  public new SymbolType? DeclaringType => DeclaringTypeCore;
+
+  public new SymbolType[] GenericTypeArguments => GenericTypeArgumentsCore;
+
+  public new SymbolModule Module => ModuleCore;
+
+  public new SymbolType? ReflectedType => ReflectedTypeCore;
+
+  public new SymbolType[] FindInterfaces(TypeFilter filter, object filterCriteria) => FindInterfacesCore(filter, filterCriteria);
+
+  public new SymbolConstructorInfo[] GetConstructors(BindingFlags bindingAttr) => GetConstructorsCore(bindingAttr);
+
+  public new SymbolType GetEnumUnderlyingType() => GetEnumUnderlyingTypeCore();
+
+  public new SymbolType? GetElementType() => GetElementTypeCore();
+
+  public new SymbolEventInfo GetEvent(string name, BindingFlags bindingAttr) => GetEventCore(name, bindingAttr);
+
+  public new SymbolEventInfo[] GetEvents() => GetEventsCore();
+
+  public new SymbolEventInfo[] GetEvents(BindingFlags bindingAttr) => GetEventsCore(bindingAttr);
+
+  public new SymbolFieldInfo GetField(string name, BindingFlags bindingAttr) => GetFieldCore(name, bindingAttr);
+
+  public new SymbolFieldInfo[] GetFields(BindingFlags bindingAttr) => GetFieldsCore(bindingAttr);
+
+  public new SymbolType[] GetGenericArguments() => GetGenericArgumentsCore();
+
+  public new SymbolType[] GetGenericParameterConstraints() => GetGenericParameterConstraintsCore();
+
+  public new SymbolType GetGenericTypeDefinition() => GetGenericTypeDefinitionCore();
+
+  public new SymbolType GetInterface(string name, bool ignoreCase) => GetInterfaceCore(name, ignoreCase);
+
+  public new SymbolType[] GetInterfaces() => GetInterfacesCore();
+
+  public new SymbolMethodInfo[] GetMethods(BindingFlags bindingAttr) => GetMethodsCore(bindingAttr);
+
+  public new SymbolPropertyInfo[] GetProperties(BindingFlags bindingAttr) => GetPropertiesCore(bindingAttr);
+
+  public new SymbolType GetNestedType(string name, BindingFlags bindingAttr) => GetNestedTypeCore(name, bindingAttr);
+
+  public new SymbolType[] GetNestedTypes(BindingFlags bindingAttr) => GetNestedTypesCore(bindingAttr);
+
+  public new SymbolType MakeArrayType() => MakeArrayTypeCore();
+
+  public new SymbolType MakeArrayType(int rank) => MakeArrayTypeCore(rank);
+
+  public new SymbolType MakeByRefType() => MakeByRefTypeCore();
+
+  public new SymbolType MakeGenericType(params Type[] typeArguments) => MakeGenericTypeCore(typeArguments);
+
+  public new SymbolType MakePointerType() => MakePointerTypeCore();
 
 
   // Private members
@@ -403,63 +452,63 @@ internal abstract class SymbolTypeBase : Type
 
   // System.Type overrides
 
-  public sealed override Assembly Assembly => AssemblyCore;
+  public override Assembly Assembly => AssemblyCore;
 
-  public sealed override Type? BaseType => BaseTypeCore;
+  public override Type? BaseType => BaseTypeCore;
 
-  public sealed override Type? DeclaringType => DeclaringTypeCore;
+  public override Type? DeclaringType => DeclaringTypeCore;
 
-  public sealed override Type[] GenericTypeArguments => GenericTypeArgumentsCore;
+  public override Type[] GenericTypeArguments => GenericTypeArgumentsCore;
 
-  public sealed override Module Module => ModuleCore;
+  public override Module Module => ModuleCore;
 
-  public sealed override Type? ReflectedType => ReflectedTypeCore;
+  public override Type? ReflectedType => ReflectedTypeCore;
 
-  public sealed override Type[] FindInterfaces(TypeFilter filter, object filterCriteria) => FindInterfacesCore(filter, filterCriteria);
+  public override Type[] FindInterfaces(TypeFilter filter, object filterCriteria) => FindInterfacesCore(filter, filterCriteria);
 
-  public sealed override ConstructorInfo[] GetConstructors(BindingFlags bindingAttr) => GetConstructorsCore(bindingAttr);
+  public override ConstructorInfo[] GetConstructors(BindingFlags bindingAttr) => GetConstructorsCore(bindingAttr);
 
-  public sealed override Type? GetElementType() => GetElementTypeCore();
+  public override Type? GetElementType() => GetElementTypeCore();
 
-  public sealed override Type GetEnumUnderlyingType() => GetEnumUnderlyingTypeCore();
+  public override Type GetEnumUnderlyingType() => GetEnumUnderlyingTypeCore();
 
-  public sealed override EventInfo GetEvent(string name, BindingFlags bindingAttr) => GetEventCore(name, bindingAttr);
+  public override EventInfo GetEvent(string name, BindingFlags bindingAttr) => GetEventCore(name, bindingAttr);
 
-  public sealed override EventInfo[] GetEvents() => GetEventsCore();
+  public override EventInfo[] GetEvents() => GetEventsCore();
 
-  public sealed override EventInfo[] GetEvents(BindingFlags bindingAttr) => GetEventsCore(bindingAttr);
+  public override EventInfo[] GetEvents(BindingFlags bindingAttr) => GetEventsCore(bindingAttr);
 
-  public sealed override FieldInfo GetField(string name, BindingFlags bindingAttr) => GetFieldCore(name, bindingAttr);
+  public override FieldInfo GetField(string name, BindingFlags bindingAttr) => GetFieldCore(name, bindingAttr);
 
-  public sealed override FieldInfo[] GetFields(BindingFlags bindingAttr) => GetFieldsCore(bindingAttr);
+  public override FieldInfo[] GetFields(BindingFlags bindingAttr) => GetFieldsCore(bindingAttr);
 
-  public sealed override Type[] GetGenericArguments() => GetGenericArgumentsCore();
+  public override Type[] GetGenericArguments() => GetGenericArgumentsCore();
 
-  public sealed override Type[] GetGenericParameterConstraints() => GetGenericParameterConstraintsCore();
+  public override Type[] GetGenericParameterConstraints() => GetGenericParameterConstraintsCore();
 
-  public sealed override Type GetGenericTypeDefinition() => GetGenericTypeDefinitionCore();
+  public override Type GetGenericTypeDefinition() => GetGenericTypeDefinitionCore();
 
-  public sealed override Type GetInterface(string name, bool ignoreCase) => GetInterfaceCore(name, ignoreCase);
+  public override Type GetInterface(string name, bool ignoreCase) => GetInterfaceCore(name, ignoreCase);
 
-  public sealed override Type[] GetInterfaces() => GetInterfacesCore();
+  public override Type[] GetInterfaces() => GetInterfacesCore();
 
-  public sealed override MethodInfo[] GetMethods(BindingFlags bindingAttr) => GetMethodsCore(bindingAttr);
+  public override MethodInfo[] GetMethods(BindingFlags bindingAttr) => GetMethodsCore(bindingAttr);
 
-  public sealed override Type GetNestedType(string name, BindingFlags bindingAttr) => GetNestedTypeCore(name, bindingAttr);
+  public override Type GetNestedType(string name, BindingFlags bindingAttr) => GetNestedTypeCore(name, bindingAttr);
 
-  public sealed override Type[] GetNestedTypes(BindingFlags bindingAttr) => GetNestedTypesCore(bindingAttr);
+  public override Type[] GetNestedTypes(BindingFlags bindingAttr) => GetNestedTypesCore(bindingAttr);
 
-  public sealed override PropertyInfo[] GetProperties(BindingFlags bindingAttr) => GetPropertiesCore(bindingAttr);
+  public override PropertyInfo[] GetProperties(BindingFlags bindingAttr) => GetPropertiesCore(bindingAttr);
 
-  public sealed override Type MakeArrayType() => MakeArrayTypeCore();
+  public override Type MakeArrayType() => MakeArrayTypeCore();
 
-  public sealed override Type MakeArrayType(int rank) => MakeArrayTypeCore(rank);
+  public override Type MakeArrayType(int rank) => MakeArrayTypeCore(rank);
 
-  public sealed override Type MakeByRefType() => MakeByRefTypeCore();
+  public override Type MakeByRefType() => MakeByRefTypeCore();
 
-  public sealed override Type MakeGenericType(params Type[] typeArguments) => MakeGenericTypeCore(typeArguments);
+  public override Type MakeGenericType(params Type[] typeArguments) => MakeGenericTypeCore(typeArguments);
 
-  public sealed override Type MakePointerType() => MakePointerTypeCore();
+  public override Type MakePointerType() => MakePointerTypeCore();
 
 
   // Abstract members

@@ -1,12 +1,13 @@
 ﻿using Microsoft.CodeAnalysis;
 using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
 
 namespace GeneratorKit.Reflection;
 
-internal sealed class SymbolConstructorInfo : ConstructorInfo
+internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
 {
   private readonly GeneratorRuntime _runtime;
 
@@ -17,6 +18,9 @@ internal sealed class SymbolConstructorInfo : ConstructorInfo
   }
 
   public IMethodSymbol Symbol { get; }
+
+
+  // System.Reflection.ConstructorInfo overrides
 
   public override MethodAttributes Attributes
   {
@@ -51,15 +55,9 @@ internal sealed class SymbolConstructorInfo : ConstructorInfo
     }
   }
 
-  public override Type DeclaringType => _runtime.CreateTypeDelegator(Symbol.ContainingType);
-
   public override RuntimeMethodHandle MethodHandle => throw new NotImplementedException();
 
-  public override Module Module => throw new NotImplementedException();
-
   public override string Name => IsStatic ? TypeConstructorName : ConstructorName;
-
-  public override Type ReflectedType => DeclaringType;
 
   public override object[] GetCustomAttributes(bool inherit)
   {
@@ -71,19 +69,9 @@ internal sealed class SymbolConstructorInfo : ConstructorInfo
     throw new NotImplementedException();
   }
 
-  public override Type[] GetGenericArguments()
-  {
-    throw new NotImplementedException();
-  }
-
   public override MethodImplAttributes GetMethodImplementationFlags()
   {
     throw new NotImplementedException();
-  }
-
-  public override ParameterInfo[] GetParameters()
-  {
-    return Symbol.Parameters.Select(x => _runtime.CreateParameterInfoDelegator(x)).ToArray();
   }
 
   public override object Invoke(BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
@@ -100,4 +88,57 @@ internal sealed class SymbolConstructorInfo : ConstructorInfo
   {
     throw new NotImplementedException();
   }
+
+
+  // SymbolConstructorInfoBase overrides
+
+  protected override SymbolType DeclaringTypeCore => _runtime.CreateTypeDelegator(Symbol.ContainingType);
+
+  protected override SymbolModule ModuleCore => throw new NotImplementedException();
+
+  protected override SymbolType ReflectedTypeCore => DeclaringTypeCore;
+
+  protected override SymbolType[] GetGenericArgumentsCore()
+  {
+    throw new NotImplementedException();
+  }
+
+  protected override SymbolParameterInfo[] GetParametersCore()
+  {
+    return Symbol.Parameters.Select(x => _runtime.CreateParameterInfoDelegator(x)).ToArray();
+  }
+}
+
+internal abstract class SymbolConstructorInfoBase : ConstructorInfo
+{
+  private protected SymbolConstructorInfoBase() { }
+
+
+  // System.Reflection.ConstructorInfo overrides
+
+  public sealed override Type DeclaringType => DeclaringTypeCore;
+
+  public sealed override Module Module => ModuleCore;
+
+  public sealed override Type ReflectedType => ReflectedTypeCore;
+
+  public sealed override Type[] GetGenericArguments() => GetGenericArgumentsCore();
+
+  public sealed override ParameterInfo[] GetParameters() => GetParametersCore();
+
+
+  // Abstract members
+
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+  protected abstract SymbolType DeclaringTypeCore { get; }
+
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+  protected abstract SymbolModule ModuleCore { get; }
+
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+  protected abstract SymbolType ReflectedTypeCore { get; }
+
+  protected abstract SymbolType[] GetGenericArgumentsCore();
+
+  protected abstract SymbolParameterInfo[] GetParametersCore();
 }

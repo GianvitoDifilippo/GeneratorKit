@@ -1,5 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -34,24 +35,7 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
 
   public override bool CanWrite => throw new NotImplementedException();
 
-  public override Type DeclaringType => _runtime.CreateTypeDelegator(Symbol.ContainingType);
-
-  public override MethodInfo? GetMethod => throw new NotImplementedException();
-
-  public override Module Module => throw new NotImplementedException();
-
   public override string Name => Symbol.Name is "this[]" ? "Item" : Symbol.Name;
-
-  public override Type PropertyType => throw new NotImplementedException();
-
-  public override Type ReflectedType => throw new NotImplementedException();
-
-  public override MethodInfo? SetMethod => throw new NotImplementedException();
-
-  public override MethodInfo[] GetAccessors(bool nonPublic)
-  {
-    throw new NotImplementedException();
-  }
 
   public override object[] GetCustomAttributes(bool inherit)
   {
@@ -59,21 +43,6 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
   }
 
   public override object[] GetCustomAttributes(Type attributeType, bool inherit)
-  {
-    throw new NotImplementedException();
-  }
-
-  public override MethodInfo? GetGetMethod(bool nonPublic)
-  {
-    throw new NotImplementedException();
-  }
-
-  public override ParameterInfo[] GetIndexParameters()
-  {
-    return Symbol.Parameters.Select(x => _runtime.CreateParameterInfoDelegator(x)).ToArray();
-  }
-
-  public override MethodInfo? GetSetMethod(bool nonPublic)
   {
     throw new NotImplementedException();
   }
@@ -92,9 +61,96 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
   {
     throw new NotImplementedException();
   }
+
+
+  // SymbolPropertyInfoBase overrides
+
+  protected override SymbolType DeclaringTypeCore => _runtime.CreateTypeDelegator(Symbol.ContainingType);
+
+  protected override SymbolMethodInfo? GetMethodCore => throw new NotImplementedException();
+
+  protected override SymbolModule ModuleCore => throw new NotImplementedException();
+
+  protected override SymbolType PropertyTypeCore => _runtime.CreateTypeDelegator(Symbol.Type);
+
+  protected override SymbolType ReflectedTypeCore => throw new NotImplementedException();
+
+  protected override SymbolMethodInfo? SetMethodCore => throw new NotImplementedException();
+
+  protected override SymbolMethodInfo[] GetAccessorsCore(bool nonPublic)
+  {
+    throw new NotImplementedException();
+  }
+
+  protected override SymbolMethodInfo? GetGetMethodCore(bool nonPublic)
+  {
+    throw new NotImplementedException();
+  }
+
+  protected override SymbolParameterInfo[] GetIndexParametersCore()
+  {
+    return Symbol.Parameters.Select(x => _runtime.CreateParameterInfoDelegator(x)).ToArray();
+  }
+
+  protected override SymbolMethodInfo? GetSetMethodCore(bool nonPublic)
+  {
+    throw new NotImplementedException();
+  }
 }
 
 internal abstract class SymbolPropertyInfoBase : PropertyInfo
 {
+  private protected SymbolPropertyInfoBase() { }
 
+
+  // System.Reflection.PropertyInfo overrides
+
+  public sealed override Type PropertyType => PropertyTypeCore;
+
+  public sealed override Type DeclaringType => DeclaringTypeCore;
+
+  public sealed override Type ReflectedType => ReflectedTypeCore;
+
+  public sealed override MethodInfo? GetMethod => GetMethodCore;
+
+  public sealed override Module Module => ModuleCore;
+
+  public sealed override MethodInfo? SetMethod => SetMethodCore;
+
+  public sealed override MethodInfo[] GetAccessors(bool nonPublic) => GetAccessorsCore(nonPublic);
+
+  public sealed override MethodInfo? GetGetMethod(bool nonPublic) => GetGetMethodCore(nonPublic);
+
+  public sealed override ParameterInfo[] GetIndexParameters() => GetIndexParametersCore();
+
+  public sealed override MethodInfo? GetSetMethod(bool nonPublic) => GetSetMethodCore(nonPublic);
+
+
+  // Abstract members
+
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+  protected abstract SymbolType PropertyTypeCore { get; }
+
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+  protected abstract SymbolType DeclaringTypeCore { get; }
+
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+  protected abstract SymbolType ReflectedTypeCore { get; }
+
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+  protected abstract SymbolMethodInfo? GetMethodCore { get; }
+
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+  protected abstract SymbolModule ModuleCore { get; }
+
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+  protected abstract SymbolMethodInfo? SetMethodCore { get; }
+
+  protected abstract SymbolMethodInfo[] GetAccessorsCore(bool nonPublic);
+
+  protected abstract SymbolMethodInfo? GetGetMethodCore(bool nonPublic);
+
+  protected abstract SymbolParameterInfo[] GetIndexParametersCore();
+
+  protected abstract SymbolMethodInfo? GetSetMethodCore(bool nonPublic);
 }
