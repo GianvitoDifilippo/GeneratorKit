@@ -94,19 +94,19 @@ namespace " + Namespace + @"
     private protected static int RootPrivateProtectedStaticProperty { get; set; }
     protected internal static int RootProtectedInternalStaticProperty { get; set; }
 
-    public int RootPublicMethod(int arg1, string arg2) => default;
-    internal int RootInternalMethod(int arg1, string arg2) => default;
-    private int RootPrivateMethod(int arg1, string arg2) => default;
-    protected int RootProtectedMethod(int arg1, string arg2) => default;
-    private protected int RootPrivateProtectedMethod(int arg1, string arg2) => default;
-    protected internal int RootProtectedInternalMethod(int arg1, string arg2) => default;
+    public int RootPublicMethod(int arg1, string arg2) => throw null;
+    internal int RootInternalMethod(int arg1, string arg2) => throw null;
+    private int RootPrivateMethod(int arg1, string arg2) => throw null;
+    protected int RootProtectedMethod(int arg1, string arg2) => throw null;
+    private protected int RootPrivateProtectedMethod(int arg1, string arg2) => throw null;
+    protected internal int RootProtectedInternalMethod(int arg1, string arg2) => throw null;
 
-    public static int RootPublicStaticMethod(int arg1, string arg2) => default;
-    internal static int RootInternalStaticMethod(int arg1, string arg2) => default;
-    private static int RootPrivateStaticMethod(int arg1, string arg2) => default;
-    protected static int RootProtectedStaticMethod(int arg1, string arg2) => default;
-    private protected static int RootPrivateProtectedStaticMethod(int arg1, string arg2) => default;
-    protected internal static int RootProtectedInternalStaticMethod(int arg1, string arg2) => default;
+    public static int RootPublicStaticMethod(int arg1, string arg2) => throw null;
+    internal static int RootInternalStaticMethod(int arg1, string arg2) => throw null;
+    private static int RootPrivateStaticMethod(int arg1, string arg2) => throw null;
+    protected static int RootProtectedStaticMethod(int arg1, string arg2) => throw null;
+    private protected static int RootPrivateProtectedStaticMethod(int arg1, string arg2) => throw null;
+    protected internal static int RootProtectedInternalStaticMethod(int arg1, string arg2) => throw null;
 
     public class RootNestedPublicClass { }
     internal class RootNestedInternalClass { }
@@ -154,19 +154,19 @@ namespace " + Namespace + @"
     private protected static int BasePrivateProtectedStaticProperty { get; set; }
     protected internal static int BaseProtectedInternalStaticProperty { get; set; }
 
-    public int BasePublicMethod(int arg1, string arg2) => default;
-    internal int BaseInternalMethod(int arg1, string arg2) => default;
-    private int BasePrivateMethod(int arg1, string arg2) => default;
-    protected int BaseProtectedMethod(int arg1, string arg2) => default;
-    private protected int BasePrivateProtectedMethod(int arg1, string arg2) => default;
-    protected internal int BaseProtectedInternalMethod(int arg1, string arg2) => default;
+    public int BasePublicMethod(int arg1, string arg2) => throw null;
+    internal int BaseInternalMethod(int arg1, string arg2) => throw null;
+    private int BasePrivateMethod(int arg1, string arg2) => throw null;
+    protected int BaseProtectedMethod(int arg1, string arg2) => throw null;
+    private protected int BasePrivateProtectedMethod(int arg1, string arg2) => throw null;
+    protected internal int BaseProtectedInternalMethod(int arg1, string arg2) => throw null;
 
-    public static int BasePublicStaticMethod(int arg1, string arg2) => default;
-    internal static int BaseInternalStaticMethod(int arg1, string arg2) => default;
-    private static int BasePrivateStaticMethod(int arg1, string arg2) => default;
-    protected static int BaseProtectedStaticMethod(int arg1, string arg2) => default;
-    private protected static int BasePrivateProtectedStaticMethod(int arg1, string arg2) => default;
-    protected internal static int BaseProtectedInternalStaticMethod(int arg1, string arg2) => default;
+    public static int BasePublicStaticMethod(int arg1, string arg2) => throw null;
+    internal static int BaseInternalStaticMethod(int arg1, string arg2) => throw null;
+    private static int BasePrivateStaticMethod(int arg1, string arg2) => throw null;
+    protected static int BaseProtectedStaticMethod(int arg1, string arg2) => throw null;
+    private protected static int BasePrivateProtectedStaticMethod(int arg1, string arg2) => throw null;
+    protected internal static int BaseProtectedInternalStaticMethod(int arg1, string arg2) => throw null;
 
     public class BaseNestedPublicClass { }
     internal class BaseNestedInternalClass { }
@@ -214,30 +214,30 @@ namespace " + Namespace + @"
     private protected static int PrivateProtectedStaticProperty { get; set; }
     protected internal static int ProtectedInternalStaticProperty { get; set; }
 
-    public int PublicMethod(int arg1, string arg2) => default;
-    internal int InternalMethod(int arg1, string arg2) => default;
-    private int PrivateMethod(int arg1, string arg2) => default;
-    protected int ProtectedMethod(int arg1, string arg2) => default;
-    private protected int PrivateProtectedMethod(int arg1, string arg2) => default;
-    protected internal int ProtectedInternalMethod(int arg1, string arg2) => default;
+    public int PublicMethod(int arg1, string arg2) => throw null;
+    internal int InternalMethod(int arg1, string arg2) => throw null;
+    private int PrivateMethod(int arg1, string arg2) => throw null;
+    protected int ProtectedMethod(int arg1, string arg2) => throw null;
+    private protected int PrivateProtectedMethod(int arg1, string arg2) => throw null;
+    protected internal int ProtectedInternalMethod(int arg1, string arg2) => throw null;
 
-    public int PublicGenericMethod<T1, T2>(T1 arg1, T2 arg2) => default;
-    internal int InternalGenericMethod<T1, T2>(T1 arg1, T2 arg2) => default;
-    private int PrivateGenericMethod<T1, T2>(T1 arg1, T2 arg2) => default;
-    protected int ProtectedGenericMethod<T1, T2>(T1 arg1, T2 arg2) => default;
-    private protected int PrivateProtectedGenericMethod<T1, T2>(T1 arg1, T2 arg2) => default;
-    protected internal int ProtectedInternalGenericMethod<T1, T2>(T1 arg1, T2 arg2) => default;
+    public int PublicGenericMethod<T1, T2>(T1 arg1, T2 arg2) => throw null;
+    internal int InternalGenericMethod<T1, T2>(T1 arg1, T2 arg2) => throw null;
+    private int PrivateGenericMethod<T1, T2>(T1 arg1, T2 arg2) => throw null;
+    protected int ProtectedGenericMethod<T1, T2>(T1 arg1, T2 arg2) => throw null;
+    private protected int PrivateProtectedGenericMethod<T1, T2>(T1 arg1, T2 arg2) => throw null;
+    protected internal int ProtectedInternalGenericMethod<T1, T2>(T1 arg1, T2 arg2) => throw null;
 
-    public static int PublicStaticMethod(int arg1, string arg2) => default;
-    internal static int InternalStaticMethod(int arg1, string arg2) => default;
-    private static int PrivateStaticMethod(int arg1, string arg2) => default;
-    protected static int ProtectedStaticMethod(int arg1, string arg2) => default;
-    private protected static int PrivateProtectedStaticMethod(int arg1, string arg2) => default;
-    protected internal static int ProtectedInternalStaticMethod(int arg1, string arg2) => default;
+    public static int PublicStaticMethod(int arg1, string arg2) => throw null;
+    internal static int InternalStaticMethod(int arg1, string arg2) => throw null;
+    private static int PrivateStaticMethod(int arg1, string arg2) => throw null;
+    protected static int ProtectedStaticMethod(int arg1, string arg2) => throw null;
+    private protected static int PrivateProtectedStaticMethod(int arg1, string arg2) => throw null;
+    protected internal static int ProtectedInternalStaticMethod(int arg1, string arg2) => throw null;
 
-    public int this[int i1] => default;
-    public int this[int i1, int i2] => default;
-    private int this[int i1, int i2, int i3] => default;
+    public int this[int i1] => throw null;
+    public int this[int i1, int i2] => throw null;
+    private int this[int i1, int i2, int i3] => throw null;
 
     public class NestedPublicClass { }
     internal class NestedInternalClass { }
@@ -263,12 +263,20 @@ namespace " + Namespace + @"
 
   public interface IWithContravariantParameter<in T1>
   {
-    void MethodWithTwoGenericParameters<T2>(T1 arg1, T2 arg2);
+    void MethodWithTwoGenericParameters<T2, T3>(T1 arg1, T2 arg2, T3 arg3);
   }
 
   public interface IWithConstrainedParameter<T1> where T1 : System.Type, IDerivedInterface
   {
-    void MethodWithTwoGenericParameters<T2>(T1 arg1, T2 arg2) where T2 : class;
+    void MethodWithTwoGenericParameters<T2, T3>(T1 arg1, T2 arg2, T3 arg3) where T2 : class where T3 : struct, System.Enum;
+  }
+
+  public class ClassForSymbolParameterType<T1>
+  {
+    public ref int MethodWithRefReturnParameter() => throw null;
+    public void MethodWithRefArgument(ref int arg) => throw null;
+    public void MethodWithOutArgument(out int arg) => throw null;
+    public void MethodWithInArgument(in int arg) => throw null;
   }
 }
 
@@ -305,15 +313,13 @@ namespace " + Namespace + @"
 
   private IEnumerable<KeyValuePair<TypeCategory, DataPair>> CreateData()
   {
-    return Enum.GetValues<TypeCategory>().Select(MakeData);
-
-    KeyValuePair<TypeCategory, DataPair> MakeData(TypeCategory category)
+    return Enum.GetValues<TypeCategory>().Select(category => 
     {
       SymbolType symbolType = GetSymbolType(category);
       Type type = GetType(category);
       _runtime.AddType(symbolType.Symbol, type);
       return KeyValuePair.Create(category, new DataPair(symbolType, type));
-    }
+    });
   }
 
   private SymbolType GetSymbolType(TypeCategory category)
@@ -507,13 +513,21 @@ namespace " + Namespace + @"
       case TypeCategory.ConstrainedTypeParameter:
         symbol = GetSymbolTypeFromCompilation("IWithConstrainedParameter`1").TypeArguments[0];
         break;
-      case TypeCategory.MethodParameter:
+      case TypeCategory.FirstMethodParameter:
         method = (IMethodSymbol)GetSymbolTypeFromCompilation("IWithContravariantParameter`1").GetMembers("MethodWithTwoGenericParameters").Single();
         symbol = method.TypeArguments[0];
         break;
-      case TypeCategory.ConstrainedMethodParameter:
+      case TypeCategory.FirstConstrainedMethodParameter:
         method = (IMethodSymbol)GetSymbolTypeFromCompilation("IWithConstrainedParameter`1").GetMembers("MethodWithTwoGenericParameters").Single();
         symbol = method.TypeArguments[0];
+        break;
+      case TypeCategory.SecondMethodParameter:
+        method = (IMethodSymbol)GetSymbolTypeFromCompilation("IWithContravariantParameter`1").GetMembers("MethodWithTwoGenericParameters").Single();
+        symbol = method.TypeArguments[1];
+        break;
+      case TypeCategory.SecondConstrainedMethodParameter:
+        method = (IMethodSymbol)GetSymbolTypeFromCompilation("IWithConstrainedParameter`1").GetMembers("MethodWithTwoGenericParameters").Single();
+        symbol = method.TypeArguments[1];
         break;
 
       default:
@@ -722,11 +736,17 @@ namespace " + Namespace + @"
       case TypeCategory.ConstrainedTypeParameter:
         type = GetTypeFromAssembly("IWithConstrainedParameter`1").GetGenericArguments()[0];
         break;
-      case TypeCategory.MethodParameter:
+      case TypeCategory.FirstMethodParameter:
         type = GetTypeFromAssembly("IWithContravariantParameter`1").GetMethod("MethodWithTwoGenericParameters")!.GetGenericArguments()[0];
         break;
-      case TypeCategory.ConstrainedMethodParameter:
+      case TypeCategory.FirstConstrainedMethodParameter:
         type = GetTypeFromAssembly("IWithConstrainedParameter`1").GetMethod("MethodWithTwoGenericParameters")!.GetGenericArguments()[0];
+        break;
+      case TypeCategory.SecondMethodParameter:
+        type = GetTypeFromAssembly("IWithContravariantParameter`1").GetMethod("MethodWithTwoGenericParameters")!.GetGenericArguments()[1];
+        break;
+      case TypeCategory.SecondConstrainedMethodParameter:
+        type = GetTypeFromAssembly("IWithConstrainedParameter`1").GetMethod("MethodWithTwoGenericParameters")!.GetGenericArguments()[1];
         break;
 
       default:
@@ -802,8 +822,15 @@ public enum TypeCategory
   CovariantTypeParameter = 192,
   ContravariantTypeParameter,
   ConstrainedTypeParameter,
-  MethodParameter,
-  ConstrainedMethodParameter
+  FirstMethodParameter,
+  FirstConstrainedMethodParameter,
+  SecondMethodParameter,
+  SecondConstrainedMethodParameter,
+
+  RefReturnType = 256,
+  RefParameterType,
+  InParameterType,
+  OutParameterType
 }
 
 public class SpecialTypesDataAttribute : DataAttribute
@@ -815,6 +842,14 @@ public class SpecialTypesDataAttribute : DataAttribute
     return Enum.GetValues<TypeCategory>()
       .Where(x => (int)x >= 0 && (int)x < 64 && !Except.Contains(x))
       .Select(x => new object[1] { x });
+  }
+}
+
+public class SpecialTypesDataExceptAttribute : SpecialTypesDataAttribute
+{
+  public SpecialTypesDataExceptAttribute(params TypeCategory[] except)
+  {
+    Except = except;
   }
 }
 
@@ -830,6 +865,14 @@ public class NamedTypesDataAttribute : DataAttribute
   }
 }
 
+public class NamedTypesDataExceptAttribute : NamedTypesDataAttribute
+{
+  public NamedTypesDataExceptAttribute(params TypeCategory[] except)
+  {
+    Except = except;
+  }
+}
+
 public class ArrayTypesDataAttribute : DataAttribute
 {
   public TypeCategory[] Except { get; set; } = Array.Empty<TypeCategory>();
@@ -842,15 +885,51 @@ public class ArrayTypesDataAttribute : DataAttribute
   }
 }
 
-public class GenericTypesDataAttribute : DataAttribute
+public class ArrayTypesDataExceptAttribute : ArrayTypesDataAttribute
+{
+  public ArrayTypesDataExceptAttribute(params TypeCategory[] except)
+  {
+    Except = except;
+  }
+}
+
+public class TypeParametersDataAttribute : DataAttribute
 {
   public TypeCategory[] Except { get; set; } = Array.Empty<TypeCategory>();
 
   public override IEnumerable<object[]> GetData(MethodInfo testMethod)
   {
     return Enum.GetValues<TypeCategory>()
-      .Where(x => (int)x >= 192 && !Except.Contains(x))
+      .Where(x => (int)x >= 192 && (int)x < 256 && !Except.Contains(x))
       .Select(x => new object[1] { x });
+  }
+}
+
+public class TypeParametersDataExceptAttribute : TypeParametersDataAttribute
+{
+  public TypeParametersDataExceptAttribute(params TypeCategory[] except)
+  {
+    Except = except;
+  }
+}
+
+public class ParamterTypesDataAttribute : DataAttribute
+{
+  public TypeCategory[] Except { get; set; } = Array.Empty<TypeCategory>();
+
+  public override IEnumerable<object[]> GetData(MethodInfo testMethod)
+  {
+    return Enum.GetValues<TypeCategory>()
+      .Where(x => (int)x >= 256 && (int)x < 320 && !Except.Contains(x))
+      .Select(x => new object[1] { x });
+  }
+}
+
+public class ParamterTypesDataExceptAttribute : ParamterTypesDataAttribute
+{
+  public ParamterTypesDataExceptAttribute(params TypeCategory[] except)
+  {
+    Except = except;
   }
 }
 
