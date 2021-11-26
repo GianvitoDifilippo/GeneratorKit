@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Reflection;
 
 namespace GeneratorKit.Reflection;
@@ -23,11 +24,17 @@ internal sealed class SymbolArrayType : SymbolType
 
   // System.Type overrides
 
+  protected override SymbolType? BaseTypeCore => _runtime.CreateTypeDelegator(_symbol.BaseType!);
+
   public override MethodBase? DeclaringMethod => throw new InvalidOperationException($"Method may only be called on a Type for which Type.IsGenericParameter is true.");
 
   public override string Namespace => _elementType.Namespace;
 
   public override string? FullName => WithArraySuffix(_elementType.FullName);
+
+  public override GenericParameterAttributes GenericParameterAttributes => throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
+
+  public override int GenericParameterPosition => throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
 
   public override bool IsConstructedGenericType => false;
 
@@ -39,7 +46,7 @@ internal sealed class SymbolArrayType : SymbolType
 
   public override bool IsSerializable => true;
 
-  public override bool IsGenericParameter => false;
+  public override MemberTypes MemberType => MemberTypes.TypeInfo;
 
   public override string Name => WithArraySuffix(_elementType.Name);
 
@@ -61,6 +68,11 @@ internal sealed class SymbolArrayType : SymbolType
   protected override TypeAttributes GetAttributeFlagsImpl()
   {
     return TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.Serializable;
+  }
+
+  public override Array GetEnumValues()
+  {
+    throw new InvalidOperationException();
   }
 
   protected override bool HasElementTypeImpl()
@@ -112,9 +124,24 @@ internal sealed class SymbolArrayType : SymbolType
     return _elementType.GetGenericArguments();
   }
 
+  protected override SymbolType GetGenericTypeDefinitionCore()
+  {
+    throw new InvalidOperationException("This operation is only valid on generic types.");
+  }
+
   protected override SymbolType[] GetGenericParameterConstraintsCore()
   {
     throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
+  }
+
+  protected sealed override SymbolType[] GetInterfacesCore()
+  {
+    return _symbol.AllInterfaces.Select(x => _runtime.CreateTypeDelegator(x)).ToArray();
+  }
+
+  protected override SymbolType MakeGenericTypeCore(params Type[] typeArguments)
+  {
+    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
   }
 
   private string WithArraySuffix(string name)

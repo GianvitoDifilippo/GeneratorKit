@@ -10,11 +10,13 @@ namespace GeneratorKit;
 internal class FakeGeneratorRuntime : GeneratorRuntime
 {
   private readonly Dictionary<ITypeSymbol, Type> _typeMap;
+  private readonly Dictionary<Type, ITypeSymbol> _symbolMap;
 
   public FakeGeneratorRuntime(Compilation compilation)
     : base(compilation)
   {
     _typeMap = new Dictionary<ITypeSymbol, Type>(SymbolEqualityComparer.Default);
+    _symbolMap = new Dictionary<Type, ITypeSymbol>();
   }
 
   public override Type? GetRuntimeType(SymbolType type)
@@ -22,8 +24,14 @@ internal class FakeGeneratorRuntime : GeneratorRuntime
     return _typeMap.GetValueOrDefault(type.Symbol);
   }
 
+  public override ITypeSymbol? GetTypeSymbol(Type type)
+  {
+    return _symbolMap.GetValueOrDefault(type);
+  }
+
   public void AddType(ITypeSymbol symbol, Type type)
   {
     _typeMap[symbol] = type;
+    _symbolMap[type] = symbol;
   }
 }

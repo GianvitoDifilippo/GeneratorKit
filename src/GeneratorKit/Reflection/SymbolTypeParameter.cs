@@ -1,5 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace GeneratorKit.Reflection;
@@ -19,7 +21,38 @@ internal sealed class SymbolTypeParameter : SymbolType
 
   // System.Type overrides
 
+  protected override SymbolType? BaseTypeCore => _symbol.ConstraintTypes.Length != 0
+    ? _runtime.CreateTypeDelegator(_symbol.ConstraintTypes[0])
+    : _runtime.CreateTypeDelegator(_compilation.GetSpecialType(SpecialType.System_Object));
+
+  public override MethodBase? DeclaringMethod => _symbol.DeclaringMethod is not null
+    ? _runtime.CreateMethodInfoDelegator(_symbol.DeclaringMethod)
+    : null;
+
   public override string? FullName => null;
+
+  public override GenericParameterAttributes GenericParameterAttributes
+  {
+    get
+    {
+      GenericParameterAttributes result = _symbol.Variance switch
+      {
+        VarianceKind.None => GenericParameterAttributes.None,
+        VarianceKind.Out  => GenericParameterAttributes.Covariant,
+        VarianceKind.In   => GenericParameterAttributes.Contravariant,
+        _                 => throw new InvalidOperationException() // Unreacheable
+      };
+
+      if (_symbol.HasReferenceTypeConstraint)
+        result |= GenericParameterAttributes.ReferenceTypeConstraint;
+      if (_symbol.HasValueTypeConstraint)
+        result |= GenericParameterAttributes.NotNullableValueTypeConstraint;
+      if (_symbol.HasConstructorConstraint)
+        result |= GenericParameterAttributes.DefaultConstructorConstraint;
+
+      return result;
+    }
+  }
 
   public override int GenericParameterPosition => _symbol.Ordinal;
 
@@ -27,11 +60,30 @@ internal sealed class SymbolTypeParameter : SymbolType
 
   public override bool IsGenericParameter => true;
 
+  public override bool IsSerializable => false;
+
+  public override MemberTypes MemberType => MemberTypes.TypeInfo;
+
   public override string Name => Symbol.MetadataName;
+
+  public override int GetArrayRank()
+  {
+    throw new ArgumentException("Must be an array type.");
+  }
+
+  public override IList<CustomAttributeData> GetCustomAttributesData()
+  {
+    return Array.Empty<CustomAttributeData>();
+  }
 
   protected override TypeAttributes GetAttributeFlagsImpl()
   {
     return TypeAttributes.Public;
+  }
+
+  public override Array GetEnumValues()
+  {
+    throw new InvalidOperationException();
   }
 
   protected override bool HasElementTypeImpl()
@@ -89,6 +141,36 @@ internal sealed class SymbolTypeParameter : SymbolType
   {
     return _symbol.ConstraintTypes
       .Select(x => _runtime.CreateTypeDelegator(x))
-      .ToList();
+      .ToArray();
+  }
+
+  protected override SymbolType GetGenericTypeDefinitionCore()
+  {
+    throw new InvalidOperationException("This operation is only valid on generic types.");
+  }
+
+  protected sealed override SymbolType[] GetInterfacesCore()
+  {
+    return GetInterfaceSymbols().Select(x => _runtime.CreateTypeDelegator(x)).ToArray();
+
+    IEnumerable<ITypeSymbol> GetInterfaceSymbols()
+    {
+      foreach (ITypeSymbol constraintType in _symbol.ConstraintTypes)
+      {
+        if (constraintType.TypeKind is TypeKind.Interface)
+        {
+          yield return constraintType;
+        }
+        foreach (ITypeSymbol constraintInterfaces in constraintType.AllInterfaces)
+        {
+          yield return constraintInterfaces;
+        }
+      }
+    }
+  }
+
+  protected override SymbolType MakeGenericTypeCore(params Type[] typeArguments)
+  {
+    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
   }
 }

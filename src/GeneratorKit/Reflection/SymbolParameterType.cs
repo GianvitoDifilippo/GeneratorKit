@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
+using System;
 using System.Reflection;
 
 namespace GeneratorKit.Reflection;
@@ -22,9 +23,21 @@ internal class SymbolParameterType : SymbolType
 
   public override string FullName => _type.FullName;
 
+  public override GenericParameterAttributes GenericParameterAttributes => _type.GenericParameterAttributes;
+
+  public override int GenericParameterPosition => _type.GenericParameterPosition;
+
   public override string Name => _type.Name;
 
+  public override string Namespace => _type.Namespace;
+
+  public override bool IsSerializable => false;
+
+  public override MemberTypes MemberType => _type.MemberType;
+
   protected override TypeAttributes GetAttributeFlagsImpl() => _type.Attributes;
+
+  public override Array GetEnumValues() => _type.GetEnumValues();
 
   protected override bool HasElementTypeImpl() => _type.HasElementType;
 
@@ -44,15 +57,21 @@ internal class SymbolParameterType : SymbolType
 
   protected override SymbolAssembly AssemblyCore => _type.Assembly;
 
-  protected override SymbolType[] GenericTypeArgumentsCore => _type.GenericTypeArgumentsCore;
+  protected override SymbolType? BaseTypeCore => _type.BaseType;
+
+  protected override SymbolType[] GenericTypeArgumentsCore => _type.GenericTypeArguments;
 
   protected override SymbolModule ModuleCore => _runtime.CreateModuleDelegator(_symbol.ContainingModule);
-
-  public override string Namespace => _symbol.ContainingNamespace.ToDisplayString(s_namespaceFormat);
 
   protected override SymbolType? GetElementTypeCore() => _type.GetElementType();
 
   protected override SymbolType[] GetGenericArgumentsCore() => _type.GetGenericArguments();
 
   protected override SymbolType[] GetGenericParameterConstraintsCore() => _type.GetGenericParameterConstraints();
+
+  protected override SymbolType GetGenericTypeDefinitionCore() => _type.GetGenericTypeDefinition();
+
+  protected override SymbolType[] GetInterfacesCore() => _type.GetInterfaces();
+
+  protected override SymbolType MakeGenericTypeCore(params Type[] typeArguments) => _type.MakeGenericType(typeArguments);
 }

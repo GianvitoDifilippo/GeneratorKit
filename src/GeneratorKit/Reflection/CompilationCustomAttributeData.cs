@@ -25,15 +25,15 @@ internal class CompilationCustomAttributeData : CustomAttributeData
 
   public static CompilationCustomAttributeData FromSymbol(
     GeneratorRuntime runtime,
-    IConstructorSymbol symbol,
+    IMethodSymbol symbol,
     IList<CustomAttributeTypedArgument> constructorArguments,
     IList<CustomAttributeNamedArgument> namedArguments)
   {
-    ConstructorInfo constructor = runtime.CreateConstructorDelegator(symbol);
+    ConstructorInfo constructor = runtime.CreateConstructorInfoDelegator(symbol);
     return new CompilationCustomAttributeData(constructor, constructorArguments, namedArguments);
   }
 
-  public static ConstructedCustomAttributeData FromParameterlessAttribute(GeneratorRuntime runtime, INamedTypeSymbol attribute)
+  public static CompilationCustomAttributeData FromParameterlessAttribute(GeneratorRuntime runtime, INamedTypeSymbol attribute)
   {
     if (attribute.InstanceConstructors.Length != 1)
       throw new ArgumentException("Symbol must contain a single parameterless constructor.", nameof(attribute));

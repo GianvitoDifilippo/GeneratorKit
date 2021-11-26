@@ -3,6 +3,8 @@ using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics.Contracts;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -28,7 +30,7 @@ internal sealed class SymbolNamedType : SymbolType
     _symbol.IsGenericType &&
     _symbol.TypeArguments.Any(x => x.TypeKind is TypeKind.TypeParameter);
 
-  public override MethodBase? DeclaringMethod => throw new InvalidOperationException($"Method may only be called on a Type for which Type.IsGenericParameter is true.");
+  public override MethodBase? DeclaringMethod => throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
 
   public override string? FullName
   {
@@ -65,6 +67,10 @@ internal sealed class SymbolNamedType : SymbolType
     }
   }
 
+  public override GenericParameterAttributes GenericParameterAttributes => throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
+
+  public override int GenericParameterPosition => throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
+
   public override bool IsConstructedGenericType => _symbol.TypeArguments.Any(x => x.TypeKind is not TypeKind.TypeParameter);
 
   public override bool IsEnum => _symbol.EnumUnderlyingType is not null;
@@ -75,9 +81,41 @@ internal sealed class SymbolNamedType : SymbolType
 
   public override bool IsGenericTypeDefinition => _symbol.IsGenericType && _symbol.IsDefinition;
 
+  public override bool IsSerializable
+  {
+    get
+    {
+      if (_symbol.TypeKind is TypeKind.Enum) return true;
+
+      if (IsPrimitive) return true;
+
+      if (FullName is
+        "System.DateTime" or
+        "System.DateTimeOffset" or
+        "System.Decimal" or
+        "System.Enum" or
+        "System.Guid" or
+        "System.Object" or
+        "System.String" or
+        "System.Uri" or
+        "System.Xml.XmlQualifiedName") return true;
+
+      return _symbol.GetAttributes().Any(x => x.AttributeClass is not null && x.AttributeClass.ToDisplayString() == "System.SerializableAttribute");
+    }
+  }
+
+  public override MemberTypes MemberType => Symbol.ContainingType is null
+    ? MemberTypes.TypeInfo
+    : MemberTypes.NestedType;
+
   public override string Name => Symbol.MetadataName;
 
   public override string Namespace => _symbol.ContainingNamespace.ToDisplayString(s_namespaceFormat);
+
+  public override int GetArrayRank()
+  {
+    throw new ArgumentException("Must be an array type.");
+  }
 
   protected override TypeAttributes GetAttributeFlagsImpl()
   {
@@ -124,11 +162,76 @@ internal sealed class SymbolNamedType : SymbolType
     if (_symbol.MemberNames.Any(x => x is "this[]"))
     {
       INamedTypeSymbol defaultMember = _compilation.GetTypeByMetadataName("System.Reflection.DefaultMemberAttribute")!;
-      CustomAttributeTypedArgument argument = new CustomAttributeTypedArgument(typeof(string), "Item");
-      result.Add(ConstructedCustomAttributeData.FromSymbol(defaultMember.InstanceConstructors[0], new[] { argument }, Array.Empty<CustomAttributeNamedArgument>()));
+      CustomAttributeTypedArgument[] arguments = new[] { new CustomAttributeTypedArgument(typeof(string), "Item") };
+      result.Add(CompilationCustomAttributeData.FromSymbol(_runtime, defaultMember.InstanceConstructors[0], arguments, Array.Empty<CustomAttributeNamedArgument>()));
     }
 
     return new ReadOnlyCollection<CustomAttributeData>(result);
+  }
+
+  public override string? GetEnumName(object value)
+  {
+    if (!IsEnum)
+      throw new InvalidOperationException();
+
+    if (value is null)
+      throw new ArgumentNullException(nameof(value));
+
+    Type valueType = value.GetType();
+
+    if (!(valueType.IsEnum || IsIntegerType(valueType)))
+      throw new ArgumentException();
+
+    ulong ulValue = ToUInt64(value);
+
+    foreach (ISymbol member in _symbol.GetMembers().Where(x => x.Kind == SymbolKind.Field))
+    {
+      IFieldSymbol field = (IFieldSymbol)member;
+      ulong memberValue = Convert.ToUInt64(field.ConstantValue);
+      if (ulValue == memberValue)
+      {
+        return member.Name;
+      }
+    }
+    return null;
+  }
+
+  public override string[] GetEnumNames()
+  {
+    if (!IsEnum)
+      throw new InvalidOperationException();
+
+    return _symbol
+      .GetMembers()
+      .Where(x => x.Kind == SymbolKind.Field)
+      .Cast<IFieldSymbol>()
+      .OrderBy(x => ToUInt64(x.ConstantValue!))
+      .Select(x => x.Name)
+      .ToArray();
+  }
+
+  public override Type GetEnumUnderlyingType()
+  {
+    if (!IsEnum)
+      throw new InvalidOperationException();
+
+    return _runtime.CreateTypeDelegator(_symbol.EnumUnderlyingType!).GetUnderlyingRuntimeType();
+  }
+
+  public override Array GetEnumValues()
+  {
+    if (!IsEnum)
+      throw new InvalidOperationException();
+
+    return GetUnderlyingRuntimeType().GetEnumValues();
+  }
+
+  protected override SymbolType GetGenericTypeDefinitionCore()
+  {
+    if (!IsGenericType)
+      throw new InvalidOperationException("This operation is only valid on generic types.");
+
+    return _runtime.CreateTypeDelegator(_symbol.OriginalDefinition);
   }
 
   protected override bool HasElementTypeImpl()
@@ -163,6 +266,60 @@ internal sealed class SymbolNamedType : SymbolType
   protected sealed override bool IsByRefImpl()
   {
     return false;
+  }
+
+  public override bool IsEnumDefined(object value)
+  {
+    if (!IsEnum)
+      throw new InvalidOperationException();
+
+    Type valueType = value.GetType();
+
+    if (valueType.IsEnum)
+    {
+      if (!TypeEqualityComparer.Default.Equals(this, valueType))
+        throw new ArgumentException("Object must be the same type as the enum.", nameof(value));
+
+      valueType = valueType.GetEnumUnderlyingType();
+    }
+
+    if (valueType == typeof(string))
+    {
+      foreach (string name in _symbol.MemberNames)
+      {
+        string stringValue = (string)value;
+        if (name == stringValue)
+        {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    if (IsIntegerType(valueType))
+    {
+      Type underlyingType = GetEnumUnderlyingType();
+      if (underlyingType != valueType)
+        throw new ArgumentException("Object must be the same type as the enum.", nameof(value));
+
+      ulong ulValue = ToUInt64(value);
+      
+      foreach (ISymbol member in _symbol.GetMembers().Where(x => x.Kind == SymbolKind.Field))
+      {
+        IFieldSymbol field = (IFieldSymbol)member;
+        ulong memberValue = Convert.ToUInt64(field.ConstantValue);
+        if (ulValue == memberValue)
+        {
+          return true;
+        }
+      }
+
+      return false;
+    }
+    else
+    {
+      throw new InvalidOperationException("Unknown enum type");
+    }
   }
 
   protected override bool IsPointerImpl()
@@ -216,6 +373,10 @@ internal sealed class SymbolNamedType : SymbolType
 
   protected override SymbolAssembly AssemblyCore => _runtime.CreateAssemblyDelegator(_symbol.ContainingAssembly);
 
+  protected override SymbolType? BaseTypeCore => _symbol.BaseType is { } baseType
+    ? _runtime.CreateTypeDelegator(baseType)
+    : null;
+
   protected override SymbolModule ModuleCore => _runtime.CreateModuleDelegator(_symbol.ContainingModule);
 
   protected override SymbolType[] GenericTypeArgumentsCore => _symbol.TypeArguments
@@ -233,10 +394,74 @@ internal sealed class SymbolNamedType : SymbolType
     return _symbol.TypeArguments
       .Select(x => _runtime.CreateTypeDelegator(x))
       .ToArray();
+
   }
 
   protected override SymbolType[] GetGenericParameterConstraintsCore()
   {
     throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
+  }
+
+  protected sealed override SymbolType[] GetInterfacesCore()
+  {
+    return _symbol.AllInterfaces.Select(x => _runtime.CreateTypeDelegator(x)).ToArray();
+  }
+
+  protected sealed override SymbolType MakeGenericTypeCore(params Type[] typeArguments)
+  {
+    if (!IsGenericTypeDefinition)
+      throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
+
+    ITypeSymbol[] symbolTypeArguments = typeArguments
+      .Select(x => _runtime.GetTypeSymbol(x) ?? throw new InvalidOperationException($"Could not resolve symbol for type {x.FullName}"))
+      .ToArray();
+
+    return _runtime.CreateTypeDelegator(_symbol.Construct(symbolTypeArguments));
+  }
+
+  private static bool IsIntegerType(Type t)
+  {
+    return
+      t == typeof(int)    ||
+      t == typeof(short)  ||
+      t == typeof(ushort) ||
+      t == typeof(byte)   ||
+      t == typeof(sbyte)  ||
+      t == typeof(uint)   ||
+      t == typeof(long)   ||
+      t == typeof(ulong)  ||
+      t == typeof(char)   ||
+      t == typeof(bool);
+  }
+
+  static ulong ToUInt64(object value)
+  {
+    TypeCode typeCode = Convert.GetTypeCode(value);
+    ulong result;
+
+    switch (typeCode)
+    {
+      case TypeCode.SByte:
+      case TypeCode.Int16:
+      case TypeCode.Int32:
+      case TypeCode.Int64:
+        result = (ulong)Convert.ToInt64(value, CultureInfo.InvariantCulture);
+        break;
+
+      case TypeCode.Byte:
+      case TypeCode.UInt16:
+      case TypeCode.UInt32:
+      case TypeCode.UInt64:
+      case TypeCode.Boolean:
+      case TypeCode.Char:
+        result = Convert.ToUInt64(value, CultureInfo.InvariantCulture);
+        break;
+
+      default:
+        // All unsigned types will be directly cast
+        Contract.Assert(false, "Invalid Object type in ToUInt64");
+        throw new InvalidOperationException();
+    }
+    return result;
   }
 }

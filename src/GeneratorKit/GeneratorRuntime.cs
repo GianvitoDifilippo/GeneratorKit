@@ -16,6 +16,8 @@ internal abstract class GeneratorRuntime : IGeneratorRuntime
 
   public abstract Type? GetRuntimeType(SymbolType type);
 
+  public abstract ITypeSymbol? GetTypeSymbol(Type type);
+
   public SymbolAssembly CreateAssemblyDelegator(IAssemblySymbol symbol)
   {
     if (symbol is null)

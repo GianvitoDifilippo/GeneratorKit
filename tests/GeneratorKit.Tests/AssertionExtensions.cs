@@ -1,7 +1,11 @@
 ﻿using FluentAssertions;
 using FluentAssertions.Collections;
 using FluentAssertions.Primitives;
+using FluentAssertions.Specialized;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using Xunit;
 
 namespace GeneratorKit;
 
@@ -24,5 +28,13 @@ public static class AssertionsExtensions
     where TAssertions : GenericCollectionAssertions<TCollection, T, TAssertions>
   {
     return assertions.BeEquivalentTo(expectation, opt => opt.Using(comparer), because, becauseArgs);
+  }
+
+  public static void ThrowSameExceptionsAs<T>(this FunctionAssertions<T> assertions, Func<T> other)
+  {
+    IEnumerable<Exception> expectedExceptions = other.Should().Throw<Exception>().Subject;
+    IEnumerable<Exception> actualExceptions = assertions.Throw<Exception>().Subject;
+
+    actualExceptions.Select(x => x.GetType()).Should().Equal(expectedExceptions.Select(x => x.GetType()));
   }
 }
