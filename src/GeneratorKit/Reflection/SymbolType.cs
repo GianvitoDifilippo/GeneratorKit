@@ -40,7 +40,7 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public sealed override bool IsSecurityTransparent => false;
 
-  public sealed override StructLayoutAttribute StructLayoutAttribute => throw new NotSupportedException("To be supported in future releases");
+  public sealed override StructLayoutAttribute StructLayoutAttribute => throw new NotSupportedException();
 
   public override RuntimeTypeHandle TypeHandle => GetUnderlyingRuntimeType().TypeHandle;
 
@@ -95,7 +95,7 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public sealed override InterfaceMapping GetInterfaceMap(Type interfaceType)
   {
-    throw new NotSupportedException("To be supported in future releases");
+    throw new NotSupportedException();
   }
 
   public sealed override MemberInfo[] GetMember(string name, BindingFlags bindingAttr)
@@ -277,7 +277,7 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public sealed override bool IsDefined(Type attributeType, bool inherit)
   {
-    throw new NotImplementedException();
+    throw new NotSupportedException();
   }
 
 
@@ -291,7 +291,7 @@ internal abstract class SymbolType : SymbolTypeBase
 
   protected sealed override SymbolType[] FindInterfacesCore(TypeFilter filter, object filterCriteria)
   {
-    throw new NotImplementedException();
+    throw new NotSupportedException();
   }
 
   protected sealed override SymbolConstructorInfo[] GetConstructorsCore(BindingFlags bindingAttr)
@@ -301,12 +301,12 @@ internal abstract class SymbolType : SymbolTypeBase
 
   protected sealed override SymbolEventInfo GetEventCore(string name, BindingFlags bindingAttr)
   {
-    throw new NotImplementedException();
+    return GetEventsEnumerable(bindingAttr).FirstOrDefault(x => x.Name == name);
   }
 
   protected sealed override SymbolEventInfo[] GetEventsCore()
   {
-    throw new NotImplementedException();
+    return GetEventsEnumerable(s_defaultLookup).ToArray();
   }
 
   protected sealed override SymbolEventInfo[] GetEventsCore(BindingFlags bindingAttr)
@@ -363,12 +363,12 @@ internal abstract class SymbolType : SymbolTypeBase
 
   protected sealed override SymbolType MakeByRefTypeCore()
   {
-    throw new NotImplementedException();
+    throw new NotSupportedException();
   }
 
   protected sealed override SymbolType MakePointerTypeCore()
   {
-    throw new NotImplementedException();
+    throw new NotSupportedException();
   }
 
 

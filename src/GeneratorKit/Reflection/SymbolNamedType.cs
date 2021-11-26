@@ -458,7 +458,6 @@ internal sealed class SymbolNamedType : SymbolType
         break;
 
       default:
-        // All unsigned types will be directly cast
         Contract.Assert(false, "Invalid Object type in ToUInt64");
         throw new InvalidOperationException();
     }

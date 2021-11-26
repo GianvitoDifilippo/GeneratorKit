@@ -18,7 +18,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void Sut_ShouldBeEquivalentToReference(TypeCategory category)
   {
     // Arrange
@@ -32,7 +32,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void Assembly_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -48,7 +48,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void AssemblyQualifiedName_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -64,7 +64,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, ArrayTypesData, TypeParametersData]
   public void Attributes_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -79,7 +79,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Be(expected);
   }
 
-  [Theory, NamedTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [Theory, NamedTypesData, ArrayTypesData, TypeParametersData]
   public void BaseType_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -95,7 +95,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void ContainsGenericParameters_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -111,7 +111,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, ArrayTypesData, TypeParametersData]
   public void CustomAttributes_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -143,7 +143,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData]
   public void DeclaringMethod_ShouldThrow_WhenTypeIsNotGenericParameter(TypeCategory category)
   {
     // Arrange
@@ -159,7 +159,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void DeclaringType_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -175,7 +175,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void FullName_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -207,7 +207,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData]
   public void GenericParameterAttributes_ShouldThrow_WhenTypeIsNotGenericParameter(TypeCategory category)
   {
     // Arrange
@@ -239,7 +239,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData]
   public void GenericParameterPosition_ShouldThrow_WhenTypeIsNotGenericParameter(TypeCategory category)
   {
     // Arrange
@@ -255,7 +255,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void GenericTypeArguments_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -287,7 +287,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, TypeParametersData]
   public void GetArrayRank_ShouldThrow_WhenTypeIsNotArrayType(TypeCategory category)
   {
     // Arrange
@@ -391,7 +391,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, ArrayTypesData, TypeParametersData]
   public void GetCustomAttributeData_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -407,7 +407,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, ArrayTypesData, TypeParametersData]
   public void GetDefaultMembers_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -423,7 +423,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void GetElementType_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -559,7 +559,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void GetGenericArguments_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -575,7 +575,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData]
   public void GetGenericParameterConstraints_ShouldThrow_WhenTypeIsNotGenericParameter(TypeCategory category)
   {
     // Arrange
@@ -626,7 +626,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
 
   [Theory]
   [NamedTypesDataExcept(TypeCategory.ClosedGeneric, TypeCategory.ClosedGenericWithGenericTypeArguments, TypeCategory.OpenGeneric)]
-  [SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void GetGenericTypeDefinition_ShouldThrow_WhenTypeIsNotGeneric(TypeCategory category)
   {
     // Arrange
@@ -676,7 +676,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void GetInterfaces_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1097,7 +1097,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void HasElementType_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1113,7 +1113,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsAbstract_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1129,7 +1129,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsAnsiClass_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1145,7 +1145,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsArray_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1243,7 +1243,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsAutoClass_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1259,7 +1259,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsAutoLayout_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1275,7 +1275,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsByRef_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1291,7 +1291,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsClass_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1307,7 +1307,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsCOMObject_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1323,7 +1323,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsConstructedGenericType_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1339,7 +1339,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsContextful_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1355,7 +1355,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsEnum_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1387,7 +1387,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsExplicitLayout_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1403,7 +1403,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsGenericMethodParameter_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1419,7 +1419,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsGenericParameter_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1435,7 +1435,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsGenericType_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1451,7 +1451,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsGenericTypeDefinition_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1467,7 +1467,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsGenericTypeParameter_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1483,7 +1483,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsImport_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1517,7 +1517,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsInterface_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1533,7 +1533,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsPrimitive_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1549,7 +1549,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsLayoutSequential_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1565,7 +1565,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsMarshalByRef_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1581,7 +1581,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsNested_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1597,7 +1597,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsNestedAssembly_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1613,7 +1613,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsNestedFamANDAssem_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1629,7 +1629,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsNestedFamily_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1645,7 +1645,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsNestedFamORAssem_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1661,7 +1661,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsNestedPrivate_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1677,7 +1677,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsNestedPublic_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1693,7 +1693,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsNotPublic_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1709,7 +1709,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsPointer_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1725,7 +1725,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsPublic_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1741,7 +1741,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsSealed_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1757,7 +1757,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsSecurityCritical_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1773,7 +1773,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsSecuritySafeCritical_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1789,7 +1789,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsSecurityTransparent_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1805,7 +1805,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsSerializable_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1821,7 +1821,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsSignatureType_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1837,7 +1837,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsSpecialName_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1892,7 +1892,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsUnicodeClass_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1908,7 +1908,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsValueType_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1924,7 +1924,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void IsVisible_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1940,7 +1940,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void MakeArrayType_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1972,7 +1972,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void MemberType_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -1988,7 +1988,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void Module_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -2004,7 +2004,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void Name_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -2020,7 +2020,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void Namespace_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -2036,7 +2036,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void ReflectedType_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -2052,7 +2052,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void TypeHandle_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -2068,7 +2068,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, ArrayTypesData, TypeParametersData]
   public void TypeInitializer_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange
@@ -2084,7 +2084,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData, ParameterTypesData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void UnderlyingSystemType_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange

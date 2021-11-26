@@ -21,9 +21,7 @@ internal sealed class SymbolTypeParameter : SymbolType
 
   // System.Type overrides
 
-  protected override SymbolType? BaseTypeCore => _symbol.ConstraintTypes.Length != 0
-    ? _runtime.CreateTypeDelegator(_symbol.ConstraintTypes[0])
-    : _runtime.CreateTypeDelegator(_compilation.GetSpecialType(SpecialType.System_Object));
+  protected override SymbolType? BaseTypeCore => _runtime.CreateTypeDelegator(BaseTypeSymbol);
 
   public override MethodBase? DeclaringMethod => _symbol.DeclaringMethod is not null
     ? _runtime.CreateMethodInfoDelegator(_symbol.DeclaringMethod)
@@ -46,7 +44,7 @@ internal sealed class SymbolTypeParameter : SymbolType
       if (_symbol.HasReferenceTypeConstraint)
         result |= GenericParameterAttributes.ReferenceTypeConstraint;
       if (_symbol.HasValueTypeConstraint)
-        result |= GenericParameterAttributes.NotNullableValueTypeConstraint;
+        result |= GenericParameterAttributes.NotNullableValueTypeConstraint | GenericParameterAttributes.DefaultConstructorConstraint;
       if (_symbol.HasConstructorConstraint)
         result |= GenericParameterAttributes.DefaultConstructorConstraint;
 
@@ -60,7 +58,9 @@ internal sealed class SymbolTypeParameter : SymbolType
 
   public override bool IsGenericParameter => true;
 
-  public override bool IsSerializable => false;
+  public override bool IsEnum => !_symbol.IsValueType && _symbol.ConstraintTypes.Contains(_compilation.GetSpecialType(SpecialType.System_Enum));
+
+  public override bool IsSerializable => IsEnum;
 
   public override MemberTypes MemberType => MemberTypes.TypeInfo;
 
@@ -113,7 +113,7 @@ internal sealed class SymbolTypeParameter : SymbolType
 
   protected override bool IsValueTypeImpl()
   {
-    return false;
+    return _symbol.IsValueType || IsEnum;
   }
 
 
@@ -139,7 +139,11 @@ internal sealed class SymbolTypeParameter : SymbolType
 
   protected override SymbolType[] GetGenericParameterConstraintsCore()
   {
-    return _symbol.ConstraintTypes
+    IEnumerable<ITypeSymbol> constraintTypes = _symbol.ConstraintTypes;
+    if (_symbol.HasValueTypeConstraint)
+      constraintTypes = constraintTypes.Concat(new[] { _compilation.GetSpecialType(SpecialType.System_ValueType) });
+
+    return constraintTypes
       .Select(x => _runtime.CreateTypeDelegator(x))
       .ToArray();
   }
@@ -173,4 +177,10 @@ internal sealed class SymbolTypeParameter : SymbolType
   {
     throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
   }
+
+  private ITypeSymbol BaseTypeSymbol => _symbol.HasValueTypeConstraint
+    ? _compilation.GetSpecialType(SpecialType.System_ValueType)
+    : _symbol.ConstraintTypes.Length != 0
+      ? _symbol.ConstraintTypes[0]
+      : _compilation.GetSpecialType(SpecialType.System_Object);
 }

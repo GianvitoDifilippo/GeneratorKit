@@ -268,7 +268,7 @@ namespace " + Namespace + @"
 
   public interface IWithConstrainedParameter<T1> where T1 : System.Type, IDerivedInterface
   {
-    void MethodWithTwoGenericParameters<T2, T3>(T1 arg1, T2 arg2, T3 arg3) where T2 : class where T3 : struct, System.Enum;
+    void MethodWithTwoGenericParameters<T2, T3>(T1 arg1, T2 arg2, T3 arg3) where T2 : class where T3 : System.Enum;
   }
 
   public class ClassForSymbolParameterType<T1>
@@ -826,11 +826,6 @@ public enum TypeCategory
   FirstConstrainedMethodParameter,
   SecondMethodParameter,
   SecondConstrainedMethodParameter,
-
-  RefReturnType = 256,
-  RefParameterType,
-  InParameterType,
-  OutParameterType
 }
 
 public class SpecialTypesDataAttribute : DataAttribute
@@ -908,26 +903,6 @@ public class TypeParametersDataAttribute : DataAttribute
 public class TypeParametersDataExceptAttribute : TypeParametersDataAttribute
 {
   public TypeParametersDataExceptAttribute(params TypeCategory[] except)
-  {
-    Except = except;
-  }
-}
-
-public class ParamterTypesDataAttribute : DataAttribute
-{
-  public TypeCategory[] Except { get; set; } = Array.Empty<TypeCategory>();
-
-  public override IEnumerable<object[]> GetData(MethodInfo testMethod)
-  {
-    return Enum.GetValues<TypeCategory>()
-      .Where(x => (int)x >= 256 && (int)x < 320 && !Except.Contains(x))
-      .Select(x => new object[1] { x });
-  }
-}
-
-public class ParamterTypesDataExceptAttribute : ParamterTypesDataAttribute
-{
-  public ParamterTypesDataExceptAttribute(params TypeCategory[] except)
   {
     Except = except;
   }
