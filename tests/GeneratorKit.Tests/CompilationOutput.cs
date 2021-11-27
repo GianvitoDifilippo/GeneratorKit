@@ -11,7 +11,7 @@ namespace GeneratorKit;
 
 public record CompilationOutput(bool IsValid, Compilation Compilation, ImmutableArray<Diagnostic> Diagnostics, Assembly? Assembly)
 {
-  public static CompilationOutput Create(string source, string assemblyName, IEnumerable<Assembly>? referencedAssemblies = null)
+  public static CompilationOutput Create(string source, string assemblyName, OutputKind outputKind = OutputKind.DynamicallyLinkedLibrary, IEnumerable<Assembly>? referencedAssemblies = null)
   {
     referencedAssemblies ??= Enumerable.Empty<Assembly>();
 
@@ -26,7 +26,7 @@ public record CompilationOutput(bool IsValid, Compilation Compilation, Immutable
       assemblyName,
       new SyntaxTree[] { CSharpSyntaxTree.ParseText(source) },
       references,
-      new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+      new CSharpCompilationOptions(outputKind));
 
     using (MemoryStream stream = new MemoryStream())
     {

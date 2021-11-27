@@ -329,7 +329,6 @@ namespace " + Namespace + @"
     INamedTypeSymbol typeArg1Symbol;
     INamedTypeSymbol typeArg2Symbol;
     IMethodSymbol method;
-    IParameterSymbol parameter;
 
     switch (category)
     {
