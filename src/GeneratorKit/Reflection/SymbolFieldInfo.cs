@@ -45,6 +45,7 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
     }
   }
 
+
   // System.Reflection.FieldInfo overrides
 
   public override FieldAttributes Attributes
@@ -90,7 +91,7 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
     }
   }
 
-  public override RuntimeFieldHandle FieldHandle => throw new NotImplementedException();
+  public override RuntimeFieldHandle FieldHandle => RuntimeField.FieldHandle;
 
   public override bool IsSecurityCritical => true;
 
@@ -135,7 +136,7 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
 
   public override object GetValue(object obj)
   {
-    throw new NotImplementedException();
+    return RuntimeField.GetValue(obj);
   }
 
   public override bool IsDefined(Type attributeType, bool inherit)
@@ -145,7 +146,7 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
 
   public override void SetValue(object obj, object value, BindingFlags invokeAttr, Binder binder, CultureInfo culture)
   {
-    throw new NotImplementedException();
+    RuntimeField.SetValue(obj, value, invokeAttr, binder, culture);
   }
 
 
