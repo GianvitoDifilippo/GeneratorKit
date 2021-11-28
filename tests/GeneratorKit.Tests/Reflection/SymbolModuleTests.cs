@@ -19,6 +19,19 @@ public class SymbolModuleTests : IClassFixture<SymbolModuleFixture>
   }
 
   [Fact]
+  public void Sut_ShouldBeEquivalentToReference()
+  {
+    // Arrange
+    Module reference = _fixture.GetReference();
+    SymbolModule sut = _fixture.GetDelegator();
+
+    // Act
+
+    // Assert
+    sut.Should().Equal(reference, ModuleEqualityComparer.Default);
+  }
+
+  [Fact]
   public void Assembly_ShouldBeCorrect()
   {
     // Arrange

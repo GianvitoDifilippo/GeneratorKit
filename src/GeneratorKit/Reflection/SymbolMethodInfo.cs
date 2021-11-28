@@ -219,16 +219,16 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
     return Symbol.TypeArguments.Select(x => _runtime.CreateTypeDelegator(x)).ToArray();
   }
 
-  // The 'keepReflectedType' parameter is a hack to make the reflected types of 'RuntimeMethod' and 'GetGenericMethodDefinition'
-  // correct. Not sure how the runtime decides when to keep the reflected type - subject needs further investigation.
-  protected override SymbolMethodInfo GetGenericMethodDefinitionCore(bool keepReflectedType)
+  // The 'preserveReflectedType' parameter is a hack to make the reflected types of 'RuntimeMethod' and 'GetGenericMethodDefinition'
+  // correct. Not sure how the runtime decides when to preserve the reflected type - subject needs further investigation.
+  protected override SymbolMethodInfo GetGenericMethodDefinitionCore(bool preserveReflectedType)
   {
     if (!IsGenericMethod)
     {
       throw new InvalidOperationException();
     }
-    keepReflectedType |= Symbol.IsOverride && Symbol.IsVirtual;
-    return keepReflectedType && _reflectedType is not null
+    preserveReflectedType |= Symbol.IsOverride && Symbol.IsVirtual;
+    return preserveReflectedType && _reflectedType is not null
       ? new SymbolMethodInfo(_runtime, Symbol.OriginalDefinition, _reflectedType)
       : _runtime.CreateMethodInfoDelegator(Symbol.OriginalDefinition);
   }
@@ -254,14 +254,19 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
 
   // New members
 
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   public new SymbolType DeclaringType => DeclaringTypeCore;
 
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   public new SymbolModule Module => ModuleCore;
 
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   public new SymbolType ReflectedType => ReflectedTypeCore;
 
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   public new SymbolParameterInfo ReturnParameter => ReturnParameterCore;
 
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   public new SymbolType ReturnType => ReturnTypeCore;
 
   public new SymbolMethodInfo GetBaseDefinition() => GetBaseDefinitionCore();
@@ -324,7 +329,7 @@ internal abstract class SymbolMethodInfoBase : MethodInfo
 
   protected abstract SymbolType[] GetGenericArgumentsCore();
 
-  protected abstract SymbolMethodInfo GetGenericMethodDefinitionCore(bool keepReflectedType);
+  protected abstract SymbolMethodInfo GetGenericMethodDefinitionCore(bool preserveReflectedType);
 
   protected abstract SymbolParameterInfo[] GetParametersCore();
 

@@ -21,6 +21,19 @@ public class SymbolAssemblyTests : IClassFixture<SymbolAssemblyFixture>
   }
 
   [Fact]
+  public void Sut_ShouldBeEquivalentToReference()
+  {
+    // Arrange
+    Assembly reference = _fixture.GetReference();
+    SymbolAssembly sut = _fixture.GetDelegator();
+
+    // Act
+
+    // Assert
+    sut.Should().Equal(reference, AssemblyEqualityComparer.Default);
+  }
+
+  [Fact]
   public void CustomAttributes_ShouldBeCorrect()
   {
     // Arrange

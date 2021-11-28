@@ -11,7 +11,6 @@ namespace GeneratorKit.Reflection;
 internal sealed class SymbolParameterInfo : SymbolParameterInfoBase
 {
   private readonly GeneratorRuntime _runtime;
-  private readonly MemberInfo? _member;
 
   public SymbolParameterInfo(GeneratorRuntime runtime, IParameterSymbol symbol)
   {
@@ -60,7 +59,7 @@ internal sealed class SymbolParameterInfo : SymbolParameterInfoBase
 
   public override object? DefaultValue => Symbol.HasExplicitDefaultValue ? Symbol.ExplicitDefaultValue : DBNull.Value;
 
-  public override MemberInfo Member => _member ?? Symbol.ContainingSymbol switch
+  public override MemberInfo Member => Symbol.ContainingSymbol switch
   {
     IPropertySymbol propertySymbol => _runtime.CreatePropertyInfoDelegator(propertySymbol),
     IMethodSymbol methodSymbol     => methodSymbol.MethodKind is MethodKind.Constructor or MethodKind.StaticConstructor

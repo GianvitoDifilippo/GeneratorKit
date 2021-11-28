@@ -42,8 +42,8 @@ internal class DelegatorBinder : Binder
     {
       if (method.GetGenericArguments().Length != _genericParameterCount) continue;
 
-      IEnumerable<Type> methodTypes = method.GetParameters().Select(x => x.ParameterType);
-      if (!methodTypes.SequenceEqual(types, TypeEqualityComparer.Default)) continue;
+      IEnumerable<Type> parameterTypes = method.GetParameters().Select(x => x.ParameterType);
+      if (!parameterTypes.SequenceEqual(types, TypeEqualityComparer.Default)) continue;
 
       return method;
     }
@@ -51,8 +51,16 @@ internal class DelegatorBinder : Binder
     return null;
   }
 
-  public override PropertyInfo SelectProperty(BindingFlags bindingAttr, PropertyInfo[] match, Type returnType, Type[] indexes, ParameterModifier[] modifiers)
+  public override PropertyInfo? SelectProperty(BindingFlags bindingAttr, PropertyInfo[] match, Type returnType, Type[] indexes, ParameterModifier[] modifiers)
   {
-    throw new NotImplementedException();
+    foreach (PropertyInfo property in match)
+    {
+      IEnumerable<Type> indexTypes = property.GetIndexParameters().Select(x => x.ParameterType);
+      if (!indexTypes.SequenceEqual(indexes, TypeEqualityComparer.Default)) continue;
+
+      return property;
+    }
+
+    return null;
   }
 }
