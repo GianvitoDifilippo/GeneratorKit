@@ -21,6 +21,7 @@ namespace " + Namespace + @"
   {
     public int Method(int arg1, string arg2) => throw null;
     public T GenericMethod<T>(T arg1) => throw null;
+    public int ReturnValue() => throw null;
     public ref int RefReturnValue() => throw null;
     public void WithRefParameter(ref int arg1) => throw null;
     public void WithInParameter(in int arg1) => throw null;
@@ -71,6 +72,7 @@ namespace " + Namespace + @"
       ParameterCategory.Position0Parameter        => GetParameterFromMethod("Method", 0),
       ParameterCategory.Position1Parameter        => GetParameterFromMethod("Method", 1),
       ParameterCategory.GenericParameter          => GetParameterFromMethod("GenericMethod"),
+      ParameterCategory.ReturnParameter           => GetParameterFromMethod("ReturnValue", -1),
       ParameterCategory.RefReturnParameter        => GetParameterFromMethod("RefReturnValue", -1),
       ParameterCategory.RefParameter              => GetParameterFromMethod("WithRefParameter"),
       ParameterCategory.InParameter               => GetParameterFromMethod("WithInParameter"),
@@ -107,6 +109,7 @@ namespace " + Namespace + @"
       ParameterCategory.Position0Parameter        => GetParameterFromMethod("Method", 0),
       ParameterCategory.Position1Parameter        => GetParameterFromMethod("Method", 1),
       ParameterCategory.GenericParameter          => GetParameterFromMethod("GenericMethod"),
+      ParameterCategory.ReturnParameter           => GetParameterFromMethod("ReturnValue", -1),
       ParameterCategory.RefReturnParameter        => GetParameterFromMethod("RefReturnValue", -1),
       ParameterCategory.RefParameter              => GetParameterFromMethod("WithRefParameter"),
       ParameterCategory.InParameter               => GetParameterFromMethod("WithInParameter"),
@@ -123,17 +126,16 @@ namespace " + Namespace + @"
     {
       INamedTypeSymbol symbol = name == "WithThis" ? _staticSymbol : _symbol;
       IMethodSymbol methodSymbol = (IMethodSymbol)symbol.GetMembers(name).Single();
-      IParameterSymbol parameterSymbol = methodSymbol.Parameters[position];
       return position == -1
-        ? new SymbolReturnParameterInfo(_runtime, methodSymbol)
-        : new SymbolParameterInfo(_runtime, parameterSymbol);
+        ? new SymbolReturnParameter(_runtime, methodSymbol)
+        : new SymbolArgumentParameter(_runtime, methodSymbol.Parameters[position]);
     }
 
-    SymbolParameterInfo GetParameterFromIndexer(int position = 0)
+    SymbolArgumentParameter GetParameterFromIndexer(int position = 0)
     {
       IPropertySymbol methodSymbol = (IPropertySymbol)_symbol.GetMembers("this[]").Single();
       IParameterSymbol parameterSymbol = methodSymbol.Parameters[position];
-      return new SymbolParameterInfo(_runtime, parameterSymbol);
+      return new SymbolArgumentParameter(_runtime, parameterSymbol);
     }
   }
 }
@@ -161,6 +163,7 @@ public enum ParameterCategory
   Position0Parameter,
   Position1Parameter,
   GenericParameter,
+  ReturnParameter,
   RefReturnParameter,
   RefParameter,
   InParameter,

@@ -401,12 +401,22 @@ internal sealed class SymbolNamedType : SymbolType
     throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
   }
 
-  protected sealed override SymbolType[] GetInterfacesCore()
+  protected override SymbolType[] GetInterfacesCore()
   {
     return _symbol.AllInterfaces.Select(x => _runtime.CreateTypeDelegator(x)).ToArray();
   }
 
-  protected sealed override SymbolType MakeGenericTypeCore(params Type[] typeArguments)
+  protected override SymbolType MakeArrayTypeCore(int rank)
+  {
+    return _runtime.CreateTypeDelegator(_runtime.Compilation.CreateArrayTypeSymbol(Symbol, rank));
+  }
+
+  protected override SymbolType MakeByRefTypeCore()
+  {
+    return new SymbolByRefType(_runtime, this);
+  }
+
+  protected override SymbolType MakeGenericTypeCore(params Type[] typeArguments)
   {
     if (!IsGenericTypeDefinition)
       throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");

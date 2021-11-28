@@ -199,7 +199,7 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
 
   protected override SymbolType ReflectedTypeCore => _reflectedType ?? DeclaringTypeCore;
 
-  protected override SymbolParameterInfo ReturnParameterCore => throw new NotImplementedException();
+  protected override SymbolArgumentParameter ReturnParameterCore => throw new NotImplementedException();
 
   protected override SymbolType ReturnTypeCore => _runtime.CreateTypeDelegator(Symbol.ReturnType);
 
@@ -233,9 +233,9 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
       : _runtime.CreateMethodInfoDelegator(Symbol.OriginalDefinition);
   }
 
-  protected override SymbolParameterInfo[] GetParametersCore()
+  protected override SymbolArgumentParameter[] GetParametersCore()
   {
-    return Symbol.Parameters.Select(x => _runtime.CreateParameterInfoDelegator(x)).ToArray();
+    return Symbol.Parameters.Select(x => new SymbolArgumentParameter(_runtime, x)).ToArray();
   }
 
   protected override SymbolMethodInfo MakeGenericMethodCore(params Type[] typeArguments)
@@ -264,7 +264,7 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
   public new SymbolType ReflectedType => ReflectedTypeCore;
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  public new SymbolParameterInfo ReturnParameter => ReturnParameterCore;
+  public new SymbolArgumentParameter ReturnParameter => ReturnParameterCore;
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   public new SymbolType ReturnType => ReturnTypeCore;
@@ -275,7 +275,7 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
 
   public new SymbolMethodInfo GetGenericMethodDefinition() => GetGenericMethodDefinitionCore(false);
 
-  public new SymbolParameterInfo[] GetParameters() => GetParametersCore();
+  public new SymbolArgumentParameter[] GetParameters() => GetParametersCore();
 
   public new SymbolMethodInfo MakeGenericMethod(params Type[] typeArguments) => MakeGenericMethodCore(typeArguments);
 }
@@ -323,7 +323,7 @@ internal abstract class SymbolMethodInfoBase : MethodInfo
   protected abstract SymbolType ReflectedTypeCore { get; }
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  protected abstract SymbolParameterInfo ReturnParameterCore { get; }
+  protected abstract SymbolArgumentParameter ReturnParameterCore { get; }
 
   protected abstract SymbolMethodInfo GetBaseDefinitionCore();
 
@@ -331,7 +331,7 @@ internal abstract class SymbolMethodInfoBase : MethodInfo
 
   protected abstract SymbolMethodInfo GetGenericMethodDefinitionCore(bool preserveReflectedType);
 
-  protected abstract SymbolParameterInfo[] GetParametersCore();
+  protected abstract SymbolArgumentParameter[] GetParametersCore();
 
   protected abstract SymbolMethodInfo MakeGenericMethodCore(params Type[] typeArguments);
 }

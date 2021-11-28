@@ -354,16 +354,6 @@ internal abstract class SymbolType : SymbolTypeBase
     return MakeArrayTypeCore(1);
   }
 
-  protected sealed override SymbolType MakeArrayTypeCore(int rank)
-  {
-    return _runtime.CreateTypeDelegator(_runtime.Compilation.CreateArrayTypeSymbol(Symbol, rank));
-  }
-
-  protected sealed override SymbolType MakeByRefTypeCore()
-  {
-    throw new NotSupportedException();
-  }
-
   protected sealed override SymbolType MakePointerTypeCore()
   {
     throw new NotSupportedException();

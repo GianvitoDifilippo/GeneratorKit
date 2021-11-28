@@ -151,9 +151,9 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
       : null;
   }
 
-  protected override SymbolParameterInfo[] GetIndexParametersCore()
+  protected override SymbolArgumentParameter[] GetIndexParametersCore()
   {
-    return Symbol.Parameters.Select(x => _runtime.CreateParameterInfoDelegator(x)).ToArray();
+    return Symbol.Parameters.Select(x => new SymbolArgumentParameter(_runtime, x)).ToArray();
   }
 
   protected override SymbolMethodInfo? GetSetMethodCore(bool nonPublic)
@@ -190,7 +190,7 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
 
   public new SymbolMethodInfo? GetGetMethod(bool nonPublic) => GetGetMethodCore(nonPublic);
 
-  public new SymbolParameterInfo[] GetIndexParameters() => GetIndexParametersCore();
+  public new SymbolArgumentParameter[] GetIndexParameters() => GetIndexParametersCore();
 
   public new SymbolMethodInfo? GetSetMethod(bool nonPublic) => GetSetMethodCore(nonPublic);
 }
@@ -237,7 +237,7 @@ internal abstract class SymbolPropertyInfoBase : PropertyInfo
 
   protected abstract SymbolMethodInfo? GetGetMethodCore(bool nonPublic);
 
-  protected abstract SymbolParameterInfo[] GetIndexParametersCore();
+  protected abstract SymbolArgumentParameter[] GetIndexParametersCore();
 
   protected abstract SymbolMethodInfo? GetSetMethodCore(bool nonPublic);
 }

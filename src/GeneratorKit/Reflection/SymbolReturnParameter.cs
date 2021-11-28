@@ -1,20 +1,17 @@
-﻿using System.Diagnostics;
+﻿using Microsoft.CodeAnalysis;
 using System;
-using System.Reflection;
-using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reflection;
 
 namespace GeneratorKit.Reflection;
 
-internal class SymbolReturnParameterInfo : SymbolReturnParameterInfoBase
+internal class SymbolReturnParameter : SymbolParameterInfo
 {
-  private readonly GeneratorRuntime _runtime;
-
-  public SymbolReturnParameterInfo(GeneratorRuntime runtime, IMethodSymbol symbol)
+  public SymbolReturnParameter(GeneratorRuntime runtime, IMethodSymbol symbol)
+    : base(runtime)
   {
-    _runtime = runtime;
     Symbol = symbol;
   }
 
@@ -23,17 +20,17 @@ internal class SymbolReturnParameterInfo : SymbolReturnParameterInfoBase
 
   // System.Reflection.ParameterInfo overrides
 
-  public override ParameterAttributes Attributes => ParameterAttributes.Retval;
+  public override ParameterAttributes Attributes => ParameterAttributes.None;
 
-  public override object? DefaultValue => DBNull.Value;
+  public override object? DefaultValue => null;
 
-  public override bool HasDefaultValue => false;
+  public override bool HasDefaultValue => true;
 
   public override MemberInfo Member => _runtime.CreateMethodInfoDelegator(Symbol);
 
   public override string? Name => null;
 
-  public override object RawDefaultValue => DBNull.Value;
+  public override object? RawDefaultValue => null;
 
   public override int Position => -1;
 
@@ -63,7 +60,16 @@ internal class SymbolReturnParameterInfo : SymbolReturnParameterInfoBase
 
   // SymbolReturnParameterInfoBase overrides
 
-  protected override SymbolType ParameterTypeCore => _runtime.CreateTypeDelegator(Symbol.ReturnType);
+  protected override SymbolType ParameterTypeCore
+  {
+    get
+    {
+      SymbolType type = _runtime.CreateTypeDelegator(Symbol.ReturnType);
+      return Symbol.ReturnsByRef
+        ? type.MakeByRefType()
+        : type;
+    }
+  }
 
   protected override SymbolType[] GetOptionalCustomModifiersCore()
   {
@@ -74,28 +80,4 @@ internal class SymbolReturnParameterInfo : SymbolReturnParameterInfoBase
   {
     throw new NotSupportedException();
   }
-}
-
-internal abstract class SymbolReturnParameterInfoBase : ParameterInfo
-{
-  private protected SymbolReturnParameterInfoBase() { }
-
-
-  // System.Reflection.ParameterInfo overrides
-
-  public sealed override Type ParameterType => ParameterTypeCore;
-
-  public sealed override Type[] GetOptionalCustomModifiers() => GetOptionalCustomModifiersCore();
-
-  public sealed override Type[] GetRequiredCustomModifiers() => GetRequiredCustomModifiersCore();
-
-
-  // Abstract members
-
-  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  protected abstract SymbolType ParameterTypeCore { get; }
-
-  protected abstract SymbolType[] GetOptionalCustomModifiersCore();
-
-  protected abstract SymbolType[] GetRequiredCustomModifiersCore();
 }

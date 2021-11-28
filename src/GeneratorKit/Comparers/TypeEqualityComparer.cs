@@ -25,6 +25,14 @@ public class TypeEqualityComparer : IEqualityComparer<Type>
     }
     else if (y.IsArray) return false;
 
+    if (x.IsByRef)
+    {
+      if (!y.IsByRef) return false;
+
+      return Equals(x.GetElementType(), y.GetElementType());
+    }
+    else if (y.IsByRef) return false;
+
     if (x.Name != y.Name) return false;
     if (x.Namespace != y.Namespace) return false;
     if (!AssemblyEqualityComparer.Default.Equals(x.Assembly, y.Assembly)) return false;

@@ -12,7 +12,6 @@ public interface IGeneratorRuntime
   FieldInfo CreateFieldInfoDelegator(IFieldSymbol symbol);
   MethodInfo CreateMethodInfoDelegator(IMethodSymbol symbol);
   Module CreateModuleDelegator(IModuleSymbol symbol);
-  ParameterInfo CreateParameterInfoDelegator(IParameterSymbol symbol);
   PropertyInfo CreatePropertyInfoDelegator(IPropertySymbol symbol);
   Type CreateTypeDelegator(ITypeSymbol symbol);
 }

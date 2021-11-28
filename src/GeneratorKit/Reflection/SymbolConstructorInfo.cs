@@ -143,9 +143,9 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
     throw new NotSupportedException();
   }
 
-  protected override SymbolParameterInfo[] GetParametersCore()
+  protected override SymbolArgumentParameter[] GetParametersCore()
   {
-    return Symbol.Parameters.Select(x => _runtime.CreateParameterInfoDelegator(x)).ToArray();
+    return Symbol.Parameters.Select(x => new SymbolArgumentParameter(_runtime, x)).ToArray();
   }
 
 
@@ -162,7 +162,7 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
 
   public new SymbolType[] GetGenericArguments() => GetGenericArgumentsCore();
 
-  public new SymbolParameterInfo[] GetParameters() => GetParametersCore();
+  public new SymbolArgumentParameter[] GetParameters() => GetParametersCore();
 }
 
 internal abstract class SymbolConstructorInfoBase : ConstructorInfo
@@ -196,5 +196,5 @@ internal abstract class SymbolConstructorInfoBase : ConstructorInfo
 
   protected abstract SymbolType[] GetGenericArgumentsCore();
 
-  protected abstract SymbolParameterInfo[] GetParametersCore();
+  protected abstract SymbolArgumentParameter[] GetParametersCore();
 }

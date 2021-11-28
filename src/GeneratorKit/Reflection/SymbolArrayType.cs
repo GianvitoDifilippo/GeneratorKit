@@ -24,8 +24,6 @@ internal sealed class SymbolArrayType : SymbolType
 
   // System.Type overrides
 
-  protected override SymbolType? BaseTypeCore => _runtime.CreateTypeDelegator(_symbol.BaseType!);
-
   public override MethodBase? DeclaringMethod => throw new InvalidOperationException($"Method may only be called on a Type for which Type.IsGenericParameter is true.");
 
   public override string Namespace => _elementType.Namespace;
@@ -110,6 +108,8 @@ internal sealed class SymbolArrayType : SymbolType
 
   protected override SymbolAssembly AssemblyCore => _elementType.Assembly;
 
+  protected override SymbolType? BaseTypeCore => _runtime.CreateTypeDelegator(_symbol.BaseType!);
+
   protected override SymbolType[] GenericTypeArgumentsCore => Array.Empty<SymbolType>();
 
   protected override SymbolModule ModuleCore => _elementType.Module;
@@ -134,9 +134,19 @@ internal sealed class SymbolArrayType : SymbolType
     throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
   }
 
-  protected sealed override SymbolType[] GetInterfacesCore()
+  protected override SymbolType[] GetInterfacesCore()
   {
     return _symbol.AllInterfaces.Select(x => _runtime.CreateTypeDelegator(x)).ToArray();
+  }
+
+  protected override SymbolType MakeArrayTypeCore(int rank)
+  {
+    return _runtime.CreateTypeDelegator(_runtime.Compilation.CreateArrayTypeSymbol(Symbol, rank));
+  }
+
+  protected override SymbolType MakeByRefTypeCore()
+  {
+    return new SymbolByRefType(_runtime, this);
   }
 
   protected override SymbolType MakeGenericTypeCore(params Type[] typeArguments)

@@ -153,7 +153,7 @@ internal sealed class SymbolTypeParameter : SymbolType
     throw new InvalidOperationException("This operation is only valid on generic types.");
   }
 
-  protected sealed override SymbolType[] GetInterfacesCore()
+  protected override SymbolType[] GetInterfacesCore()
   {
     return GetInterfaceSymbols().Select(x => _runtime.CreateTypeDelegator(x)).ToArray();
 
@@ -171,6 +171,16 @@ internal sealed class SymbolTypeParameter : SymbolType
         }
       }
     }
+  }
+
+  protected override SymbolType MakeArrayTypeCore(int rank)
+  {
+    return _runtime.CreateTypeDelegator(_runtime.Compilation.CreateArrayTypeSymbol(Symbol, rank));
+  }
+
+  protected override SymbolType MakeByRefTypeCore()
+  {
+    return new SymbolByRefType(_runtime, this);
   }
 
   protected override SymbolType MakeGenericTypeCore(params Type[] typeArguments)

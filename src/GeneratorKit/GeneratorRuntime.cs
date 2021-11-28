@@ -70,14 +70,6 @@ internal abstract class GeneratorRuntime : IGeneratorRuntime
     return new SymbolModule(this, symbol);
   }
 
-  public SymbolParameterInfo CreateParameterInfoDelegator(IParameterSymbol symbol)
-  {
-    if (symbol is null)
-      throw new ArgumentNullException(nameof(symbol));
-
-    return new SymbolParameterInfo(this, symbol);
-  }
-
   public SymbolPropertyInfo CreatePropertyInfoDelegator(IPropertySymbol symbol)
   {
     if (symbol is null)
@@ -128,11 +120,6 @@ internal abstract class GeneratorRuntime : IGeneratorRuntime
   Module IGeneratorRuntime.CreateModuleDelegator(IModuleSymbol symbol)
   {
     return CreateModuleDelegator(symbol);
-  }
-
-  ParameterInfo IGeneratorRuntime.CreateParameterInfoDelegator(IParameterSymbol symbol)
-  {
-    return CreateParameterInfoDelegator(symbol);
   }
 
   PropertyInfo IGeneratorRuntime.CreatePropertyInfoDelegator(IPropertySymbol symbol)
