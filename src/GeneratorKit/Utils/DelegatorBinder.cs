@@ -40,7 +40,7 @@ internal class DelegatorBinder : Binder
   {
     foreach (MethodBase method in match)
     {
-      if (method.GetGenericArguments().Length != _genericParameterCount) continue;
+      if (!method.IsConstructor && method.GetGenericArguments().Length != _genericParameterCount) continue;
 
       IEnumerable<Type> parameterTypes = method.GetParameters().Select(x => x.ParameterType);
       if (!parameterTypes.SequenceEqual(types, TypeEqualityComparer.Default)) continue;

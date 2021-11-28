@@ -168,16 +168,22 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
 
   // New members
 
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   public new SymbolType PropertyType => PropertyTypeCore;
 
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   public new SymbolType DeclaringType => DeclaringTypeCore;
 
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   public new SymbolType ReflectedType => ReflectedTypeCore;
 
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   public new SymbolMethodInfo? GetMethod => (SymbolMethodInfo?)base.GetMethod;
 
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   public new SymbolModule Module => ModuleCore;
 
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   public new SymbolMethodInfo? SetMethod => (SymbolMethodInfo?)base.SetMethod;
 
   public new SymbolMethodInfo[] GetAccessors(bool nonPublic) => GetAccessorsCore(nonPublic);
