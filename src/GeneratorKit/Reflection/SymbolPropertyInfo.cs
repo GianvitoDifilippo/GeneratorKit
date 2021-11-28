@@ -78,6 +78,15 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
     throw new NotImplementedException();
   }
 
+  public override IList<CustomAttributeData> GetCustomAttributesData()
+  {
+    List<CustomAttributeData> result = Symbol
+      .GetAttributes()
+      .Select(x => (CustomAttributeData)CompilationCustomAttributeData.FromAttributeData(_runtime, x))
+      .ToList();
+    return new ReadOnlyCollection<CustomAttributeData>(result);
+  }
+
   public override Type[] GetOptionalCustomModifiers()
   {
     throw new NotSupportedException();
@@ -131,15 +140,6 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
       : includeSetMethod
         ? new SymbolMethodInfo[] { SetMethod! }
         : Array.Empty<SymbolMethodInfo>();
-  }
-
-  public override IList<CustomAttributeData> GetCustomAttributesData()
-  {
-    List<CustomAttributeData> result = Symbol
-      .GetAttributes()
-      .Select(x => (CustomAttributeData)CompilationCustomAttributeData.FromAttributeData(_runtime, x))
-      .ToList();
-    return new ReadOnlyCollection<CustomAttributeData>(result);
   }
 
   protected override SymbolMethodInfo? GetGetMethodCore(bool nonPublic)

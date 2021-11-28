@@ -30,9 +30,6 @@ internal sealed class SymbolParameterInfo : SymbolParameterInfoBase
       ParameterAttributes result = ParameterAttributes.None;
       switch (Symbol.RefKind)
       {
-        case RefKind.Ref:
-          result |= ParameterAttributes.Retval;
-          break;
         case RefKind.Out:
           result |= ParameterAttributes.Out;
           break;
@@ -54,10 +51,29 @@ internal sealed class SymbolParameterInfo : SymbolParameterInfoBase
       .GetAttributes()
       .Select(x => (CustomAttributeData)CompilationCustomAttributeData.FromAttributeData(_runtime, x))
       .ToList();
+    if (Symbol.IsParams)
+    {
+      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, _runtime.Compilation.GetTypeByMetadataName("System.ParamArrayAttribute")!));
+    }
+    if (Symbol.IsOptional)
+    {
+      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, _runtime.Compilation.GetTypeByMetadataName("System.Runtime.InteropServices.OptionalAttribute")!));
+    }
+    if (Symbol.RefKind is RefKind.In)
+    {
+      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, _runtime.Compilation.GetTypeByMetadataName("System.Runtime.InteropServices.InAttribute")!));
+      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, _runtime.Compilation.GetTypeByMetadataName("System.Runtime.CompilerServices.IsReadOnlyAttribute")!));
+    }
+    if (Symbol.RefKind is RefKind.Out)
+    {
+      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, _runtime.Compilation.GetTypeByMetadataName("System.Runtime.InteropServices.OutAttribute")!));
+    }
     return new ReadOnlyCollection<CustomAttributeData>(result);
   }
 
   public override object? DefaultValue => Symbol.HasExplicitDefaultValue ? Symbol.ExplicitDefaultValue : DBNull.Value;
+
+  public override bool HasDefaultValue => Symbol.HasExplicitDefaultValue;
 
   public override MemberInfo Member => Symbol.ContainingSymbol switch
   {
@@ -72,9 +88,20 @@ internal sealed class SymbolParameterInfo : SymbolParameterInfoBase
 
   public override int Position => Symbol.Ordinal;
 
+  public override object? RawDefaultValue => Symbol.HasExplicitDefaultValue ? Symbol.ExplicitDefaultValue : DBNull.Value;
+
   // SymbolParameterInfoBase overrides
 
-  protected override SymbolType ParameterTypeCore => _runtime.CreateTypeDelegator(Symbol.Type);
+  protected override SymbolType ParameterTypeCore
+  {
+    get
+    {
+      SymbolType type = _runtime.CreateTypeDelegator(Symbol.Type);
+      return Symbol.RefKind is not RefKind.None
+        ? type.MakeByRefType()
+        : type;
+    }
+  }
 
   protected override SymbolType[] GetOptionalCustomModifiersCore()
   {
@@ -92,7 +119,7 @@ internal abstract class SymbolParameterInfoBase : ParameterInfo
   private protected SymbolParameterInfoBase() { }
 
 
-  // System.Reflection.PropertyInfo overrides
+  // System.Reflection.ParameterInfo overrides
 
   public sealed override Type ParameterType => ParameterTypeCore;
 

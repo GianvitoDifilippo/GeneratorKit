@@ -15,8 +15,8 @@ internal sealed class SymbolNamedType : SymbolType
 {
   private readonly INamedTypeSymbol _symbol;
 
-  public SymbolNamedType(GeneratorRuntime runtime, Compilation compilation, INamedTypeSymbol symbol)
-    : base(runtime, compilation)
+  public SymbolNamedType(GeneratorRuntime runtime,  INamedTypeSymbol symbol)
+    : base(runtime)
   {
     _symbol = symbol;
   }
@@ -161,7 +161,7 @@ internal sealed class SymbolNamedType : SymbolType
 
     if (_symbol.MemberNames.Any(x => x is "this[]"))
     {
-      INamedTypeSymbol defaultMember = _compilation.GetTypeByMetadataName("System.Reflection.DefaultMemberAttribute")!;
+      INamedTypeSymbol defaultMember = _runtime.Compilation.GetTypeByMetadataName("System.Reflection.DefaultMemberAttribute")!;
       CustomAttributeTypedArgument[] arguments = new[] { new CustomAttributeTypedArgument(typeof(string), "Item") };
       result.Add(CompilationCustomAttributeData.FromSymbol(_runtime, defaultMember.InstanceConstructors[0], arguments, Array.Empty<CustomAttributeNamedArgument>()));
     }

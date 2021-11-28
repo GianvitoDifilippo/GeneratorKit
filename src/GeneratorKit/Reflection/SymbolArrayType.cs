@@ -12,8 +12,8 @@ internal sealed class SymbolArrayType : SymbolType
   private readonly IArrayTypeSymbol _symbol;
   private readonly SymbolType _elementType;
 
-  public SymbolArrayType(GeneratorRuntime runtime, Compilation compilation, IArrayTypeSymbol symbol)
-    : base(runtime, compilation)
+  public SymbolArrayType(GeneratorRuntime runtime, IArrayTypeSymbol symbol)
+    : base(runtime)
   {
     _symbol = symbol;
     _elementType = runtime.CreateTypeDelegator(_symbol.ElementType);
@@ -59,7 +59,7 @@ internal sealed class SymbolArrayType : SymbolType
   {
     List<CustomAttributeData> result = new List<CustomAttributeData>
     {
-      CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, _compilation.GetTypeByMetadataName("System.SerializableAttribute")!)
+      CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, _runtime.Compilation.GetTypeByMetadataName("System.SerializableAttribute")!)
     };
 
     return new ReadOnlyCollection<CustomAttributeData>(result);

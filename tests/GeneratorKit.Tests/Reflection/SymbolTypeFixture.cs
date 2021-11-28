@@ -535,9 +535,9 @@ namespace " + Namespace + @"
 
     return symbol switch
     {
-      INamedTypeSymbol     => new SymbolNamedType(_runtime, _compilation, (INamedTypeSymbol)symbol),
-      IArrayTypeSymbol     => new SymbolArrayType(_runtime, _compilation, (IArrayTypeSymbol)symbol),
-      ITypeParameterSymbol => new SymbolTypeParameter(_runtime, _compilation, (ITypeParameterSymbol)symbol),
+      INamedTypeSymbol     => new SymbolNamedType(_runtime, (INamedTypeSymbol)symbol),
+      IArrayTypeSymbol     => new SymbolArrayType(_runtime, (IArrayTypeSymbol)symbol),
+      ITypeParameterSymbol => new SymbolTypeParameter(_runtime, (ITypeParameterSymbol)symbol),
       _                    => throw new InvalidOperationException()
     };
 

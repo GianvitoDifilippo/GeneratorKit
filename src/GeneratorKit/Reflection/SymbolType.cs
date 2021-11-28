@@ -15,12 +15,10 @@ internal abstract class SymbolType : SymbolTypeBase
   protected static readonly SymbolDisplayFormat s_namespaceFormat = new SymbolDisplayFormat(typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces);
 
   protected readonly GeneratorRuntime _runtime;
-  protected readonly Compilation _compilation;
 
-  protected SymbolType(GeneratorRuntime runtime, Compilation compilation)
+  protected SymbolType(GeneratorRuntime runtime)
   {
     _runtime = runtime;
-    _compilation = compilation;
   }
 
   public abstract ITypeSymbol Symbol { get; }
@@ -358,7 +356,7 @@ internal abstract class SymbolType : SymbolTypeBase
 
   protected sealed override SymbolType MakeArrayTypeCore(int rank)
   {
-    return _runtime.CreateTypeDelegator(_compilation.CreateArrayTypeSymbol(Symbol, rank));
+    return _runtime.CreateTypeDelegator(_runtime.Compilation.CreateArrayTypeSymbol(Symbol, rank));
   }
 
   protected sealed override SymbolType MakeByRefTypeCore()

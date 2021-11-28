@@ -7,12 +7,12 @@ namespace GeneratorKit;
 
 internal abstract class GeneratorRuntime : IGeneratorRuntime
 {
-  private readonly Compilation _compilation;
-
   public GeneratorRuntime(Compilation compilation)
   {
-    _compilation = compilation;
+    Compilation = compilation;
   }
+
+  public Compilation Compilation { get; }
 
   public abstract Type? GetRuntimeType(SymbolType type);
 
@@ -93,9 +93,9 @@ internal abstract class GeneratorRuntime : IGeneratorRuntime
 
     return symbol.Kind switch
     {
-      SymbolKind.NamedType     => new SymbolNamedType(this, _compilation, (INamedTypeSymbol)symbol),
-      SymbolKind.ArrayType     => new SymbolArrayType(this, _compilation, (IArrayTypeSymbol)symbol),
-      SymbolKind.TypeParameter => new SymbolTypeParameter(this, _compilation, (ITypeParameterSymbol)symbol),
+      SymbolKind.NamedType     => new SymbolNamedType(this, (INamedTypeSymbol)symbol),
+      SymbolKind.ArrayType     => new SymbolArrayType(this, (IArrayTypeSymbol)symbol),
+      SymbolKind.TypeParameter => new SymbolTypeParameter(this, (ITypeParameterSymbol)symbol),
       _                        => throw new NotSupportedException($"Symbol of kind {symbol.Kind} is not supported.")
     };
   }

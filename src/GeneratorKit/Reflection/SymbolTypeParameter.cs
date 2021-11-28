@@ -10,8 +10,8 @@ internal sealed class SymbolTypeParameter : SymbolType
 {
   private readonly ITypeParameterSymbol _symbol;
 
-  public SymbolTypeParameter(GeneratorRuntime runtime, Compilation compilation, ITypeParameterSymbol symbol)
-    : base(runtime, compilation)
+  public SymbolTypeParameter(GeneratorRuntime runtime, ITypeParameterSymbol symbol)
+    : base(runtime)
   {
     _symbol = symbol;
   }
@@ -58,7 +58,7 @@ internal sealed class SymbolTypeParameter : SymbolType
 
   public override bool IsGenericParameter => true;
 
-  public override bool IsEnum => !_symbol.IsValueType && _symbol.ConstraintTypes.Contains(_compilation.GetSpecialType(SpecialType.System_Enum));
+  public override bool IsEnum => !_symbol.IsValueType && _symbol.ConstraintTypes.Contains(_runtime.Compilation.GetSpecialType(SpecialType.System_Enum));
 
   public override bool IsSerializable => IsEnum;
 
@@ -141,7 +141,7 @@ internal sealed class SymbolTypeParameter : SymbolType
   {
     IEnumerable<ITypeSymbol> constraintTypes = _symbol.ConstraintTypes;
     if (_symbol.HasValueTypeConstraint)
-      constraintTypes = constraintTypes.Concat(new[] { _compilation.GetSpecialType(SpecialType.System_ValueType) });
+      constraintTypes = constraintTypes.Concat(new[] { _runtime.Compilation.GetSpecialType(SpecialType.System_ValueType) });
 
     return constraintTypes
       .Select(x => _runtime.CreateTypeDelegator(x))
@@ -179,8 +179,8 @@ internal sealed class SymbolTypeParameter : SymbolType
   }
 
   private ITypeSymbol BaseTypeSymbol => _symbol.HasValueTypeConstraint
-    ? _compilation.GetSpecialType(SpecialType.System_ValueType)
+    ? _runtime.Compilation.GetSpecialType(SpecialType.System_ValueType)
     : _symbol.ConstraintTypes.Length != 0
       ? _symbol.ConstraintTypes[0]
-      : _compilation.GetSpecialType(SpecialType.System_Object);
+      : _runtime.Compilation.GetSpecialType(SpecialType.System_Object);
 }

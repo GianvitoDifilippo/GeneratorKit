@@ -564,7 +564,7 @@ public class SymbolConstructorInfoTests : IClassFixture<SymbolConstructorInfoFix
     // Arrange
     SymbolConstructorInfo sut = _fixture.GetDelegator(category);
     ConstructorInfo reference = _fixture.GetReference(category);
-  
+    
     ConstructorInfo expected = reference;
   
     // Act
