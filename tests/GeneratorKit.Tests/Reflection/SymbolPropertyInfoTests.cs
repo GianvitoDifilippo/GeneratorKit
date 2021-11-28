@@ -139,7 +139,7 @@ public class SymbolPropertyInfoTests : IClassFixture<SymbolPropertyInfoFixture>
     // Arrange
     PropertyInfo reference = _fixture.GetReference(category);
     SymbolPropertyInfo sut = _fixture.GetDelegator(category);
-
+    
     IList<CustomAttributeData> expected = reference.GetCustomAttributesData();
 
     // Act
