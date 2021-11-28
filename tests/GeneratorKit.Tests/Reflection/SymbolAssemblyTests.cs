@@ -26,6 +26,7 @@ public class SymbolAssemblyTests : IClassFixture<SymbolAssemblyFixture>
     // Arrange
     SymbolAssembly sut = _fixture.GetDelegator();
     Assembly reference = _fixture.GetReference();
+
     IEnumerable<CustomAttributeData> expected = reference.CustomAttributes;
 
     // Act
@@ -42,6 +43,7 @@ public class SymbolAssemblyTests : IClassFixture<SymbolAssemblyFixture>
     // Arrange
     SymbolAssembly sut = _fixture.GetDelegator();
     Assembly reference = _fixture.GetReference();
+
     MethodInfo? expected = reference.EntryPoint;
 
     // Act
@@ -57,6 +59,7 @@ public class SymbolAssemblyTests : IClassFixture<SymbolAssemblyFixture>
     // Arrange
     SymbolAssembly sut = _fixture.GetDelegator();
     Assembly reference = _fixture.GetReference();
+
     IEnumerable<Type> expected = reference.ExportedTypes;
     
     // Act
@@ -72,6 +75,7 @@ public class SymbolAssemblyTests : IClassFixture<SymbolAssemblyFixture>
     // Arrange
     SymbolAssembly sut = _fixture.GetDelegator();
     Assembly reference = _fixture.GetReference();
+
     string? expected = reference.FullName;
 
     // Act
@@ -87,6 +91,7 @@ public class SymbolAssemblyTests : IClassFixture<SymbolAssemblyFixture>
     // Arrange
     SymbolAssembly sut = _fixture.GetDelegator();
     Assembly reference = _fixture.GetReference();
+
     IList<CustomAttributeData> expected = reference.GetCustomAttributesData();
 
     // Act
@@ -103,6 +108,7 @@ public class SymbolAssemblyTests : IClassFixture<SymbolAssemblyFixture>
     // Arrange
     SymbolAssembly sut = _fixture.GetDelegator();
     Assembly reference = _fixture.GetReference();
+
     IEnumerable<Type> expected = reference.GetExportedTypes();
 
     // Act
@@ -157,6 +163,7 @@ public class SymbolAssemblyTests : IClassFixture<SymbolAssemblyFixture>
     // Arrange
     SymbolAssembly sut = _fixture.GetDelegator();
     Assembly reference = _fixture.GetReference();
+
     Module[] expected = reference.GetLoadedModules();
 
     // Act
@@ -172,6 +179,7 @@ public class SymbolAssemblyTests : IClassFixture<SymbolAssemblyFixture>
     // Arrange
     SymbolAssembly sut = _fixture.GetDelegator();
     Assembly reference = _fixture.GetReference();
+
     Module[] expected = reference.GetModules();
 
     // Act
@@ -187,6 +195,7 @@ public class SymbolAssemblyTests : IClassFixture<SymbolAssemblyFixture>
     // Arrange
     SymbolAssembly sut = _fixture.GetDelegator();
     Assembly reference = _fixture.GetReference();
+
     Module? expected = reference.GetModule(SymbolAssemblyFixture.AssemblyName);
 
     // Act
@@ -202,6 +211,7 @@ public class SymbolAssemblyTests : IClassFixture<SymbolAssemblyFixture>
     // Arrange
     SymbolAssembly sut = _fixture.GetDelegator();
     Assembly reference = _fixture.GetReference();
+
     string? expected = reference.GetName().FullName;
 
     // Act
@@ -217,6 +227,7 @@ public class SymbolAssemblyTests : IClassFixture<SymbolAssemblyFixture>
     // Arrange
     SymbolAssembly sut = _fixture.GetDelegator();
     Assembly reference = _fixture.GetReference();
+
     IEnumerable<Type> expected = reference.GetTypes();
 
     // Act
@@ -234,6 +245,7 @@ public class SymbolAssemblyTests : IClassFixture<SymbolAssemblyFixture>
     // Arrange
     SymbolAssembly sut = _fixture.GetDelegator();
     Assembly reference = _fixture.GetReference();
+
     Type? expected = reference.GetType(name, false, false);
 
     // Act
@@ -249,6 +261,7 @@ public class SymbolAssemblyTests : IClassFixture<SymbolAssemblyFixture>
     // Arrange
     SymbolAssembly sut = _fixture.GetDelegator();
     Assembly reference = _fixture.GetReference();
+
     Type? expected = reference.GetType("x", false, false);
 
     // Act
@@ -263,9 +276,10 @@ public class SymbolAssemblyTests : IClassFixture<SymbolAssemblyFixture>
   public void GetType_ShouldReturnType_WhenCorrectNameIsProviderAndIsNotCaseSensitive()
   {
     // Arrange
-    const string name = s_namespace + ".baseClass";
     SymbolAssembly sut = _fixture.GetDelegator();
     Assembly reference = _fixture.GetReference();
+
+    const string name = s_namespace + ".baseClass";
     Type? expected = reference.GetType(name, false, true);
 
     // Act
@@ -294,6 +308,7 @@ public class SymbolAssemblyTests : IClassFixture<SymbolAssemblyFixture>
     // Arrange
     SymbolAssembly sut = _fixture.GetDelegator();
     Assembly reference = _fixture.GetReference();
+
     bool expected = reference.IsDynamic;
 
     // Act
@@ -309,6 +324,7 @@ public class SymbolAssemblyTests : IClassFixture<SymbolAssemblyFixture>
     // Arrange
     SymbolAssembly sut = _fixture.GetDelegator();
     Assembly reference = _fixture.GetReference();
+
     IEnumerable<Module> expected = reference.Modules;
 
     // Act
@@ -324,6 +340,7 @@ public class SymbolAssemblyTests : IClassFixture<SymbolAssemblyFixture>
     // Arrange
     SymbolAssembly sut = _fixture.GetDelegator();
     Assembly reference = _fixture.GetReference();
+
     bool expected = reference.ReflectionOnly;
 
     // Act
@@ -339,6 +356,7 @@ public class SymbolAssemblyTests : IClassFixture<SymbolAssemblyFixture>
     // Arrange
     SymbolAssembly sut = _fixture.GetDelegator();
     Assembly reference = _fixture.GetReference();
+
     SecurityRuleSet expected = reference.SecurityRuleSet;
 
     // Act

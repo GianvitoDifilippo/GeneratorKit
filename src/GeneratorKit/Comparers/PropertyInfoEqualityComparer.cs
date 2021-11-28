@@ -18,7 +18,7 @@ public class PropertyInfoEqualityComparer : IEqualityComparer<PropertyInfo>
 
     if (x.Name != y.Name) return false;
 
-    if (!TypeEqualityComparer.Default.Equals(x.DeclaringType, y.DeclaringType)) return false;
+    if (!TypeEqualityComparer.Default.Equals(x.ReflectedType, y.ReflectedType)) return false;
 
     ParameterInfo[] parameters1 = x.GetIndexParameters();
     ParameterInfo[] parameters2 = y.GetIndexParameters();

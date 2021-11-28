@@ -18,7 +18,7 @@ public class FieldInfoEqualityComparer : IEqualityComparer<FieldInfo>
 
     if (x.Name != y.Name) return false;
 
-    if (!TypeEqualityComparer.Default.Equals(x.DeclaringType, y.DeclaringType)) return false;
+    if (!TypeEqualityComparer.Default.Equals(x.ReflectedType, y.ReflectedType)) return false;
 
     return true;
   }

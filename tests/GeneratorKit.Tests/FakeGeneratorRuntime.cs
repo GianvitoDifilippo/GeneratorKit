@@ -26,6 +26,9 @@ internal class FakeGeneratorRuntime : GeneratorRuntime
 
   public override ITypeSymbol? GetTypeSymbol(Type type)
   {
+    if (type is SymbolType symbolType)
+      return symbolType.Symbol;
+
     return _symbolMap.GetValueOrDefault(type);
   }
 

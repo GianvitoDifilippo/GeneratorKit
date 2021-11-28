@@ -73,7 +73,7 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
 
   protected override SymbolType PropertyTypeCore => _runtime.CreateTypeDelegator(Symbol.Type);
 
-  protected override SymbolType ReflectedTypeCore => throw new NotImplementedException();
+  protected override SymbolType ReflectedTypeCore => _reflectedType ?? DeclaringTypeCore;
 
   protected override SymbolMethodInfo? SetMethodCore => throw new NotImplementedException();
 

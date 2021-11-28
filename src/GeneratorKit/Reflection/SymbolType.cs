@@ -42,7 +42,7 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public sealed override StructLayoutAttribute StructLayoutAttribute => throw new NotSupportedException();
 
-  public override RuntimeTypeHandle TypeHandle => GetUnderlyingRuntimeType().TypeHandle;
+  public sealed override RuntimeTypeHandle TypeHandle => GetRuntimeTypeOrThrow().TypeHandle;
 
   public sealed override Type UnderlyingSystemType => _runtime.GetRuntimeType(this) ?? this;
 
@@ -267,7 +267,7 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public sealed override object InvokeMember(string name, BindingFlags invokeAttr, Binder binder, object target, object[] args, ParameterModifier[] modifiers, CultureInfo culture, string[] namedParameters)
   {
-    return GetUnderlyingRuntimeType().InvokeMember(name, invokeAttr, binder, target, args, modifiers, culture, namedParameters);
+    return GetRuntimeTypeOrThrow().InvokeMember(name, invokeAttr, binder, target, args, modifiers, culture, namedParameters);
   }
 
   protected sealed override bool IsCOMObjectImpl()
@@ -291,7 +291,7 @@ internal abstract class SymbolType : SymbolTypeBase
 
   protected sealed override SymbolType[] FindInterfacesCore(TypeFilter filter, object filterCriteria)
   {
-    throw new NotSupportedException();
+    throw new NotImplementedException();
   }
 
   protected sealed override SymbolConstructorInfo[] GetConstructorsCore(BindingFlags bindingAttr)
@@ -374,14 +374,19 @@ internal abstract class SymbolType : SymbolTypeBase
 
   // New members
 
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   public new SymbolAssembly Assembly => AssemblyCore;
 
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   public new SymbolType? BaseType => BaseTypeCore;
 
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   public new SymbolType? DeclaringType => DeclaringTypeCore;
 
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   public new SymbolType[] GenericTypeArguments => GenericTypeArgumentsCore;
 
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   public new SymbolModule Module => ModuleCore;
 
   public new SymbolType? ReflectedType => ReflectedTypeCore;
@@ -439,7 +444,7 @@ internal abstract class SymbolType : SymbolTypeBase
 
   // Other members
 
-  internal Type GetUnderlyingRuntimeType()
+  internal Type GetRuntimeTypeOrThrow()
   {
     return _runtime.GetRuntimeType(this) ?? throw new InvalidOperationException("Could not create runtime type.");
   }
@@ -448,28 +453,28 @@ internal abstract class SymbolType : SymbolTypeBase
   {
     return GetMembersSymbols(bindingAttr, true)
       .Where(x => x is IMethodSymbol methodSymbol && methodSymbol.MethodKind is MethodKind.Constructor or MethodKind.StaticConstructor)
-      .Select(x => new SymbolConstructorInfo(_runtime, (IMethodSymbol)x));
+      .Select(x => _runtime.CreateConstructorInfoDelegator((IMethodSymbol)x));
   }
 
   private IEnumerable<SymbolEventInfo> GetEventsEnumerable(BindingFlags bindingAttr)
   {
     return GetMembersSymbols(bindingAttr, true)
       .Where(x => x.Kind is SymbolKind.Event)
-      .Select(x => new SymbolEventInfo(_runtime, (IEventSymbol)x));
+      .Select(x => new SymbolEventInfo(_runtime, (IEventSymbol)x, this));
   }
 
   private IEnumerable<SymbolFieldInfo> GetFieldsEnumerable(BindingFlags bindingAttr)
   {
     return GetMembersSymbols(bindingAttr, true)
       .Where(x => x.Kind is SymbolKind.Field)
-      .Select(x => new SymbolFieldInfo(_runtime, (IFieldSymbol)x));
+      .Select(x => new SymbolFieldInfo(_runtime, (IFieldSymbol)x, this));
   }
 
   private IEnumerable<SymbolMethodInfo> GetMethodsEnumerable(BindingFlags bindingAttr)
   {
     return GetMembersSymbols(bindingAttr, true)
       .Where(x => x is IMethodSymbol methodSymbol && methodSymbol.MethodKind is not MethodKind.Constructor and not MethodKind.StaticConstructor)
-      .Select(x => new SymbolMethodInfo(_runtime, (IMethodSymbol)x));
+      .Select(x => new SymbolMethodInfo(_runtime, (IMethodSymbol)x, this));
   }
 
   private IEnumerable<SymbolType> GetNestedTypesEnumerable(BindingFlags bindingAttr)
@@ -483,7 +488,7 @@ internal abstract class SymbolType : SymbolTypeBase
   {
     return GetMembersSymbols(bindingAttr, true)
       .Where(x => x.Kind is SymbolKind.Property)
-      .Select(x => new SymbolPropertyInfo(_runtime, (IPropertySymbol)x));
+      .Select(x => new SymbolPropertyInfo(_runtime, (IPropertySymbol)x, this));
   }
 
   private IEnumerable<MemberInfo> GetMembersEnumerable(BindingFlags bindingAttr)
@@ -492,12 +497,12 @@ internal abstract class SymbolType : SymbolTypeBase
       .Where(x => x is IFieldSymbol or IPropertySymbol or IEventSymbol or IMethodSymbol or INamedTypeSymbol)
       .Select<ISymbol, MemberInfo>(x => x switch
       {
-        IFieldSymbol fieldSymbol         => _runtime.CreateFieldInfoDelegator(fieldSymbol),
-        IPropertySymbol propertySymbol   => _runtime.CreatePropertyInfoDelegator(propertySymbol),
-        IEventSymbol eventSymbol         => _runtime.CreateEventInfoDelegator(eventSymbol),
+        IFieldSymbol fieldSymbol         => new SymbolFieldInfo(_runtime, fieldSymbol, this),
+        IPropertySymbol propertySymbol   => new SymbolPropertyInfo(_runtime, propertySymbol, this),
+        IEventSymbol eventSymbol         => new SymbolEventInfo(_runtime, eventSymbol, this),
         IMethodSymbol methodSymbol       => methodSymbol.MethodKind is MethodKind.Constructor or MethodKind.StaticConstructor
                                             ? _runtime.CreateConstructorInfoDelegator(methodSymbol)
-                                            : _runtime.CreateMethodInfoDelegator(methodSymbol),
+                                            : new SymbolMethodInfo(_runtime, methodSymbol, this),
         INamedTypeSymbol namedTypeSymbol => _runtime.CreateTypeDelegator(namedTypeSymbol),
         _ => throw new InvalidOperationException()
       });

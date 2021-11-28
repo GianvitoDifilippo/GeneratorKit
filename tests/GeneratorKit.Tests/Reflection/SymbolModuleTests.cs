@@ -24,6 +24,7 @@ public class SymbolModuleTests : IClassFixture<SymbolModuleFixture>
     // Arrange
     SymbolModule sut = _fixture.GetDelegator();
     Module reference = _fixture.GetReference();
+
     Assembly expected = reference.Assembly;
 
     // Act
@@ -39,6 +40,7 @@ public class SymbolModuleTests : IClassFixture<SymbolModuleFixture>
     // Arrange
     SymbolModule sut = _fixture.GetDelegator();
     Module reference = _fixture.GetReference();
+
     IEnumerable<CustomAttributeData> expected = reference.CustomAttributes;
 
     // Act
@@ -55,6 +57,7 @@ public class SymbolModuleTests : IClassFixture<SymbolModuleFixture>
     // Arrange
     SymbolModule sut = _fixture.GetDelegator();
     Module reference = _fixture.GetReference();
+
     string expected = reference.FullyQualifiedName;
 
     // Act
@@ -70,6 +73,7 @@ public class SymbolModuleTests : IClassFixture<SymbolModuleFixture>
     // Arrange
     SymbolModule sut = _fixture.GetDelegator();
     Module reference = _fixture.GetReference();
+
     IList<CustomAttributeData> expected = reference.GetCustomAttributesData();
 
     // Act
@@ -86,6 +90,7 @@ public class SymbolModuleTests : IClassFixture<SymbolModuleFixture>
     // Arrange
     SymbolModule sut = _fixture.GetDelegator();
     Module reference = _fixture.GetReference();
+
     IEnumerable<Type> expected = reference.GetTypes();
 
     // Act
@@ -103,6 +108,7 @@ public class SymbolModuleTests : IClassFixture<SymbolModuleFixture>
     // Arrange
     SymbolModule sut = _fixture.GetDelegator();
     Module reference = _fixture.GetReference();
+
     Type? expected = reference.GetType(name, false, false);
 
     // Act
@@ -118,6 +124,7 @@ public class SymbolModuleTests : IClassFixture<SymbolModuleFixture>
     // Arrange
     SymbolModule sut = _fixture.GetDelegator();
     Module reference = _fixture.GetReference();
+
     Type? expected = reference.GetType("x", false, false);
 
     // Act
@@ -132,9 +139,10 @@ public class SymbolModuleTests : IClassFixture<SymbolModuleFixture>
   public void GetType_ShouldReturnType_WhenCorrectNameIsProviderAndIsNotCaseSensitive()
   {
     // Arrange
-    const string name = s_namespace + ".baseClass";
     SymbolModule sut = _fixture.GetDelegator();
     Module reference = _fixture.GetReference();
+
+    const string name = s_namespace + ".baseClass";
     Type? expected = reference.GetType(name, false, true);
 
     // Act
@@ -163,6 +171,7 @@ public class SymbolModuleTests : IClassFixture<SymbolModuleFixture>
     // Arrange
     SymbolModule sut = _fixture.GetDelegator();
     Module reference = _fixture.GetReference();
+
     string expected = reference.Name;
 
     // Act
@@ -178,6 +187,7 @@ public class SymbolModuleTests : IClassFixture<SymbolModuleFixture>
     // Arrange
     SymbolModule sut = _fixture.GetDelegator();
     Module reference = _fixture.GetReference();
+
     string expected = reference.ScopeName;
 
     // Act

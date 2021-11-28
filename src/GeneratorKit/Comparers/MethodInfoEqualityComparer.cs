@@ -18,7 +18,7 @@ public class MethodInfoEqualityComparer : IEqualityComparer<MethodInfo>
 
     if (x.Name != y.Name) return false;
 
-    if (!TypeEqualityComparer.Default.Equals(x.DeclaringType, y.DeclaringType)) return false;
+    if (!TypeEqualityComparer.Default.Equals(x.ReflectedType, y.ReflectedType)) return false;
 
     ParameterInfo[] parameters1 = x.GetParameters();
     ParameterInfo[] parameters2 = y.GetParameters();

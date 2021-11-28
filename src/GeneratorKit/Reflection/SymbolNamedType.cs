@@ -215,7 +215,7 @@ internal sealed class SymbolNamedType : SymbolType
     if (!IsEnum)
       throw new InvalidOperationException();
 
-    return _runtime.CreateTypeDelegator(_symbol.EnumUnderlyingType!).GetUnderlyingRuntimeType();
+    return _runtime.CreateTypeDelegator(_symbol.EnumUnderlyingType!).GetRuntimeTypeOrThrow();
   }
 
   public override Array GetEnumValues()
@@ -223,7 +223,7 @@ internal sealed class SymbolNamedType : SymbolType
     if (!IsEnum)
       throw new InvalidOperationException();
 
-    return GetUnderlyingRuntimeType().GetEnumValues();
+    return GetRuntimeTypeOrThrow().GetEnumValues();
   }
 
   protected override SymbolType GetGenericTypeDefinitionCore()
@@ -394,7 +394,6 @@ internal sealed class SymbolNamedType : SymbolType
     return _symbol.TypeArguments
       .Select(x => _runtime.CreateTypeDelegator(x))
       .ToArray();
-
   }
 
   protected override SymbolType[] GetGenericParameterConstraintsCore()

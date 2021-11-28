@@ -1,6 +1,9 @@
 ﻿using Microsoft.CodeAnalysis;
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 
 namespace GeneratorKit.Reflection;
@@ -8,6 +11,7 @@ namespace GeneratorKit.Reflection;
 internal sealed class SymbolParameterInfo : SymbolParameterInfoBase
 {
   private readonly GeneratorRuntime _runtime;
+  private readonly MemberInfo? _member;
 
   public SymbolParameterInfo(GeneratorRuntime runtime, IParameterSymbol symbol)
   {
@@ -18,6 +22,56 @@ internal sealed class SymbolParameterInfo : SymbolParameterInfoBase
   public IParameterSymbol Symbol { get; }
 
 
+  // System.Reflection.ParameterInfo overrides
+
+  public override ParameterAttributes Attributes
+  {
+    get
+    {
+      ParameterAttributes result = ParameterAttributes.None;
+      switch (Symbol.RefKind)
+      {
+        case RefKind.Ref:
+          result |= ParameterAttributes.Retval;
+          break;
+        case RefKind.Out:
+          result |= ParameterAttributes.Out;
+          break;
+        case RefKind.In:
+          result |= ParameterAttributes.In;
+          break;
+      }
+      if (Symbol.HasExplicitDefaultValue)
+        result |= ParameterAttributes.HasDefault;
+      if (Symbol.IsOptional)
+        result |= ParameterAttributes.Optional;
+      return result;
+    }
+  }
+
+  public override IList<CustomAttributeData> GetCustomAttributesData()
+  {
+    List<CustomAttributeData> result = Symbol
+      .GetAttributes()
+      .Select(x => (CustomAttributeData)CompilationCustomAttributeData.FromAttributeData(_runtime, x))
+      .ToList();
+    return new ReadOnlyCollection<CustomAttributeData>(result);
+  }
+
+  public override object? DefaultValue => Symbol.HasExplicitDefaultValue ? Symbol.ExplicitDefaultValue : DBNull.Value;
+
+  public override MemberInfo Member => _member ?? Symbol.ContainingSymbol switch
+  {
+    IPropertySymbol propertySymbol => _runtime.CreatePropertyInfoDelegator(propertySymbol),
+    IMethodSymbol methodSymbol     => methodSymbol.MethodKind is MethodKind.Constructor or MethodKind.StaticConstructor
+                                        ? _runtime.CreateConstructorInfoDelegator(methodSymbol)
+                                        : _runtime.CreateMethodInfoDelegator(methodSymbol),
+    _                              => throw new NotSupportedException()
+  };
+
+  public override string Name => Symbol.Name;
+
+  public override int Position => Symbol.Ordinal;
 
   // SymbolParameterInfoBase overrides
 

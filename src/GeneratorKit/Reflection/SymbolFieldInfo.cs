@@ -9,11 +9,18 @@ namespace GeneratorKit.Reflection;
 internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
 {
   private readonly GeneratorRuntime _runtime;
+  private readonly SymbolType? _reflectedType;
 
   public SymbolFieldInfo(GeneratorRuntime runtime, IFieldSymbol symbol)
   {
     _runtime = runtime;
     Symbol = symbol;
+  }
+
+  public SymbolFieldInfo(GeneratorRuntime runtime, IFieldSymbol symbol, SymbolType reflectedType)
+    : this(runtime, symbol)
+  {
+    _reflectedType = reflectedType;
   }
 
   public IFieldSymbol Symbol { get; }
@@ -61,7 +68,7 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
 
   protected override SymbolModule ModuleCore => throw new NotImplementedException();
 
-  protected override SymbolType ReflectedTypeCore => throw new NotImplementedException();
+  protected override SymbolType ReflectedTypeCore => _reflectedType ?? DeclaringTypeCore;
 }
 
 internal abstract class SymbolFieldInfoBase : FieldInfo

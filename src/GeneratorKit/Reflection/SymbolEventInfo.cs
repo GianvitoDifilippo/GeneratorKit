@@ -8,11 +8,18 @@ namespace GeneratorKit.Reflection;
 internal sealed class SymbolEventInfo : SymbolEventInfoBase
 {
   private readonly GeneratorRuntime _runtime;
+  private readonly SymbolType? _reflectedType;
 
   public SymbolEventInfo(GeneratorRuntime runtime, IEventSymbol symbol)
   {
     _runtime = runtime;
     Symbol = symbol;
+  }
+
+  public SymbolEventInfo(GeneratorRuntime runtime, IEventSymbol symbol, SymbolType reflectedType)
+    : this(runtime, symbol)
+  {
+    _reflectedType = reflectedType;
   }
 
   public IEventSymbol Symbol { get; }
@@ -53,7 +60,7 @@ internal sealed class SymbolEventInfo : SymbolEventInfoBase
 
   protected override SymbolModule ModuleCore => throw new NotImplementedException();
 
-  protected override SymbolType ReflectedTypeCore => throw new NotImplementedException();
+  protected override SymbolType ReflectedTypeCore => _reflectedType ?? DeclaringTypeCore;
 
   protected override SymbolMethodInfo? GetRaiseMethodCore(bool nonPublic)
   {

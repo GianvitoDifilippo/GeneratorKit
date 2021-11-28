@@ -38,6 +38,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     Assembly expected = reference.Assembly;
 
     // Act
@@ -54,6 +55,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     string? expected = reference.AssemblyQualifiedName;
 
     // Act
@@ -70,6 +72,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     TypeAttributes expected = reference.Attributes;
 
     // Act
@@ -85,6 +88,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     Type? expected = reference.BaseType;
 
     // Act
@@ -101,6 +105,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.ContainsGenericParameters;
 
     // Act
@@ -117,6 +122,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     IEnumerable<CustomAttributeData> expected = reference.CustomAttributes;
 
     // Act
@@ -133,6 +139,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     MethodBase? expected = reference.DeclaringMethod;
 
     // Act
@@ -149,6 +156,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     Func<MethodBase?> expected = () => reference.DeclaringMethod;
 
     // Act
@@ -165,6 +173,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     Type? expected = reference.DeclaringType;
 
     // Act
@@ -181,6 +190,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     string? expected = reference.FullName;
 
     // Act
@@ -197,6 +207,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     GenericParameterAttributes expected = reference.GenericParameterAttributes;
 
     // Act
@@ -213,6 +224,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     Func<GenericParameterAttributes> expected = () => reference.GenericParameterAttributes;
 
     // Act
@@ -229,6 +241,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     int expected = reference.GenericParameterPosition;
 
     // Act
@@ -245,6 +258,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     Func<int> expected = () => reference.GenericParameterPosition;
 
     // Act
@@ -261,6 +275,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     Type[] expected = reference.GenericTypeArguments;
 
     // Act
@@ -277,6 +292,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     int expected = reference.GetArrayRank();
 
     // Act
@@ -293,6 +309,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     Func<int> expected = () => reference.GetArrayRank();
 
     // Act
@@ -306,9 +323,10 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   public void GetConstructor1Args_ShouldBeCorrect()
   {
     // Arrange
-    Type[] types = new[] { typeof(int) };
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
+    Type[] types = new[] { typeof(int) };
     ConstructorInfo? expected = reference.GetConstructor(types);
 
     // Act
@@ -323,10 +341,11 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   public void GetConstructor2Args_ShouldBeCorrect()
   {
     // Arrange
-    Type[] types = new[] { typeof(float), typeof(float) };
-    BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Instance;
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
+    BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Instance;
+    Type[] types = new[] { typeof(float), typeof(float) };
     ConstructorInfo? expected = reference.GetConstructor(bindingAttr, types);
 
     // Act
@@ -341,10 +360,11 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   public void GetConstructor4Args_ShouldBeCorrect()
   {
     // Arrange
-    Type[] types = new[] { typeof(float), typeof(float) };
-    BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Instance;
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
+    Type[] types = new[] { typeof(float), typeof(float) };
+    BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Instance;
     ConstructorInfo? expected = reference.GetConstructor(bindingAttr, null, types, null);
 
     // Act
@@ -359,11 +379,12 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   public void GetConstructor5Args_ShouldBeCorrect()
   {
     // Arrange
-    Type[] types = new[] { typeof(float), typeof(float) };
-    BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Instance;
-    CallingConventions callConvention = CallingConventions.Standard | CallingConventions.HasThis;
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
+    BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Instance;
+    CallingConventions callConvention = CallingConventions.Standard | CallingConventions.HasThis;
+    Type[] types = new[] { typeof(float), typeof(float) };
     ConstructorInfo? expected = reference.GetConstructor(bindingAttr, null, callConvention, types, null);
 
     // Act
@@ -381,6 +402,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
     ConstructorInfo[] expected = reference.GetConstructors(bindingAttr);
 
     // Act
@@ -397,6 +419,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     IList<CustomAttributeData> expected = reference.GetCustomAttributesData();
 
     // Act
@@ -413,6 +436,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     MemberInfo[] expected = reference.GetDefaultMembers();
 
     // Act
@@ -429,6 +453,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     Type? expected = reference.GetElementType();
 
     // Act
@@ -444,6 +469,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(TypeCategory.Enum);
     Type reference = _fixture.GetReference(TypeCategory.Enum);
+
     object value = ((IList)reference.GetEnumValues())[0]!;
     string? expected = reference.GetEnumName(value);
     
@@ -460,6 +486,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(TypeCategory.Enum);
     Type reference = _fixture.GetReference(TypeCategory.Enum);
+
     string[] expected = reference.GetEnumNames();
 
     // Act
@@ -475,6 +502,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(TypeCategory.Enum);
     Type reference = _fixture.GetReference(TypeCategory.Enum);
+
     Type expected = reference.GetEnumUnderlyingType();
 
     // Act
@@ -490,6 +518,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(TypeCategory.Enum);
     Type reference = _fixture.GetReference(TypeCategory.Enum);
+
     IEnumerable<object> expected = CastToGeneric(reference.GetEnumValues());
 
     // Act
@@ -514,6 +543,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     string name = "PublicField";
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
     FieldInfo? expected = reference.GetField(name);
 
     // Act
@@ -528,10 +558,11 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   public void GetField2Args_ShouldBeCorrect()
   {
     // Arrange
-    string name = "PrivateField";
-    BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Instance;
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
+    string name = "PrivateField";
+    BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Instance;
     FieldInfo? expected = reference.GetField(name, bindingAttr);
 
     // Act
@@ -549,6 +580,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
     FieldInfo[] expected = reference.GetFields(bindingAttr);
 
     // Act
@@ -565,6 +597,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     Type[] expected = reference.GetGenericArguments();
 
     // Act
@@ -581,6 +614,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     Func<Type[]> expected = () => reference.GetGenericParameterConstraints();
 
     // Act
@@ -597,6 +631,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     Type[] expected = reference.GetGenericParameterConstraints();
 
     // Act
@@ -615,6 +650,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     Type expected = reference.GetGenericTypeDefinition();
 
     // Act
@@ -632,6 +668,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     Func<Type> expected = () => reference.GetGenericTypeDefinition();
     
     // Act
@@ -645,9 +682,10 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   public void GetInterface1Args_ShouldBeCorrect()
   {
     // Arrange
-    string name = "IDerivedInterface";
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
+    string name = "IDerivedInterface";
     Type? expected = reference.GetInterface(name);
 
     // Act
@@ -662,9 +700,10 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   public void GetInterface2Args_ShouldBeCorrect()
   {
     // Arrange
-    string name = "iderivedinterface";
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
+    string name = "iderivedinterface";
     Type? expected = reference.GetInterface(name, true);
     
     // Act
@@ -682,6 +721,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     Type[] expected = reference.GetInterfaces();
 
     // Act
@@ -695,9 +735,10 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   public void GetMember1Args_ShouldBeCorrect()
   {
     // Arrange
-    string name = "PublicStaticProperty";
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
+    string name = "PublicStaticProperty";
     MemberInfo[] expected = reference.GetMember(name);
 
     // Act
@@ -712,10 +753,11 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   public void GetMember2Args_ShouldBeCorrect()
   {
     // Arrange
-    string name = "ProtectedStaticProperty";
-    BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Static;
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
+    string name = "ProtectedStaticProperty";
+    BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Static;
     MemberInfo[] expected = reference.GetMember(name, bindingAttr);
 
     // Act
@@ -730,11 +772,12 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   public void GetMember3Args_ShouldBeCorrect()
   {
     // Arrange
+    SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
+    Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
     string name = "PrivateProtectedStaticProperty";
     MemberTypes type = MemberTypes.Property;
     BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Static;
-    SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
-    Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
     MemberInfo[] expected = reference.GetMember(name, type, bindingAttr);
     
     // Act
@@ -752,6 +795,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
     MemberInfo[] expected = reference.GetMembers(bindingAttr);
   
     // Act
@@ -765,9 +809,10 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   public void GetMethod1Args_ShouldBeCorrect()
   {
     // Arrange
-    string name = "PublicMethod";
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
+    string name = "PublicMethod";
     MethodInfo? expected = reference.GetMethod(name);
 
     // Act
@@ -782,10 +827,11 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   public void GetMethod2ArgsBindingAttrs_ShouldBeCorrect()
   {
     // Arrange
-    string name = "PrivateMethod";
-    BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Instance;
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
+    string name = "PrivateMethod";
+    BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Instance;
     MethodInfo? expected = reference.GetMethod(name, bindingAttr);
 
     // Act
@@ -800,10 +846,11 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   public void GetMethod2ArgsTypes_ShouldBeCorrect()
   {
     // Arrange
-    string name = "PublicStaticMethod";
-    Type[] types = new[] { typeof(int), typeof(string) };
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
+    string name = "PublicStaticMethod";
+    Type[] types = new[] { typeof(int), typeof(string) };
     MethodInfo? expected = reference.GetMethod(name, types);
 
     // Act
@@ -818,11 +865,12 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   public void GetMethod3Args_ShouldBeCorrect()
   {
     // Arrange
+    SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
+    Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
     string name = "PrivateMethod";
     BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Instance;
     Type[] types = new[] { typeof(int), typeof(string) };
-    SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
-    Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
     MethodInfo? expected = reference.GetMethod(name, bindingAttr, types);
 
     // Act
@@ -837,11 +885,12 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   public void GetMethod5Args_ShouldBeCorrect()
   {
     // Arrange
+    SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
+    Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
     string name = "PrivateStaticMethod";
     BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Static;
     Type[] types = new[] { typeof(int), typeof(string) };
-    SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
-    Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
     MethodInfo? expected = reference.GetMethod(name, bindingAttr, null, types, null);
 
     // Act
@@ -856,12 +905,13 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   public void GetMethod6Args_ShouldBeCorrect()
   {
     // Arrange
+    SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
+    Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
     string name = "ProtectedStaticMethod";
     BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Static;
     CallingConventions callConvention = CallingConventions.Standard | CallingConventions.HasThis;
     Type[] types = new[] { typeof(int), typeof(string) };
-    SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
-    Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
     MethodInfo? expected = reference.GetMethod(name, bindingAttr, null, callConvention, types, null);
 
     // Act
@@ -878,6 +928,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
     MethodInfo[] expected = reference.GetMethods();
 
     // Act
@@ -894,6 +945,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
     MethodInfo[] expected = reference.GetMethods(bindingAttr);
     
     // Act
@@ -907,9 +959,10 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   public void GetNestedType1Args_ShouldBeCorrect()
   {
     // Arrange
-    string name = "NestedPublicClass";
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
+    string name = "NestedPublicClass";
     Type? expected = reference.GetNestedType(name);
 
     // Act
@@ -924,10 +977,11 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   public void GetNestedType2Args_ShouldBeCorrect()
   {
     // Arrange
-    string name = "NestedProtectedClass";
-    BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Instance;
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
+    string name = "NestedProtectedClass";
+    BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Instance;
     Type? expected = reference.GetNestedType(name, bindingAttr);
 
     // Act
@@ -945,6 +999,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
     Type[] expected = reference.GetNestedTypes(bindingAttr);
 
     // Act
@@ -960,6 +1015,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
     PropertyInfo[] expected = reference.GetProperties();
 
     // Act
@@ -976,6 +1032,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
     PropertyInfo[] expected = reference.GetProperties(bindingAttr);
 
     // Act
@@ -989,9 +1046,10 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   public void GetProperty1Args_ShouldBeCorrect()
   {
     // Arrange
-    string name = "PublicProperty";
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
+    string name = "PublicProperty";
     PropertyInfo? expected = reference.GetProperty(name);
 
     // Act
@@ -1006,10 +1064,11 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   public void GetProperty2ArgsBindingAttr_ShouldBeCorrect()
   {
     // Arrange
-    string name = "InternalProperty";
-    BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Instance;
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
+    string name = "InternalProperty";
+    BindingFlags bindingAttr = BindingFlags.NonPublic | BindingFlags.Instance;
     PropertyInfo? expected = reference.GetProperty(name, bindingAttr);
 
     // Act
@@ -1024,10 +1083,11 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   public void GetProperty2ArgsTypes_ShouldBeCorrect()
   {
     // Arrange
-    string name = "Item";
-    Type[] types = new[] { typeof(int), typeof(int) };
     SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
     Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
+    string name = "Item";
+    Type[] types = new[] { typeof(int), typeof(int) };
     PropertyInfo? expected = reference.GetProperty(name, types);
 
     // Act
@@ -1042,11 +1102,12 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   public void GetProperty3Args_ShouldBeCorrect()
   {
     // Arrange
+    SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
+    Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
     string name = "Item";
     Type[] types = new[] { typeof(int), typeof(int) };
     Type returnType = typeof(int);
-    SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
-    Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
     PropertyInfo? expected = reference.GetProperty(name, returnType, types);
 
     // Act
@@ -1061,11 +1122,12 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   public void GetProperty4Args_ShouldBeCorrect()
   {
     // Arrange
+    SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
+    Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
     string name = "Item";
     Type[] types = new[] { typeof(int), typeof(int) };
     Type returnType = typeof(int);
-    SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
-    Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
     PropertyInfo? expected = reference.GetProperty(name, returnType, types, null);
 
     // Act
@@ -1080,12 +1142,13 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   public void GetProperty5Args_ShouldBeCorrect()
   {
     // Arrange
+    SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
+    Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
+
     string name = "Item";
     Type[] types = new[] { typeof(int), typeof(int) };
     Type returnType = typeof(int);
     BindingFlags bindingAttr = BindingFlags.Public | BindingFlags.Instance;
-    SymbolType sut = _fixture.GetDelegator(TypeCategory.WithAllMembers);
-    Type reference = _fixture.GetReference(TypeCategory.WithAllMembers);
     PropertyInfo? expected = reference.GetProperty(name, bindingAttr, null, returnType, types, null);
 
     // Act
@@ -1103,6 +1166,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.HasElementType;
 
     // Act
@@ -1119,6 +1183,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsAbstract;
 
     // Act
@@ -1135,6 +1200,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsAnsiClass;
 
     // Act
@@ -1151,6 +1217,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsArray;
 
     // Act
@@ -1189,8 +1256,9 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   {
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
-    SymbolType targetType = _fixture.GetDelegator(targetCategory);
     Type reference = _fixture.GetReference(category);
+
+    SymbolType targetType = _fixture.GetDelegator(targetCategory);
     Type referenceTargetType = _fixture.GetReference(targetCategory);
     bool expected = reference.IsAssignableFrom(referenceTargetType);
   
@@ -1230,8 +1298,9 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   {
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
-    SymbolType targetType = _fixture.GetDelegator(targetCategory);
     Type reference = _fixture.GetReference(category);
+
+    SymbolType targetType = _fixture.GetDelegator(targetCategory);
     Type referenceTargetType = _fixture.GetReference(targetCategory);
     bool expected = reference.IsAssignableTo(referenceTargetType);
   
@@ -1249,6 +1318,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsAutoClass;
 
     // Act
@@ -1265,6 +1335,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsAutoLayout;
 
     // Act
@@ -1281,6 +1352,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsByRef;
 
     // Act
@@ -1297,6 +1369,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsClass;
 
     // Act
@@ -1313,6 +1386,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsCOMObject;
 
     // Act
@@ -1329,6 +1403,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsConstructedGenericType;
 
     // Act
@@ -1345,6 +1420,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsContextful;
 
     // Act
@@ -1361,6 +1437,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsEnum;
 
     // Act
@@ -1376,6 +1453,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(TypeCategory.Enum);
     Type reference = _fixture.GetReference(TypeCategory.Enum);
+
     object value = ((IList)reference.GetEnumValues())[0]!;
     bool expected = reference.IsEnumDefined(value);
 
@@ -1393,6 +1471,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsExplicitLayout;
 
     // Act
@@ -1409,6 +1488,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsGenericMethodParameter;
 
     // Act
@@ -1425,6 +1505,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsGenericParameter;
 
     // Act
@@ -1441,6 +1522,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsGenericType;
 
     // Act
@@ -1457,6 +1539,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsGenericTypeDefinition;
 
     // Act
@@ -1473,6 +1556,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsGenericTypeParameter;
     
     // Act
@@ -1489,6 +1573,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsImport;
     
     // Act
@@ -1506,6 +1591,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     object instance = Activator.CreateInstance(reference)!;
     bool expected = reference.IsInstanceOfType(instance);
 
@@ -1523,6 +1609,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsInterface;
 
     // Act
@@ -1539,6 +1626,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsPrimitive;
 
     // Act
@@ -1555,6 +1643,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsLayoutSequential;
 
     // Act
@@ -1571,6 +1660,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsMarshalByRef;
 
     // Act
@@ -1587,6 +1677,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsNested;
 
     // Act
@@ -1603,6 +1694,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsNestedAssembly;
 
     // Act
@@ -1619,6 +1711,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsNestedFamANDAssem;
 
     // Act
@@ -1635,6 +1728,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsNestedFamily;
 
     // Act
@@ -1651,6 +1745,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsNestedFamORAssem;
 
     // Act
@@ -1667,6 +1762,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsNestedPrivate;
 
     // Act
@@ -1683,6 +1779,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsNestedPublic;
 
     // Act
@@ -1715,6 +1812,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsPointer;
 
     // Act
@@ -1731,6 +1829,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsPublic;
 
     // Act
@@ -1747,6 +1846,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsPublic;
 
     // Act
@@ -1763,6 +1863,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsSecurityCritical;
 
     // Act
@@ -1779,6 +1880,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsSecuritySafeCritical;
 
     // Act
@@ -1795,6 +1897,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsSecurityTransparent;
 
     // Act
@@ -1811,6 +1914,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsSerializable;
 
     // Act
@@ -1827,6 +1931,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsSignatureType;
 
     // Act
@@ -1843,6 +1948,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsSpecialName;
 
     // Act
@@ -1879,8 +1985,9 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   {
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
-    SymbolType targetType = _fixture.GetDelegator(targetCategory);
     Type reference = _fixture.GetReference(category);
+
+    SymbolType targetType = _fixture.GetDelegator(targetCategory);
     Type referenceTargetType = _fixture.GetReference(targetCategory);
     bool expected = reference.IsSubclassOf(referenceTargetType);
   
@@ -1898,6 +2005,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsUnicodeClass;
 
     // Act
@@ -1914,6 +2022,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsValueType;
 
     // Act
@@ -1930,6 +2039,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     bool expected = reference.IsVisible;
 
     // Act
@@ -1946,6 +2056,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     Type expected = reference.MakeArrayType();
 
     // Act
@@ -1978,6 +2089,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     MemberTypes expected = reference.MemberType;
     
     // Act
@@ -1994,6 +2106,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     Module expected = reference.Module;
 
     // Act
@@ -2010,6 +2123,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     string? expected = reference.Name;
 
     // Act
@@ -2026,6 +2140,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     string? expected = reference.Namespace;
 
     // Act
@@ -2042,6 +2157,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     Type? expected = reference.ReflectedType;
 
     // Act
@@ -2058,6 +2174,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     RuntimeTypeHandle expected = reference.TypeHandle;
 
     // Act
@@ -2074,6 +2191,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     ConstructorInfo? expected = reference.TypeInitializer;
 
     // Act
@@ -2090,6 +2208,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     // Arrange
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
+
     Type expected = reference.UnderlyingSystemType;
 
     // Act
