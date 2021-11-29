@@ -4,7 +4,7 @@ using System.Reflection;
 
 namespace GeneratorKit.Comparers;
 
-public class CustomAttributeDataEqualityComparer : IEqualityComparer<CustomAttributeData>
+public class CustomAttributeDataEqualityComparer : IEqualityComparer<CustomAttributeData?>
 {
   public static readonly CustomAttributeDataEqualityComparer Default = new CustomAttributeDataEqualityComparer();
 

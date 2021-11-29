@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace GeneratorKit.Comparers;
 
-public class MethodInfoEqualityComparer : IEqualityComparer<MethodInfo>
+public class MethodInfoEqualityComparer : IEqualityComparer<MethodInfo?>
 {
   public static readonly MethodInfoEqualityComparer Default = new MethodInfoEqualityComparer();
 

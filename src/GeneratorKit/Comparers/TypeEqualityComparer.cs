@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace GeneratorKit.Comparers;
 
-public class TypeEqualityComparer : IEqualityComparer<Type>
+public class TypeEqualityComparer : IEqualityComparer<Type?>
 {
   public static readonly TypeEqualityComparer Default = new TypeEqualityComparer();
 

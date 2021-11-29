@@ -2,8 +2,9 @@
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
-namespace GeneratorKit;
+namespace GeneratorKit.TestHelpers;
 
 #pragma warning disable RS1024 // Compare symbols correctly
 
@@ -18,6 +19,10 @@ internal class FakeGeneratorRuntime : GeneratorRuntime
     _typeMap = new Dictionary<ITypeSymbol, Type>(SymbolEqualityComparer.Default);
     _symbolMap = new Dictionary<Type, ITypeSymbol>();
   }
+
+  public override SymbolAssembly CompilationAssembly => throw new NotImplementedException();
+
+  public override CancellationToken CancellationToken => CancellationToken.None;
 
   public override Type? GetRuntimeType(SymbolType type)
   {

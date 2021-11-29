@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using GeneratorKit.Comparers;
+using GeneratorKit.TestHelpers;
 using System;
 using System.Collections.Generic;
 using System.Reflection;

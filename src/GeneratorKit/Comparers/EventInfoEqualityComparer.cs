@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace GeneratorKit.Comparers;
 
-public class EventInfoEqualityComparer : IEqualityComparer<EventInfo>
+public class EventInfoEqualityComparer : IEqualityComparer<EventInfo?>
 {
   public static readonly EventInfoEqualityComparer Default = new EventInfoEqualityComparer();
 

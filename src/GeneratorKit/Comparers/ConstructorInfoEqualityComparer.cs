@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace GeneratorKit.Comparers;
 
-public class ConstructorInfoEqualityComparer : IEqualityComparer<ConstructorInfo>
+public class ConstructorInfoEqualityComparer : IEqualityComparer<ConstructorInfo?>
 {
   public static readonly ConstructorInfoEqualityComparer Default = new ConstructorInfoEqualityComparer();
 

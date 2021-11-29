@@ -6,6 +6,8 @@ namespace GeneratorKit;
 
 public interface IGeneratorRuntime
 {
+  public Assembly CompilationAssembly { get; }
+
   Assembly CreateAssemblyDelegator(IAssemblySymbol symbol);
   ConstructorInfo CreateConstructorInfoDelegator(IMethodSymbol symbol);
   EventInfo CreateEventInfoDelegator(IEventSymbol symbol);

@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace GeneratorKit.Comparers;
 
-public class FieldInfoEqualityComparer : IEqualityComparer<FieldInfo>
+public class FieldInfoEqualityComparer : IEqualityComparer<FieldInfo?>
 {
   public static readonly FieldInfoEqualityComparer Default = new FieldInfoEqualityComparer();
 

@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis;
 using System;
 using System.Reflection;
+using System.Threading;
 
 namespace GeneratorKit;
 
@@ -13,6 +14,10 @@ internal abstract class GeneratorRuntime : IGeneratorRuntime
   }
 
   public Compilation Compilation { get; }
+
+  public abstract CancellationToken CancellationToken { get; }
+  
+  public abstract SymbolAssembly CompilationAssembly { get; }
 
   public abstract Type? GetRuntimeType(SymbolType type);
 
@@ -91,6 +96,10 @@ internal abstract class GeneratorRuntime : IGeneratorRuntime
       _                        => throw new NotSupportedException($"Symbol of kind {symbol.Kind} is not supported.")
     };
   }
+
+  // For now we don't expose the real types
+
+  Assembly IGeneratorRuntime.CompilationAssembly => CompilationAssembly;
 
   Assembly IGeneratorRuntime.CreateAssemblyDelegator(IAssemblySymbol symbol)
   {
