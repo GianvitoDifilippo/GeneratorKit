@@ -1,5 +1,6 @@
 ﻿#pragma warning disable RS1024 // Compare symbols correctly
 
+using GeneratorKit.Proxy;
 using GeneratorKit.Reflection;
 using Microsoft.CodeAnalysis;
 using System;
@@ -10,13 +11,16 @@ namespace GeneratorKit;
 
 internal class ConcreteGeneratorRuntime : GeneratorRuntime
 {
+  private readonly IProxyTypeFactory _proxyTypeFactory;
   private readonly SymbolAssembly _compilationAssembly;
   private readonly Dictionary<ITypeSymbol, Type> _typeMap;
 
-  public ConcreteGeneratorRuntime(Compilation compilation, CancellationToken cancellationToken)
+  public ConcreteGeneratorRuntime(Compilation compilation, IProxyTypeFactory proxyTypeFactory, CancellationToken cancellationToken)
     : base(compilation)
   {
+    _proxyTypeFactory = proxyTypeFactory;
     CancellationToken = cancellationToken;
+
     _compilationAssembly = new SymbolAssembly(this, compilation.Assembly, compilation.GetEntryPoint(cancellationToken));
     _typeMap = new Dictionary<ITypeSymbol, Type>(SymbolEqualityComparer.Default);
   }

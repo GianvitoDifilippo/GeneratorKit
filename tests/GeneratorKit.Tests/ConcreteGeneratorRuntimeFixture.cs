@@ -21,6 +21,8 @@ namespace " + Namespace + @"
 
 ";
 
+  private readonly FakeProxyTypeFactory _proxyTypeFactory;
+
   public ConcreteGeneratorRuntimeFixture()
   {
     CompilationOutput output = CompilationOutput.Create(s_source, AssemblyName);
@@ -31,6 +33,8 @@ namespace " + Namespace + @"
 
     Compilation = output.Compilation;
     Assembly = output.Assembly!;
+
+    _proxyTypeFactory = new FakeProxyTypeFactory();
   }
 
   public Compilation Compilation { get; }
@@ -50,6 +54,6 @@ namespace " + Namespace + @"
 
   internal ConcreteGeneratorRuntime GetGeneratorRuntime()
   {
-    return new ConcreteGeneratorRuntime(Compilation, CancellationToken.None);
+    return new ConcreteGeneratorRuntime(Compilation, _proxyTypeFactory, CancellationToken.None);
   }
 }
