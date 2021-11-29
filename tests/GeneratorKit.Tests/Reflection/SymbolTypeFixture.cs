@@ -56,6 +56,7 @@ namespace " + Namespace + @"
 
   internal class InternalClass { }
 
+  [System.CLSCompliant(true)]
   public class ClassWithAllMembersRoot
   {
     static ClassWithAllMembersRoot() { }
@@ -116,6 +117,7 @@ namespace " + Namespace + @"
     protected internal class RootNestedProtectedInternalClass { }
   }
 
+  [System.Obsolete]
   public class ClassWithAllMembersBase : ClassWithAllMembersRoot, IBaseInterface
   {
     static ClassWithAllMembersBase() { }
@@ -176,6 +178,7 @@ namespace " + Namespace + @"
     protected internal class BaseNestedProtectedInternalClass { }
   }
 
+  [System.Serializable]
   public class ClassWithAllMembers : ClassWithAllMembersBase, IDerivedInterface
   {
     static ClassWithAllMembers() { }
@@ -252,9 +255,6 @@ namespace " + Namespace + @"
   {
     public int DefaultMember;
   }
-
-  [System.Serializable]
-  public class SerializableClass { }
 
   public interface IWithCovariantParameter<out T1>
   {
@@ -443,9 +443,6 @@ namespace " + Namespace + @"
         break;
       case TypeCategory.Sealed:
         symbol = GetSymbolTypeFromCompilation("SealedClass");
-        break;
-      case TypeCategory.Serializable:
-        symbol = GetSymbolTypeFromCompilation("SerializableClass");
         break;
 
       case TypeCategory.ObjectArray1:
@@ -667,9 +664,6 @@ namespace " + Namespace + @"
       case TypeCategory.Sealed:
         type = GetTypeFromAssembly("SealedClass");
         break;
-      case TypeCategory.Serializable:
-        type = GetTypeFromAssembly("SerializableClass");
-        break;
 
       case TypeCategory.ObjectArray1:
         type = typeof(object[]);
@@ -799,7 +793,6 @@ public enum TypeCategory
   Enum,
   Abstract,
   Sealed,
-  Serializable,
 
   ObjectArray1 = 128,
   IntArray1,
