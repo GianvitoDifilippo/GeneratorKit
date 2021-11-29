@@ -1,17 +1,22 @@
 ﻿using GeneratorKit.Reflection;
 using Microsoft.CodeAnalysis;
 using System;
+using System.Reflection;
 
 namespace GeneratorKit;
 
-public class GeneratorRuntime : IGeneratorRuntime
+internal abstract class GeneratorRuntime : IGeneratorRuntime
 {
-  private readonly Compilation _compilation;
-
   public GeneratorRuntime(Compilation compilation)
   {
-    _compilation = compilation;
+    Compilation = compilation;
   }
+
+  public Compilation Compilation { get; }
+
+  public abstract Type? GetRuntimeType(SymbolType type);
+
+  public abstract ITypeSymbol? GetTypeSymbol(Type type);
 
   public SymbolAssembly CreateAssemblyDelegator(IAssemblySymbol symbol)
   {
@@ -65,14 +70,6 @@ public class GeneratorRuntime : IGeneratorRuntime
     return new SymbolModule(this, symbol);
   }
 
-  public SymbolParameterInfo CreateParameterInfoDelegator(IParameterSymbol symbol)
-  {
-    if (symbol is null)
-      throw new ArgumentNullException(nameof(symbol));
-
-    return new SymbolParameterInfo(this, symbol);
-  }
-
   public SymbolPropertyInfo CreatePropertyInfoDelegator(IPropertySymbol symbol)
   {
     if (symbol is null)
@@ -88,10 +85,50 @@ public class GeneratorRuntime : IGeneratorRuntime
 
     return symbol.Kind switch
     {
-      SymbolKind.NamedType     => new SymbolNamedType(this, _compilation, (INamedTypeSymbol)symbol),
-      SymbolKind.ArrayType     => new SymbolArrayType(this, _compilation, (IArrayTypeSymbol)symbol),
-      SymbolKind.TypeParameter => new SymbolParameterType(this, _compilation, (ITypeParameterSymbol)symbol),
+      SymbolKind.NamedType     => new SymbolNamedType(this, (INamedTypeSymbol)symbol),
+      SymbolKind.ArrayType     => new SymbolArrayType(this, (IArrayTypeSymbol)symbol),
+      SymbolKind.TypeParameter => new SymbolTypeParameter(this, (ITypeParameterSymbol)symbol),
       _                        => throw new NotSupportedException($"Symbol of kind {symbol.Kind} is not supported.")
     };
+  }
+
+  Assembly IGeneratorRuntime.CreateAssemblyDelegator(IAssemblySymbol symbol)
+  {
+    return CreateAssemblyDelegator(symbol);
+  }
+
+  ConstructorInfo IGeneratorRuntime.CreateConstructorInfoDelegator(IMethodSymbol symbol)
+  {
+    return CreateConstructorInfoDelegator(symbol);
+  }
+
+  EventInfo IGeneratorRuntime.CreateEventInfoDelegator(IEventSymbol symbol)
+  {
+    return CreateEventInfoDelegator(symbol);
+  }
+
+  FieldInfo IGeneratorRuntime.CreateFieldInfoDelegator(IFieldSymbol symbol)
+  {
+    return CreateFieldInfoDelegator(symbol);
+  }
+
+  MethodInfo IGeneratorRuntime.CreateMethodInfoDelegator(IMethodSymbol symbol)
+  {
+    return CreateMethodInfoDelegator(symbol);
+  }
+
+  Module IGeneratorRuntime.CreateModuleDelegator(IModuleSymbol symbol)
+  {
+    return CreateModuleDelegator(symbol);
+  }
+
+  PropertyInfo IGeneratorRuntime.CreatePropertyInfoDelegator(IPropertySymbol symbol)
+  {
+    return CreatePropertyInfoDelegator(symbol);
+  }
+
+  Type IGeneratorRuntime.CreateTypeDelegator(ITypeSymbol symbol)
+  {
+    return CreateTypeDelegator(symbol);
   }
 }

@@ -5,14 +5,21 @@ using System.Reflection;
 
 namespace GeneratorKit.Reflection;
 
-public sealed class SymbolEventInfo : SymbolEventInfoBase
+internal sealed class SymbolEventInfo : SymbolEventInfoBase
 {
-  private readonly IGeneratorRuntime _runtime;
+  private readonly GeneratorRuntime _runtime;
+  private readonly SymbolType? _reflectedType;
 
-  internal SymbolEventInfo(IGeneratorRuntime runtime, IEventSymbol symbol)
+  public SymbolEventInfo(GeneratorRuntime runtime, IEventSymbol symbol)
   {
     _runtime = runtime;
     Symbol = symbol;
+  }
+
+  public SymbolEventInfo(GeneratorRuntime runtime, IEventSymbol symbol, SymbolType reflectedType)
+    : this(runtime, symbol)
+  {
+    _reflectedType = reflectedType;
   }
 
   public IEventSymbol Symbol { get; }
@@ -22,7 +29,12 @@ public sealed class SymbolEventInfo : SymbolEventInfoBase
 
   public override EventAttributes Attributes => throw new NotImplementedException();
 
-  public override string Name => throw new NotImplementedException();
+  public override string Name => Symbol.Name;
+
+  protected override SymbolMethodInfo? GetAddMethodCore(bool nonPublic)
+  {
+    throw new NotImplementedException();
+  }
 
   public override object[] GetCustomAttributes(bool inherit)
   {
@@ -42,18 +54,13 @@ public sealed class SymbolEventInfo : SymbolEventInfoBase
 
   // SymbolEventInfoBase overrides
 
-  protected override SymbolType DeclaringTypeCore => throw new NotImplementedException();
+  protected override SymbolType DeclaringTypeCore => _runtime.CreateTypeDelegator(Symbol.ContainingType);
 
   protected override SymbolType EventHandlerTypeCore => throw new NotImplementedException();
 
   protected override SymbolModule ModuleCore => throw new NotImplementedException();
 
-  protected override SymbolType ReflectedTypeCore => throw new NotImplementedException();
-
-  protected override SymbolMethodInfo? GetAddMethodCore(bool nonPublic)
-  {
-    throw new NotImplementedException();
-  }
+  protected override SymbolType ReflectedTypeCore => _reflectedType ?? DeclaringTypeCore;
 
   protected override SymbolMethodInfo? GetRaiseMethodCore(bool nonPublic)
   {
@@ -66,9 +73,7 @@ public sealed class SymbolEventInfo : SymbolEventInfoBase
   }
 }
 
-#region Base
-
-public abstract class SymbolEventInfoBase : EventInfo
+internal abstract class SymbolEventInfoBase : EventInfo
 {
   private protected SymbolEventInfoBase() { }
 
@@ -110,5 +115,3 @@ public abstract class SymbolEventInfoBase : EventInfo
 
   protected abstract SymbolMethodInfo? GetRemoveMethodCore(bool nonPublic);
 }
-
-#endregion

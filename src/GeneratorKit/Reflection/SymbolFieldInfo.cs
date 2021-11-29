@@ -1,45 +1,142 @@
 ﻿using Microsoft.CodeAnalysis;
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
 
 namespace GeneratorKit.Reflection;
 
-public sealed class SymbolFieldInfo : SymbolFieldInfoBase
+internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
 {
-  private readonly IGeneratorRuntime _runtime;
+  private readonly GeneratorRuntime _runtime;
+  private readonly SymbolType? _reflectedType;
+  private FieldInfo? _runtimeField;
 
-  internal SymbolFieldInfo(IGeneratorRuntime runtime, IFieldSymbol symbol)
+  public SymbolFieldInfo(GeneratorRuntime runtime, IFieldSymbol symbol)
   {
     _runtime = runtime;
     Symbol = symbol;
   }
 
+  public SymbolFieldInfo(GeneratorRuntime runtime, IFieldSymbol symbol, SymbolType reflectedType)
+    : this(runtime, symbol)
+  {
+    _reflectedType = reflectedType;
+  }
+
   public IFieldSymbol Symbol { get; }
+
+  public FieldInfo RuntimeField
+  {
+    get
+    {
+      if (_runtimeField is null)
+      {
+        BindingFlags bindingAttr =
+          (Symbol.DeclaredAccessibility is Accessibility.Public ? BindingFlags.Public : BindingFlags.NonPublic) |
+          (Symbol.IsStatic ? BindingFlags.Static : BindingFlags.Instance);
+
+        _runtimeField = ReflectedTypeCore.UnderlyingSystemType.GetField(Name, bindingAttr);
+      }
+      return _runtimeField;
+    }
+  }
 
 
   // System.Reflection.FieldInfo overrides
 
-  public override FieldAttributes Attributes => throw new NotImplementedException();
+  public override FieldAttributes Attributes
+  {
+    get
+    {
+      FieldAttributes result = default;
 
-  public override RuntimeFieldHandle FieldHandle => throw new NotImplementedException();
+      switch (Symbol.DeclaredAccessibility)
+      {
+        case Accessibility.Public:
+          result |= FieldAttributes.Public;
+          break;
+        case Accessibility.ProtectedOrInternal:
+          result |= FieldAttributes.FamORAssem;
+          break;
+        case Accessibility.Protected:
+          result |= FieldAttributes.Family;
+          break;
+        case Accessibility.Internal:
+          result |= FieldAttributes.Assembly;
+          break;
+        case Accessibility.ProtectedAndInternal:
+          result |= FieldAttributes.FamANDAssem;
+          break;
+        case Accessibility.Private:
+          result |= FieldAttributes.Private;
+          break;
+      }
 
-  public override string Name => throw new NotImplementedException();
+      if (Symbol.IsStatic)
+        result |= FieldAttributes.Static;
+      if (Symbol.IsConst)
+        result |= FieldAttributes.Literal;
+      if (Symbol.IsReadOnly)
+        result |= FieldAttributes.InitOnly;
+      if (Symbol.HasConstantValue)
+        result |= FieldAttributes.HasDefault;
+      if (Symbol.GetAttributes().Any(x => x.AttributeClass!.ContainingNamespace.Name == "System" && x.AttributeClass!.Name == "NonSerializedAttribute"))
+        result |= FieldAttributes.NotSerialized;
+
+      return result;
+    }
+  }
+
+  public override RuntimeFieldHandle FieldHandle => RuntimeField.FieldHandle;
+
+  public override bool IsSecurityCritical => true;
+
+  public override bool IsSecuritySafeCritical => false;
+
+  public override bool IsSecurityTransparent => false;
+
+  public override MemberTypes MemberType => MemberTypes.Field;
+
+  public override int MetadataToken => throw new NotSupportedException();
+
+  public override string Name => Symbol.Name;
+
+  public override IList<CustomAttributeData> GetCustomAttributesData()
+  {
+    List<CustomAttributeData> result = Symbol
+      .GetAttributes()
+      .Select(x => (CustomAttributeData)CompilationCustomAttributeData.FromAttributeData(_runtime, x))
+      .ToList();
+    return new ReadOnlyCollection<CustomAttributeData>(result);
+  }
 
   public override object[] GetCustomAttributes(bool inherit)
   {
-    throw new NotImplementedException();
+    throw new NotSupportedException();
   }
 
   public override object[] GetCustomAttributes(Type attributeType, bool inherit)
   {
-    throw new NotImplementedException();
+    throw new NotSupportedException();
+  }
+
+  public override Type[] GetOptionalCustomModifiers()
+  {
+    throw new NotSupportedException();
+  }
+
+  public override Type[] GetRequiredCustomModifiers()
+  {
+    throw new NotSupportedException();
   }
 
   public override object GetValue(object obj)
   {
-    throw new NotImplementedException();
+    return RuntimeField.GetValue(obj);
   }
 
   public override bool IsDefined(Type attributeType, bool inherit)
@@ -49,24 +146,37 @@ public sealed class SymbolFieldInfo : SymbolFieldInfoBase
 
   public override void SetValue(object obj, object value, BindingFlags invokeAttr, Binder binder, CultureInfo culture)
   {
-    throw new NotImplementedException();
+    RuntimeField.SetValue(obj, value, invokeAttr, binder, culture);
   }
 
 
   // SymbolFieldInfoBase overrides
 
-  protected override SymbolType DeclaringTypeCore => throw new NotImplementedException();
+  protected override SymbolType DeclaringTypeCore => _runtime.CreateTypeDelegator(Symbol.ContainingType);
 
-  protected override SymbolType FieldTypeCore => throw new NotImplementedException();
+  protected override SymbolType FieldTypeCore => _runtime.CreateTypeDelegator(Symbol.Type);
 
-  protected override SymbolModule ModuleCore => throw new NotImplementedException();
+  protected override SymbolModule ModuleCore => _runtime.CreateModuleDelegator(Symbol.ContainingModule);
 
-  protected override SymbolType ReflectedTypeCore => throw new NotImplementedException();
+  protected override SymbolType ReflectedTypeCore => _reflectedType ?? DeclaringTypeCore;
+
+
+  // New members
+
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+  public new SymbolType DeclaringType => DeclaringTypeCore;
+
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+  public new SymbolType FieldType => FieldTypeCore;
+
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+  public new SymbolModule Module => ModuleCore;
+
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+  public new SymbolType ReflectedType => ReflectedTypeCore;
 }
 
-#region Base
-
-public abstract class SymbolFieldInfoBase : FieldInfo
+internal abstract class SymbolFieldInfoBase : FieldInfo
 {
   private protected SymbolFieldInfoBase() { }
 
@@ -96,5 +206,3 @@ public abstract class SymbolFieldInfoBase : FieldInfo
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   protected abstract SymbolType ReflectedTypeCore { get; }
 }
-
-#endregion

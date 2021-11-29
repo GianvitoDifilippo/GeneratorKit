@@ -1,49 +1,25 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using System;
 using System.Diagnostics;
-using System;
 using System.Reflection;
 
 namespace GeneratorKit.Reflection;
 
-public sealed class SymbolParameterInfo : SymbolParameterInfoBase
+internal abstract class SymbolParameterInfo : SymbolParameterInfoBase
 {
-  private readonly IGeneratorRuntime _runtime;
+  protected readonly GeneratorRuntime _runtime;
 
-  internal SymbolParameterInfo(IGeneratorRuntime runtime, IParameterSymbol symbol)
-  {
+  public SymbolParameterInfo(GeneratorRuntime runtime)
+{
     _runtime = runtime;
-    Symbol = symbol;
-  }
-
-  public IParameterSymbol Symbol { get; }
-
-
-  // System.Reflection.ParameterInfo overrides
-
-
-  // SymbolParameterInfoBase overrides
-
-  protected override SymbolType ParameterTypeCore => throw new NotImplementedException();
-
-  protected override SymbolType[] GetOptionalCustomModifiersCore()
-  {
-    throw new NotImplementedException();
-  }
-
-  protected override SymbolType[] GetRequiredCustomModifiersCore()
-  {
-    throw new NotImplementedException();
   }
 }
 
-#region Base
-
-public abstract class SymbolParameterInfoBase : ParameterInfo
+internal abstract class SymbolParameterInfoBase : ParameterInfo
 {
   private protected SymbolParameterInfoBase() { }
 
 
-  // System.Reflection.PropertyInfo overrides
+  // System.Reflection.ParameterInfo overrides
 
   public sealed override Type ParameterType => ParameterTypeCore;
 
@@ -61,5 +37,3 @@ public abstract class SymbolParameterInfoBase : ParameterInfo
 
   protected abstract SymbolType[] GetRequiredCustomModifiersCore();
 }
-
-#endregion

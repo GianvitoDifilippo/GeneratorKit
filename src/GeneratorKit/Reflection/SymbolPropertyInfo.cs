@@ -1,23 +1,28 @@
-﻿using Microsoft.CodeAnalysis;
-using System.Diagnostics;
+﻿using GeneratorKit.Utils;
+using Microsoft.CodeAnalysis;
 using System;
-using System.Reflection;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
+using System.Reflection;
 
 namespace GeneratorKit.Reflection;
 
-public sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
+internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
 {
-  private readonly IGeneratorRuntime _runtime;
+  private readonly GeneratorRuntime _runtime;
   private readonly SymbolType? _reflectedType;
+  private PropertyInfo? _runtimeProperty;
 
-  internal SymbolPropertyInfo(IGeneratorRuntime runtime, IPropertySymbol symbol)
+  public SymbolPropertyInfo(GeneratorRuntime runtime, IPropertySymbol symbol)
   {
     _runtime = runtime;
     Symbol = symbol;
   }
 
-  internal SymbolPropertyInfo(IGeneratorRuntime runtime, IPropertySymbol symbol, SymbolType reflectedType)
+  public SymbolPropertyInfo(GeneratorRuntime runtime, IPropertySymbol symbol, SymbolType reflectedType)
     : this(runtime, symbol)
   {
     _reflectedType = reflectedType;
@@ -25,25 +30,42 @@ public sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
 
   public IPropertySymbol Symbol { get; }
 
+  public PropertyInfo RuntimeProperty
+  {
+    get
+    {
+      if (_runtimeProperty is null)
+      {
+        BindingFlags bindingAttr =
+          (Symbol.DeclaredAccessibility is Accessibility.Public ? BindingFlags.Public : BindingFlags.NonPublic) |
+          (Symbol.IsStatic ? BindingFlags.Static : BindingFlags.Instance);
+
+        _runtimeProperty = Symbol.Name is "this[]"
+          ? ReflectedTypeCore.UnderlyingSystemType.GetProperty("Item", bindingAttr, new DelegatorBinder(0), PropertyType, GetIndexParametersCore().Select(x => x.ParameterType).ToArray(), null)
+          : ReflectedTypeCore.UnderlyingSystemType.GetProperty(Symbol.Name, bindingAttr);
+      }
+      return _runtimeProperty;
+    }
+  }
+
 
   // System.Reflection.PropertyInfo overrides
 
-  public override PropertyAttributes Attributes => throw new NotImplementedException();
+  public override PropertyAttributes Attributes => PropertyAttributes.None;
 
-  public override bool CanRead => throw new NotImplementedException();
+  public override bool CanRead => !Symbol.IsWriteOnly;
 
-  public override bool CanWrite => throw new NotImplementedException();
+  public override bool CanWrite => !Symbol.IsReadOnly;
 
-  public override string Name => throw new NotImplementedException();
+  public override MemberTypes MemberType => MemberTypes.Property;
 
-  public override object GetValue(object obj, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
+  public override int MetadataToken => throw new NotSupportedException();
+
+  public override string Name => Symbol.Name is "this[]" ? "Item" : Symbol.Name;
+
+  public override object GetConstantValue()
   {
-    throw new NotImplementedException();
-  }
-
-  public override void SetValue(object obj, object value, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
-  {
-    throw new NotImplementedException();
+    throw new NotSupportedException();
   }
 
   public override object[] GetCustomAttributes(bool inherit)
@@ -56,50 +78,124 @@ public sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
     throw new NotImplementedException();
   }
 
+  public override IList<CustomAttributeData> GetCustomAttributesData()
+  {
+    List<CustomAttributeData> result = Symbol
+      .GetAttributes()
+      .Select(x => (CustomAttributeData)CompilationCustomAttributeData.FromAttributeData(_runtime, x))
+      .ToList();
+    return new ReadOnlyCollection<CustomAttributeData>(result);
+  }
+
+  public override Type[] GetOptionalCustomModifiers()
+  {
+    throw new NotSupportedException();
+  }
+
+  public override Type[] GetRequiredCustomModifiers()
+  {
+    throw new NotSupportedException();
+  }
+
+  public override object GetRawConstantValue()
+  {
+    throw new NotSupportedException();
+  }
+
+  public override object GetValue(object obj, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
+  {
+    return RuntimeProperty.GetValue(obj, invokeAttr, binder, index, culture);
+  }
+
   public override bool IsDefined(Type attributeType, bool inherit)
   {
     throw new NotImplementedException();
   }
 
+  public override void SetValue(object obj, object value, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
+  {
+    SetValue(obj, value, invokeAttr, binder, index, culture);
+  }
+
 
   // SymbolPropertyInfoBase overrides
 
-  protected override SymbolType PropertyTypeCore => throw new NotImplementedException();
+  protected override SymbolType DeclaringTypeCore => _runtime.CreateTypeDelegator(Symbol.ContainingType);
 
-  protected override SymbolType DeclaringTypeCore => throw new NotImplementedException();
+  protected override SymbolModule ModuleCore => _runtime.CreateModuleDelegator(Symbol.ContainingModule);
 
-  protected override SymbolType ReflectedTypeCore => throw new NotImplementedException();
+  protected override SymbolType PropertyTypeCore => _runtime.CreateTypeDelegator(Symbol.Type);
 
-  protected override SymbolMethodInfo? GetMethodCore => throw new NotImplementedException();
-
-  protected override SymbolModule ModuleCore => throw new NotImplementedException();
-
-  protected override SymbolMethodInfo? SetMethodCore => throw new NotImplementedException();
+  protected override SymbolType ReflectedTypeCore => _reflectedType ?? DeclaringTypeCore;
 
   protected override SymbolMethodInfo[] GetAccessorsCore(bool nonPublic)
   {
-    throw new NotImplementedException();
+    bool includeGetMethod = CanRead && (Symbol.GetMethod!.DeclaredAccessibility == Accessibility.Public || nonPublic);
+    bool includeSetMethod = CanWrite && (Symbol.SetMethod!.DeclaredAccessibility == Accessibility.Public || nonPublic);
+
+    return includeGetMethod
+      ? includeSetMethod
+        ? new SymbolMethodInfo[] { GetMethod!, SetMethod! }
+        : new SymbolMethodInfo[] { GetMethod! }
+      : includeSetMethod
+        ? new SymbolMethodInfo[] { SetMethod! }
+        : Array.Empty<SymbolMethodInfo>();
   }
 
   protected override SymbolMethodInfo? GetGetMethodCore(bool nonPublic)
   {
-    throw new NotImplementedException();
+    return CanRead && (Symbol.GetMethod!.DeclaredAccessibility == Accessibility.Public || nonPublic)
+      ? _reflectedType is not null
+        ? new SymbolMethodInfo(_runtime, Symbol.GetMethod, _reflectedType)
+        : _runtime.CreateMethodInfoDelegator(Symbol.GetMethod)
+      : null;
   }
 
-  protected override SymbolParameterInfo[] GetIndexParametersCore()
+  protected override SymbolArgumentParameter[] GetIndexParametersCore()
   {
-    throw new NotImplementedException();
+    return Symbol.Parameters.Select(x => new SymbolArgumentParameter(_runtime, x)).ToArray();
   }
 
   protected override SymbolMethodInfo? GetSetMethodCore(bool nonPublic)
   {
-    throw new NotImplementedException();
+    return CanWrite && (Symbol.SetMethod!.DeclaredAccessibility == Accessibility.Public || nonPublic)
+      ? _reflectedType is not null
+        ? new SymbolMethodInfo(_runtime, Symbol.SetMethod, _reflectedType)
+        : _runtime.CreateMethodInfoDelegator(Symbol.SetMethod)
+      : null;
   }
+
+
+  // New members
+
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+  public new SymbolType PropertyType => PropertyTypeCore;
+
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+  public new SymbolType DeclaringType => DeclaringTypeCore;
+
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+  public new SymbolType ReflectedType => ReflectedTypeCore;
+
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+  public new SymbolMethodInfo? GetMethod => (SymbolMethodInfo?)base.GetMethod;
+
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+  public new SymbolModule Module => ModuleCore;
+
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+  public new SymbolMethodInfo? SetMethod => (SymbolMethodInfo?)base.SetMethod;
+
+  public new SymbolMethodInfo[] GetAccessors(bool nonPublic) => GetAccessorsCore(nonPublic);
+
+  public new SymbolMethodInfo? GetGetMethod(bool nonPublic) => GetGetMethodCore(nonPublic);
+
+  public new SymbolArgumentParameter[] GetIndexParameters() => GetIndexParametersCore();
+
+  public new SymbolMethodInfo? GetSetMethod(bool nonPublic) => GetSetMethodCore(nonPublic);
 }
 
-#region Base
-
-public abstract class SymbolPropertyInfoBase : PropertyInfo
+internal abstract class SymbolPropertyInfoBase : PropertyInfo
 {
   private protected SymbolPropertyInfoBase() { }
 
@@ -112,11 +208,7 @@ public abstract class SymbolPropertyInfoBase : PropertyInfo
 
   public sealed override Type ReflectedType => ReflectedTypeCore;
 
-  public sealed override MethodInfo? GetMethod => GetMethodCore;
-
   public sealed override Module Module => ModuleCore;
-
-  public sealed override MethodInfo? SetMethod => SetMethodCore;
 
   public sealed override MethodInfo[] GetAccessors(bool nonPublic) => GetAccessorsCore(nonPublic);
 
@@ -139,21 +231,13 @@ public abstract class SymbolPropertyInfoBase : PropertyInfo
   protected abstract SymbolType ReflectedTypeCore { get; }
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  protected abstract SymbolMethodInfo? GetMethodCore { get; }
-
-  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   protected abstract SymbolModule ModuleCore { get; }
-
-  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  protected abstract SymbolMethodInfo? SetMethodCore { get; }
 
   protected abstract SymbolMethodInfo[] GetAccessorsCore(bool nonPublic);
 
   protected abstract SymbolMethodInfo? GetGetMethodCore(bool nonPublic);
 
-  protected abstract SymbolParameterInfo[] GetIndexParametersCore();
+  protected abstract SymbolArgumentParameter[] GetIndexParametersCore();
 
   protected abstract SymbolMethodInfo? GetSetMethodCore(bool nonPublic);
 }
-
-#endregion
