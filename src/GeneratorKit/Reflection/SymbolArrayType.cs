@@ -55,9 +55,10 @@ internal sealed class SymbolArrayType : SymbolType
 
   public override IList<CustomAttributeData> GetCustomAttributesData()
   {
+    INamedTypeSymbol serializableAttributeSymbol = _runtime.Compilation.GetTypeByMetadataName("System.SerializableAttribute")!;
     List<CustomAttributeData> result = new List<CustomAttributeData>
     {
-      CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, _runtime.Compilation.GetTypeByMetadataName("System.SerializableAttribute")!)
+      CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, serializableAttributeSymbol)
     };
 
     return new ReadOnlyCollection<CustomAttributeData>(result);
