@@ -111,6 +111,16 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
       .GetAttributes()
       .Select(x => (CustomAttributeData)CompilationCustomAttributeData.FromAttributeData(_runtime, x))
       .ToList();
+    if (Symbol.IsImplicitlyDeclared)
+    {
+      INamedTypeSymbol compilerGeneratedAttributeSymbol = _runtime.Compilation.GetTypeByMetadataName("System.Runtime.CompilerServices.CompilerGeneratedAttribute")!;
+      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, compilerGeneratedAttributeSymbol));
+
+      INamedTypeSymbol debuggerBrowsableAttributeSymbol = _runtime.Compilation.GetTypeByMetadataName("System.Diagnostics.DebuggerBrowsableAttribute")!;
+      IMethodSymbol constructor = debuggerBrowsableAttributeSymbol.Constructors[0];
+      CustomAttributeTypedArgument[] arguments = new[] { new CustomAttributeTypedArgument(DebuggerBrowsableState.Never) };
+      result.Add(CompilationCustomAttributeData.FromSymbol(_runtime, constructor, arguments, Array.Empty<CustomAttributeNamedArgument>()));
+    }
     return new ReadOnlyCollection<CustomAttributeData>(result);
   }
 

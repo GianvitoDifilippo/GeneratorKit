@@ -1,8 +1,8 @@
 ﻿using Microsoft.CodeAnalysis;
-using System.Reflection;
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using Xunit.Sdk;
 
 namespace GeneratorKit.Reflection;
@@ -48,6 +48,8 @@ namespace " + Namespace + @"
     public const int ConstField = 2;
 
     public readonly int ReadonlyField;
+
+    public int ForBackingFieldProperty { get; set; }
   }
 }
 
@@ -140,6 +142,9 @@ namespace " + Namespace + @"
       FieldCategory.ReadonlyField
         => GetFieldFromType(_derivedType, "ReadonlyField"),
 
+      FieldCategory.BackingField
+        => GetFieldFromType(_derivedType, "<ForBackingFieldProperty>k__BackingField"),
+
       _
         => throw new InvalidOperationException()
     };
@@ -209,6 +214,9 @@ namespace " + Namespace + @"
       FieldCategory.ReadonlyField
         => GetFieldFromType(_derivedSymbol, "ReadonlyField"),
 
+      FieldCategory.BackingField
+        => GetFieldFromType(_derivedSymbol, "<ForBackingFieldProperty>k__BackingField"),
+
       _ => throw new InvalidOperationException()
     };
 
@@ -267,4 +275,5 @@ public enum FieldCategory
   BaseField,
   BaseFieldReflectedFromDerived,
   ReadonlyField,
+  BackingField
 }
