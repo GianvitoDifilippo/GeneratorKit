@@ -1,12 +1,12 @@
-﻿using GeneratorKit.Reflection;
+﻿#pragma warning disable RS1024 // Compare symbols correctly
+
+using GeneratorKit.Reflection;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 
 namespace GeneratorKit.TestHelpers;
-
-#pragma warning disable RS1024 // Compare symbols correctly
 
 internal class FakeGeneratorRuntime : GeneratorRuntime
 {

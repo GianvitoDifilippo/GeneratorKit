@@ -1,4 +1,5 @@
-﻿using GeneratorKit.TestHelpers;
+﻿using GeneratorKit.Proxy;
+using GeneratorKit.TestHelpers;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Reflection;
@@ -21,8 +22,6 @@ namespace " + Namespace + @"
 
 ";
 
-  private readonly FakeProxyTypeFactory _proxyTypeFactory;
-
   public ConcreteGeneratorRuntimeFixture()
   {
     CompilationOutput output = CompilationOutput.Create(s_source, AssemblyName);
@@ -33,8 +32,6 @@ namespace " + Namespace + @"
 
     Compilation = output.Compilation;
     Assembly = output.Assembly!;
-
-    _proxyTypeFactory = new FakeProxyTypeFactory();
   }
 
   public Compilation Compilation { get; }
@@ -52,8 +49,8 @@ namespace " + Namespace + @"
     return Assembly.GetType(name) ?? throw new Exception($"Could not find type {name} in assembly.");
   }
 
-  internal ConcreteGeneratorRuntime GetGeneratorRuntime()
+  internal ConcreteGeneratorRuntime GetGeneratorRuntime(IProxyTypeFactory factory)
   {
-    return new ConcreteGeneratorRuntime(Compilation, _proxyTypeFactory, CancellationToken.None);
+    return new ConcreteGeneratorRuntime(Compilation, factory, CancellationToken.None);
   }
 }

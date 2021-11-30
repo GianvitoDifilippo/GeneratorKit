@@ -11,8 +11,8 @@ public abstract class RuntimeSourceGenerator : ISourceGenerator
       ? $"{name}.GeneratorProxies"
       : "GeneratorProxies";
 
-    ProxyTypeFactory factory = new ProxyTypeFactory(assemblyName);
-    ConcreteGeneratorRuntime runtime = new ConcreteGeneratorRuntime(context.Compilation, factory, context.CancellationToken);
+    ProxyTypeFactory typeFactory = new ProxyTypeFactory(assemblyName);
+    ConcreteGeneratorRuntime runtime = new ConcreteGeneratorRuntime(context.Compilation, typeFactory, context.CancellationToken);
     
     Execute(context, runtime);
   }
