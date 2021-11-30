@@ -446,58 +446,58 @@ namespace " + Namespace + @"
         symbol = GetSymbolTypeFromCompilation("SealedClass");
         break;
 
-      case TypeCategory.ObjectArray1:
+      case TypeCategory.ObjectSZArray:
         symbol = _compilation.CreateArrayTypeSymbol(_compilation.GetSpecialType(SpecialType.System_Object));
         break;
-      case TypeCategory.ObjectArray2:
+      case TypeCategory.ObjectMDArray2:
         symbol = _compilation.CreateArrayTypeSymbol(_compilation.GetSpecialType(SpecialType.System_Object), 2);
         break;
-      case TypeCategory.IntArray1:
+      case TypeCategory.IntSZArray:
         symbol = _compilation.CreateArrayTypeSymbol(_compilation.GetSpecialType(SpecialType.System_Int32));
         break;
-      case TypeCategory.IntArray2:
+      case TypeCategory.IntMDArray2:
         symbol = _compilation.CreateArrayTypeSymbol(_compilation.GetSpecialType(SpecialType.System_Int32), 2);
         break;
-      case TypeCategory.OpenGenericArray1:
+      case TypeCategory.OpenGenericSZArray:
         symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("GenericClass`2"));
         break;
-      case TypeCategory.OpenGenericArray2:
+      case TypeCategory.OpenGenericMDArray2:
         symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("GenericClass`2"), 2);
         break;
-      case TypeCategory.ClosedGenericArray1:
+      case TypeCategory.ClosedGenericSZArray:
         namedSymbol = GetSymbolTypeFromCompilation("GenericClass`2");
         typeArg1Symbol = GetSymbolTypeFromCompilation("TypeArgument1");
         typeArg2Symbol = GetSymbolTypeFromCompilation("TypeArgument2");
         symbol = _compilation.CreateArrayTypeSymbol(namedSymbol.Construct(typeArg1Symbol, typeArg2Symbol));
         break;
-      case TypeCategory.ClosedGenericArray2:
+      case TypeCategory.ClosedGenericMDArray2:
         namedSymbol = GetSymbolTypeFromCompilation("GenericClass`2");
         typeArg1Symbol = GetSymbolTypeFromCompilation("TypeArgument1");
         typeArg2Symbol = GetSymbolTypeFromCompilation("TypeArgument2");
         symbol = _compilation.CreateArrayTypeSymbol(namedSymbol.Construct(typeArg1Symbol, typeArg2Symbol), 2);
         break;
-      case TypeCategory.ClassArray1:
+      case TypeCategory.ClassSZArray:
         symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("InternalClass"));
         break;
-      case TypeCategory.ClassArray2:
+      case TypeCategory.ClassMDArray2:
         symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("InternalClass"), 2);
         break;
-      case TypeCategory.InterfaceArray1:
+      case TypeCategory.InterfaceSZArray:
         symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("IDerivedInterface"));
         break;
-      case TypeCategory.InterfaceArray2:
+      case TypeCategory.InterfaceMDArray2:
         symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("IDerivedInterface"), 2);
         break;
-      case TypeCategory.StructArray1:
+      case TypeCategory.StructSZArray:
         symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("Struct"));
         break;
-      case TypeCategory.StructArray2:
+      case TypeCategory.StructMDArray2:
         symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("Struct"), 2);
         break;
-      case TypeCategory.EnumArray1:
+      case TypeCategory.EnumSZArray:
         symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("Enumeration"));
         break;
-      case TypeCategory.EnumArray2:
+      case TypeCategory.EnumMDArray2:
         symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("Enumeration"), 2);
         break;
 
@@ -662,52 +662,52 @@ namespace " + Namespace + @"
         type = GetTypeFromAssembly("SealedClass");
         break;
 
-      case TypeCategory.ObjectArray1:
-        type = GetType(TypeCategory.Object).MakeArrayType(1);
+      case TypeCategory.ObjectSZArray:
+        type = GetType(TypeCategory.Object).MakeArrayType();
         break;
-      case TypeCategory.ObjectArray2:
+      case TypeCategory.ObjectMDArray2:
         type = GetType(TypeCategory.Object).MakeArrayType(2);
         break;
-      case TypeCategory.IntArray1:
-        type = GetType(TypeCategory.Int).MakeArrayType(1);
+      case TypeCategory.IntSZArray:
+        type = GetType(TypeCategory.Int).MakeArrayType();
         break;
-      case TypeCategory.IntArray2:
+      case TypeCategory.IntMDArray2:
         type = GetType(TypeCategory.Int).MakeArrayType(2);
         break;
-      case TypeCategory.OpenGenericArray1:
-        type = GetType(TypeCategory.OpenGeneric).MakeArrayType(1);
+      case TypeCategory.OpenGenericSZArray:
+        type = GetType(TypeCategory.OpenGeneric).MakeArrayType();
         break;
-      case TypeCategory.OpenGenericArray2:
+      case TypeCategory.OpenGenericMDArray2:
         type = GetType(TypeCategory.OpenGeneric).MakeArrayType(2);
         break;
-      case TypeCategory.ClosedGenericArray1:
-        type = GetType(TypeCategory.ClosedGeneric).MakeArrayType(1);
+      case TypeCategory.ClosedGenericSZArray:
+        type = GetType(TypeCategory.ClosedGeneric).MakeArrayType();
         break;
-      case TypeCategory.ClosedGenericArray2:
+      case TypeCategory.ClosedGenericMDArray2:
         type = GetType(TypeCategory.ClosedGeneric).MakeArrayType(2);
         break;
-      case TypeCategory.ClassArray1:
-        type = GetType(TypeCategory.Internal).MakeArrayType(1);
+      case TypeCategory.ClassSZArray:
+        type = GetType(TypeCategory.Internal).MakeArrayType();
         break;
-      case TypeCategory.ClassArray2:
+      case TypeCategory.ClassMDArray2:
         type = GetType(TypeCategory.Internal).MakeArrayType(2);
         break;
-      case TypeCategory.InterfaceArray1:
-        type = GetType(TypeCategory.DerivedInterface).MakeArrayType(1);
+      case TypeCategory.InterfaceSZArray:
+        type = GetType(TypeCategory.DerivedInterface).MakeArrayType();
         break;
-      case TypeCategory.InterfaceArray2:
+      case TypeCategory.InterfaceMDArray2:
         type = GetType(TypeCategory.DerivedInterface).MakeArrayType(2);
         break;
-      case TypeCategory.StructArray1:
-        type = GetType(TypeCategory.Struct).MakeArrayType(1);
+      case TypeCategory.StructSZArray:
+        type = GetType(TypeCategory.Struct).MakeArrayType();
         break;
-      case TypeCategory.StructArray2:
+      case TypeCategory.StructMDArray2:
         type = GetType(TypeCategory.Struct).MakeArrayType(2);
         break;
-      case TypeCategory.EnumArray1:
-        type = GetType(TypeCategory.Enum).MakeArrayType(1);
+      case TypeCategory.EnumSZArray:
+        type = GetType(TypeCategory.Enum).MakeArrayType();
         break;
-      case TypeCategory.EnumArray2:
+      case TypeCategory.EnumMDArray2:
         type = GetType(TypeCategory.Enum).MakeArrayType(2);
         break;
 
@@ -796,22 +796,22 @@ public enum TypeCategory
   Abstract,
   Sealed,
 
-  ObjectArray1 = 128,
-  IntArray1,
-  OpenGenericArray1,
-  ClosedGenericArray1,
-  ClassArray1,
-  InterfaceArray1,
-  StructArray1,
-  EnumArray1,
-  ObjectArray2,
-  IntArray2,
-  OpenGenericArray2,
-  ClosedGenericArray2,
-  ClassArray2,
-  InterfaceArray2,
-  StructArray2,
-  EnumArray2,
+  ObjectSZArray = 128,
+  IntSZArray,
+  OpenGenericSZArray,
+  ClosedGenericSZArray,
+  ClassSZArray,
+  InterfaceSZArray,
+  StructSZArray,
+  EnumSZArray,
+  ObjectMDArray2,
+  IntMDArray2,
+  OpenGenericMDArray2,
+  ClosedGenericMDArray2,
+  ClassMDArray2,
+  InterfaceMDArray2,
+  StructMDArray2,
+  EnumMDArray2,
 
   CovariantTypeParameter = 192,
   ContravariantTypeParameter,

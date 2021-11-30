@@ -349,11 +349,6 @@ internal abstract class SymbolType : SymbolTypeBase
     return GetPropertiesEnumerable(bindingAttr).ToArray();
   }
 
-  protected sealed override SymbolType MakeArrayTypeCore()
-  {
-    return MakeArrayTypeCore(1);
-  }
-
   protected sealed override SymbolType MakePointerTypeCore()
   {
     throw new NotSupportedException();

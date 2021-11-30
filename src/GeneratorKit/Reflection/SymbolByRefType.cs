@@ -101,6 +101,11 @@ internal class SymbolByRefType : SymbolType
     return Array.Empty<SymbolType>();
   }
 
+  protected override SymbolType MakeArrayTypeCore()
+  {
+    throw new TypeLoadException();
+  }
+
   protected override SymbolType MakeArrayTypeCore(int rank)
   {
     throw new TypeLoadException();
