@@ -5,9 +5,15 @@ namespace GeneratorKit.Comparers;
 
 public class MethodInfoEqualityComparer : IEqualityComparer<MethodInfo?>
 {
-  public static readonly MethodInfoEqualityComparer Default = new MethodInfoEqualityComparer();
+  public static readonly MethodInfoEqualityComparer Default = new MethodInfoEqualityComparer(TypeEqualityComparer.Default);
+  public static readonly MethodInfoEqualityComparer Shallow = new MethodInfoEqualityComparer(TypeEqualityComparer.Shallow);
 
-  private MethodInfoEqualityComparer() { }
+  private readonly TypeEqualityComparer _typeComparer;
+
+  private MethodInfoEqualityComparer(TypeEqualityComparer typeComparer)
+  {
+    _typeComparer = typeComparer;
+  }
 
   public bool Equals(MethodInfo? x, MethodInfo? y)
   {
@@ -18,7 +24,7 @@ public class MethodInfoEqualityComparer : IEqualityComparer<MethodInfo?>
 
     if (x.Name != y.Name) return false;
 
-    if (!TypeEqualityComparer.Default.Equals(x.ReflectedType, y.ReflectedType)) return false;
+    if (!_typeComparer.Equals(x.ReflectedType, y.ReflectedType)) return false;
 
     ParameterInfo[] parameters1 = x.GetParameters();
     ParameterInfo[] parameters2 = y.GetParameters();
@@ -30,7 +36,7 @@ public class MethodInfoEqualityComparer : IEqualityComparer<MethodInfo?>
       ParameterInfo param1 = parameters1[i];
       ParameterInfo param2 = parameters2[i];
 
-      if (!TypeEqualityComparer.Default.Equals(param1.ParameterType, param2.ParameterType)) return false;
+      if (!_typeComparer.Equals(param1.ParameterType, param2.ParameterType)) return false;
     }
 
     return true;
@@ -43,12 +49,12 @@ public class MethodInfoEqualityComparer : IEqualityComparer<MethodInfo?>
     unchecked
     {
       int hashCode = 17;
-      hashCode = hashCode * 23 + TypeEqualityComparer.Default.GetHashCode(obj.DeclaringType);
+      hashCode = hashCode * 23 + _typeComparer.GetHashCode(obj.ReflectedType);
       hashCode = hashCode * 23 + obj.Name.GetHashCode();
 
       foreach (ParameterInfo parameter in obj.GetParameters())
       {
-        hashCode = hashCode * 23 + TypeEqualityComparer.Default.GetHashCode(parameter.ParameterType);
+        hashCode = hashCode * 23 + _typeComparer.GetHashCode(parameter.ParameterType);
       }
 
       return hashCode;

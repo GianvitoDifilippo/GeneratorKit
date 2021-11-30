@@ -9,7 +9,7 @@ internal abstract class SymbolParameterInfo : SymbolParameterInfoBase
   protected readonly GeneratorRuntime _runtime;
 
   public SymbolParameterInfo(GeneratorRuntime runtime)
-{
+  {
     _runtime = runtime;
   }
 }

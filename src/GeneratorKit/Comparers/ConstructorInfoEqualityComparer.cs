@@ -5,9 +5,15 @@ namespace GeneratorKit.Comparers;
 
 public class ConstructorInfoEqualityComparer : IEqualityComparer<ConstructorInfo?>
 {
-  public static readonly ConstructorInfoEqualityComparer Default = new ConstructorInfoEqualityComparer();
+  public static readonly ConstructorInfoEqualityComparer Default = new ConstructorInfoEqualityComparer(TypeEqualityComparer.Default);
+  public static readonly ConstructorInfoEqualityComparer Shallow = new ConstructorInfoEqualityComparer(TypeEqualityComparer.Shallow);
 
-  private ConstructorInfoEqualityComparer() { }
+  private readonly TypeEqualityComparer _typeComparer;
+
+  private ConstructorInfoEqualityComparer(TypeEqualityComparer typeComparer)
+  {
+    _typeComparer = typeComparer;
+  }
 
   public bool Equals(ConstructorInfo? x, ConstructorInfo? y)
   {
@@ -18,7 +24,7 @@ public class ConstructorInfoEqualityComparer : IEqualityComparer<ConstructorInfo
 
     if (x.IsStatic != y.IsStatic) return false;
 
-    if (!TypeEqualityComparer.Default.Equals(x.DeclaringType, y.DeclaringType)) return false;
+    if (!_typeComparer.Equals(x.DeclaringType, y.DeclaringType)) return false;
 
     ParameterInfo[] parameters1 = x.GetParameters();
     ParameterInfo[] parameters2 = y.GetParameters();
@@ -30,7 +36,7 @@ public class ConstructorInfoEqualityComparer : IEqualityComparer<ConstructorInfo
       ParameterInfo param1 = parameters1[i];
       ParameterInfo param2 = parameters2[i];
 
-      if (!TypeEqualityComparer.Default.Equals(param1.ParameterType, param2.ParameterType)) return false;
+      if (!_typeComparer.Equals(param1.ParameterType, param2.ParameterType)) return false;
     }
 
     return true;
@@ -43,11 +49,11 @@ public class ConstructorInfoEqualityComparer : IEqualityComparer<ConstructorInfo
     unchecked
     {
       int hashCode = 17;
-      hashCode = hashCode * 23 + TypeEqualityComparer.Default.GetHashCode(obj.DeclaringType);
+      hashCode = hashCode * 23 + _typeComparer.GetHashCode(obj.DeclaringType);
 
       foreach (ParameterInfo parameter in obj.GetParameters())
       {
-        hashCode = hashCode * 23 + TypeEqualityComparer.Default.GetHashCode(parameter.ParameterType);
+        hashCode = hashCode * 23 + _typeComparer.GetHashCode(parameter.ParameterType);
       }
 
       return hashCode;

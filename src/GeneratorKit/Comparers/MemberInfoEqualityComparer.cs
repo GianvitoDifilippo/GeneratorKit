@@ -4,7 +4,7 @@ using System.Reflection;
 
 namespace GeneratorKit.Comparers;
 
-public class MemberInfoEqualityComparer : IEqualityComparer<MemberInfo?>
+internal class MemberInfoEqualityComparer : IEqualityComparer<MemberInfo?>
 {
   public static readonly MemberInfoEqualityComparer Default = new MemberInfoEqualityComparer();
 

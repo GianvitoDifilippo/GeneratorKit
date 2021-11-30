@@ -5,9 +5,15 @@ namespace GeneratorKit.Comparers;
 
 public class FieldInfoEqualityComparer : IEqualityComparer<FieldInfo?>
 {
-  public static readonly FieldInfoEqualityComparer Default = new FieldInfoEqualityComparer();
+  public static readonly FieldInfoEqualityComparer Default = new FieldInfoEqualityComparer(TypeEqualityComparer.Default);
+  public static readonly FieldInfoEqualityComparer Shallow = new FieldInfoEqualityComparer(TypeEqualityComparer.Shallow);
 
-  private FieldInfoEqualityComparer() { }
+  private readonly TypeEqualityComparer _typeComparer;
+
+  private FieldInfoEqualityComparer(TypeEqualityComparer typeComparer)
+  {
+    _typeComparer = typeComparer;
+  }
 
   public bool Equals(FieldInfo? x, FieldInfo? y)
   {
@@ -18,7 +24,7 @@ public class FieldInfoEqualityComparer : IEqualityComparer<FieldInfo?>
 
     if (x.Name != y.Name) return false;
 
-    if (!TypeEqualityComparer.Default.Equals(x.ReflectedType, y.ReflectedType)) return false;
+    if (!_typeComparer.Equals(x.ReflectedType, y.ReflectedType)) return false;
 
     return true;
   }
@@ -29,7 +35,7 @@ public class FieldInfoEqualityComparer : IEqualityComparer<FieldInfo?>
 
     unchecked
     {
-      int hashCode = 391 + TypeEqualityComparer.Default.GetHashCode(obj.DeclaringType);
+      int hashCode = 391 + _typeComparer.GetHashCode(obj.ReflectedType);
       hashCode = hashCode * 23 + obj.Name.GetHashCode();
 
       return hashCode;

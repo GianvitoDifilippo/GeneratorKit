@@ -5,9 +5,15 @@ namespace GeneratorKit.Comparers;
 
 public class PropertyInfoEqualityComparer : IEqualityComparer<PropertyInfo?>
 {
-  public static readonly PropertyInfoEqualityComparer Default = new PropertyInfoEqualityComparer();
+  public static readonly PropertyInfoEqualityComparer Default = new PropertyInfoEqualityComparer(TypeEqualityComparer.Default);
+  public static readonly PropertyInfoEqualityComparer Shallow = new PropertyInfoEqualityComparer(TypeEqualityComparer.Shallow);
 
-  private PropertyInfoEqualityComparer() { }
+  private readonly TypeEqualityComparer _typeComparer;
+
+  private PropertyInfoEqualityComparer(TypeEqualityComparer typeComparer)
+  {
+    _typeComparer = typeComparer;
+  }
 
   public bool Equals(PropertyInfo? x, PropertyInfo? y)
   {
@@ -18,7 +24,7 @@ public class PropertyInfoEqualityComparer : IEqualityComparer<PropertyInfo?>
 
     if (x.Name != y.Name) return false;
 
-    if (!TypeEqualityComparer.Default.Equals(x.ReflectedType, y.ReflectedType)) return false;
+    if (!_typeComparer.Equals(x.ReflectedType, y.ReflectedType)) return false;
 
     ParameterInfo[] parameters1 = x.GetIndexParameters();
     ParameterInfo[] parameters2 = y.GetIndexParameters();
@@ -30,7 +36,7 @@ public class PropertyInfoEqualityComparer : IEqualityComparer<PropertyInfo?>
       ParameterInfo param1 = parameters1[i];
       ParameterInfo param2 = parameters2[i];
 
-      if (!TypeEqualityComparer.Default.Equals(param1.ParameterType, param2.ParameterType)) return false;
+      if (!_typeComparer.Equals(param1.ParameterType, param2.ParameterType)) return false;
     }
 
     return true;
@@ -43,12 +49,12 @@ public class PropertyInfoEqualityComparer : IEqualityComparer<PropertyInfo?>
     unchecked
     {
       int hashCode = 17;
-      hashCode = hashCode * 23 + TypeEqualityComparer.Default.GetHashCode(obj.DeclaringType);
+      hashCode = hashCode * 23 + _typeComparer.GetHashCode(obj.ReflectedType);
       hashCode = hashCode * 23 + obj.Name.GetHashCode();
 
       foreach (ParameterInfo parameter in obj.GetIndexParameters())
       {
-        hashCode = hashCode * 23 + TypeEqualityComparer.Default.GetHashCode(parameter.ParameterType);
+        hashCode = hashCode * 23 + _typeComparer.GetHashCode(parameter.ParameterType);
       }
 
       return hashCode;

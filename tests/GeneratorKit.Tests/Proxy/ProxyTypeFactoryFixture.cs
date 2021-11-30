@@ -17,9 +17,15 @@ namespace " + Namespace + @"
 {
   public class Class
   {
+    private static int _staticField;
     private readonly int _readonlyField;
     private string _initField = ""_initField"";
     private object? _field;
+
+    static Class()
+    {
+      _staticField = 1;
+    }
 
     public Class(int readonlyField)
     {
@@ -30,6 +36,7 @@ namespace " + Namespace + @"
     public string AutoProperty { get; set; }
 
     public string StringMethod(int arg1, string arg2) => throw null;
+    public void VoidMethod() => throw null;
   }
 }
 

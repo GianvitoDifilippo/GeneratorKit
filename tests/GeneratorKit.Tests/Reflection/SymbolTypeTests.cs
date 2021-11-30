@@ -2067,6 +2067,40 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     actual.Should().Equal(expected, TypeEqualityComparer.Default);
   }
 
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
+  public void MakeArrayType1_ShouldBeCorrect(TypeCategory category)
+  {
+    // Arrange
+    SymbolType sut = _fixture.GetDelegator(category);
+    Type reference = _fixture.GetReference(category);
+
+    Type expected = reference.MakeArrayType(1);
+
+    // Act
+    Type actual = sut.MakeArrayType(1);
+
+    // Assert
+    actual.Should().Equal(expected, TypeEqualityComparer.Default);
+  }
+
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
+  public void MakeArrayType2_ShouldBeCorrect(TypeCategory category)
+  {
+    // Arrange
+    SymbolType sut = _fixture.GetDelegator(category);
+    Type reference = _fixture.GetReference(category);
+
+    Type expected = reference.MakeArrayType(2);
+
+    // Act
+    Type actual = sut.MakeArrayType(2);
+
+    // Assert
+    actual.Should().Equal(expected, TypeEqualityComparer.Default);
+  }
+
   [Fact]
   public void MakeGenericType_ShouldBeCorrect()
   {
