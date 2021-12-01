@@ -15,6 +15,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
 
   public SymbolTypeTests(SymbolTypeFixture fixture)
   {
+    throw new Exception("This should not merge");
     _fixture = fixture;
   }
 
