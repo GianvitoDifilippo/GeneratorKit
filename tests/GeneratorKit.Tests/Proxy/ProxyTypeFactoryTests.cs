@@ -45,7 +45,7 @@ public class ProxyTypeFactoryTests : IClassFixture<ProxyTypeFactoryFixture>
 
     SymbolType type = _fixture.GetSymbolType(TypeCategory.Class);
     FieldInfo[] expected = type.GetFields(s_allDeclared);
-
+    
     // Act
     FieldInfo[] actual = sut.CreateProxyType(_fixture.Runtime, type)!.GetFields(s_allDeclared);
 

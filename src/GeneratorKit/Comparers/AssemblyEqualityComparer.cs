@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace GeneratorKit.Comparers;
 
-public class AssemblyEqualityComparer : IEqualityComparer<Assembly?>
+internal class AssemblyEqualityComparer : IEqualityComparer<Assembly?>
 {
   public static readonly AssemblyEqualityComparer Default = new AssemblyEqualityComparer();
 

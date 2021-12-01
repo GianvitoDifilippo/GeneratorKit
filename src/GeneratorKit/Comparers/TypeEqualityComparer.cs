@@ -4,10 +4,10 @@ using System.Linq;
 
 namespace GeneratorKit.Comparers;
 
-public abstract class TypeEqualityComparer : IEqualityComparer<Type?>
+internal abstract class TypeEqualityComparer : IEqualityComparer<Type?>
 {
   public static readonly TypeEqualityComparer Default = new DefaultComparer();
-  public static readonly TypeEqualityComparer Shallow = new ByNameComparer();
+  public static readonly TypeEqualityComparer Shallow = new ShallowComparer();
 
   public abstract bool Equals(Type? x, Type? y);
   public abstract int GetHashCode(Type? obj);
@@ -79,7 +79,7 @@ public abstract class TypeEqualityComparer : IEqualityComparer<Type?>
     }
   }
 
-  private class ByNameComparer : TypeEqualityComparer
+  private class ShallowComparer : TypeEqualityComparer
   {
     public override bool Equals(Type? x, Type? y)
     {

@@ -3,42 +3,71 @@ using System.Reflection;
 
 namespace GeneratorKit.Comparers;
 
-public class FieldInfoEqualityComparer : IEqualityComparer<FieldInfo?>
+internal abstract class FieldInfoEqualityComparer : IEqualityComparer<FieldInfo?>
 {
-  public static readonly FieldInfoEqualityComparer Default = new FieldInfoEqualityComparer(TypeEqualityComparer.Default);
-  public static readonly FieldInfoEqualityComparer Shallow = new FieldInfoEqualityComparer(TypeEqualityComparer.Shallow);
+  public static readonly FieldInfoEqualityComparer Default = new DefaultComparer();
+  public static readonly FieldInfoEqualityComparer Shallow = new ShallowComparer();
 
-  private readonly TypeEqualityComparer _typeComparer;
-
-  private FieldInfoEqualityComparer(TypeEqualityComparer typeComparer)
+  public abstract bool Equals(FieldInfo? x, FieldInfo? y);
+  public abstract int GetHashCode(FieldInfo? obj);
+  
+  private class DefaultComparer : FieldInfoEqualityComparer
   {
-    _typeComparer = typeComparer;
-  }
-
-  public bool Equals(FieldInfo? x, FieldInfo? y)
-  {
-    if (ReferenceEquals(x, y)) return true;
-
-    if (x is null) return y is null;
-    if (y is null) return false;
-
-    if (x.Name != y.Name) return false;
-
-    if (!_typeComparer.Equals(x.ReflectedType, y.ReflectedType)) return false;
-
-    return true;
-  }
-
-  public int GetHashCode(FieldInfo? obj)
-  {
-    if (obj is null) return 0;
-
-    unchecked
+    public override bool Equals(FieldInfo? x, FieldInfo? y)
     {
-      int hashCode = 391 + _typeComparer.GetHashCode(obj.ReflectedType);
-      hashCode = hashCode * 23 + obj.Name.GetHashCode();
+      if (ReferenceEquals(x, y)) return true;
 
-      return hashCode;
+      if (x is null) return y is null;
+      if (y is null) return false;
+
+      if (x.Name != y.Name) return false;
+
+      if (!TypeEqualityComparer.Default.Equals(x.ReflectedType, y.ReflectedType)) return false;
+
+      return true;
+    }
+
+    public override int GetHashCode(FieldInfo? obj)
+    {
+      if (obj is null) return 0;
+
+      unchecked
+      {
+        int hashCode = 391 + TypeEqualityComparer.Default.GetHashCode(obj.ReflectedType);
+        hashCode = hashCode * 23 + obj.Name.GetHashCode();
+
+        return hashCode;
+      }
+    }
+  }
+
+  private class ShallowComparer : FieldInfoEqualityComparer
+  {
+    public override bool Equals(FieldInfo? x, FieldInfo? y)
+    {
+      if (ReferenceEquals(x, y)) return true;
+
+      if (x is null) return y is null;
+      if (y is null) return false;
+
+      if (x.Name != y.Name) return false;
+
+      if (x.Attributes != y.Attributes) return false;
+
+      return true;
+    }
+
+    public override int GetHashCode(FieldInfo? obj)
+    {
+      if (obj is null) return 0;
+
+      unchecked
+      {
+        int hashCode = 391 + obj.Name.GetHashCode();
+        hashCode = hashCode * 23 + obj.Attributes.GetHashCode();
+
+        return hashCode;
+      }
     }
   }
 }

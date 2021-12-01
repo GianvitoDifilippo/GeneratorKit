@@ -30,13 +30,17 @@ namespace " + Namespace + @"
     private protected Class(int param1, short param2, long param3, float param4) { }
     protected internal Class(int param1, short param2, long param3, float param4, double param5) { }
   }
+
+  public class ClassWithDefaultCtor { }
 }
 
 ";
 
   private readonly FakeGeneratorRuntime _runtime;
-  private readonly Type _type;
-  private readonly INamedTypeSymbol _symbol;
+  private readonly Type _classType;
+  private readonly Type _classWithDefaultCtorType;
+  private readonly INamedTypeSymbol _classSymbol;
+  private readonly INamedTypeSymbol _classWithDefaultCtorSymbol;
 
   public SymbolConstructorInfoFixture()
   {
@@ -48,11 +52,14 @@ namespace " + Namespace + @"
 
     _runtime = new FakeGeneratorRuntime(output.Compilation);
 
-    _type = output.Assembly!.GetType(Namespace + ".Class")!;
+    _classType = output.Assembly!.GetType(Namespace + ".Class")!;
+    _classWithDefaultCtorType = output.Assembly!.GetType(Namespace + ".ClassWithDefaultCtor")!;
 
-    _symbol = output.Compilation.GetTypeByMetadataName(Namespace + ".Class")!;
+    _classSymbol = output.Compilation.GetTypeByMetadataName(Namespace + ".Class")!;
+    _classWithDefaultCtorSymbol = output.Compilation.GetTypeByMetadataName(Namespace + ".ClassWithDefaultCtor")!;
 
-    _runtime.AddType(_symbol, _type);
+    _runtime.AddType(_classSymbol, _classType);
+    _runtime.AddType(_classWithDefaultCtorSymbol, _classWithDefaultCtorType);
   }
 
   public ConstructorInfo GetReference(ConstructorCategory category)
@@ -60,25 +67,28 @@ namespace " + Namespace + @"
     return category switch
     {
       ConstructorCategory.PublicConstructor
-        => GetConstructorFromType(_type, 0),
+        => GetConstructorFromType(_classType, 0),
 
       ConstructorCategory.InternalConstructor
-        => GetConstructorFromType(_type, 1),
+        => GetConstructorFromType(_classType, 1),
 
       ConstructorCategory.PrivateConstructor
-        => GetConstructorFromType(_type, 2),
+        => GetConstructorFromType(_classType, 2),
 
       ConstructorCategory.ProtectedConstructor
-        => GetConstructorFromType(_type, 3),
+        => GetConstructorFromType(_classType, 3),
 
       ConstructorCategory.PrivateProtectedConstructor
-        => GetConstructorFromType(_type, 4),
+        => GetConstructorFromType(_classType, 4),
 
       ConstructorCategory.ProtectedInternalConstructor
-        => GetConstructorFromType(_type, 5),
+        => GetConstructorFromType(_classType, 5),
 
       ConstructorCategory.StaticConstructor
-        => _type.GetConstructors(BindingFlags.NonPublic | BindingFlags.Static)[0],
+        => _classType.GetConstructors(BindingFlags.NonPublic | BindingFlags.Static)[0],
+
+      ConstructorCategory.DefaultConstructor
+        => GetConstructorFromType(_classWithDefaultCtorType, 0),
 
       _
         => throw new InvalidOperationException()
@@ -96,25 +106,28 @@ namespace " + Namespace + @"
     IMethodSymbol symbol = category switch
     {
       ConstructorCategory.PublicConstructor
-        => GetConstructorFromType(_symbol, 0),
+        => GetConstructorFromType(_classSymbol, 0),
 
       ConstructorCategory.InternalConstructor
-        => GetConstructorFromType(_symbol, 1),
+        => GetConstructorFromType(_classSymbol, 1),
 
       ConstructorCategory.PrivateConstructor
-        => GetConstructorFromType(_symbol, 2),
+        => GetConstructorFromType(_classSymbol, 2),
 
       ConstructorCategory.ProtectedConstructor
-        => GetConstructorFromType(_symbol, 3),
+        => GetConstructorFromType(_classSymbol, 3),
 
       ConstructorCategory.PrivateProtectedConstructor
-        => GetConstructorFromType(_symbol, 4),
+        => GetConstructorFromType(_classSymbol, 4),
 
       ConstructorCategory.ProtectedInternalConstructor
-        => GetConstructorFromType(_symbol, 5),
+        => GetConstructorFromType(_classSymbol, 5),
 
       ConstructorCategory.StaticConstructor
-        => _symbol.StaticConstructors[0],
+        => _classSymbol.StaticConstructors[0],
+
+      ConstructorCategory.DefaultConstructor
+        => GetConstructorFromType(_classWithDefaultCtorSymbol, 0),
 
       _ => throw new InvalidOperationException()
     };
@@ -155,5 +168,6 @@ public enum ConstructorCategory
   ProtectedConstructor,
   PrivateProtectedConstructor,
   ProtectedInternalConstructor,
-  StaticConstructor
+  StaticConstructor,
+  DefaultConstructor
 }

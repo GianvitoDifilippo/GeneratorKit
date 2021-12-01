@@ -12,6 +12,15 @@ internal abstract class SymbolParameterInfo : SymbolParameterInfoBase
   {
     _runtime = runtime;
   }
+
+
+  // New members
+
+  public new SymbolType ParameterType => ParameterTypeCore;
+
+  public new SymbolType[] GetOptionalCustomModifiers() => GetOptionalCustomModifiersCore();
+
+  public new SymbolType[] GetRequiredCustomModifiers() => GetRequiredCustomModifiersCore();
 }
 
 internal abstract class SymbolParameterInfoBase : ParameterInfo

@@ -34,7 +34,7 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
           (Symbol.IsStatic ? BindingFlags.Static : BindingFlags.Instance) |
           BindingFlags.DeclaredOnly;
 
-        _runtimeConstructor = DeclaringTypeCore.UnderlyingSystemType.GetConstructor(bindingAttr, new DelegatorBinder(0), GetParameters().Select(x => x.ParameterType).ToArray(), null);
+        _runtimeConstructor = DeclaringTypeCore.RuntimeType.GetConstructor(bindingAttr, new DelegatorBinder(0), GetParameters().Select(x => x.ParameterType).ToArray(), null);
       }
       return _runtimeConstructor;
     }

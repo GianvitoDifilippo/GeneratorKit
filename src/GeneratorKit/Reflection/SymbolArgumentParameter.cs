@@ -50,20 +50,26 @@ internal sealed class SymbolArgumentParameter : SymbolParameterInfo
       .ToList();
     if (Symbol.IsParams)
     {
-      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, _runtime.Compilation.GetTypeByMetadataName("System.ParamArrayAttribute")!));
+      INamedTypeSymbol paramArrayAttributeSymbol = _runtime.Compilation.GetTypeByMetadataName("System.ParamArrayAttribute")!;
+      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, paramArrayAttributeSymbol));
     }
     if (Symbol.IsOptional)
     {
-      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, _runtime.Compilation.GetTypeByMetadataName("System.Runtime.InteropServices.OptionalAttribute")!));
+      INamedTypeSymbol optionalAttributeSymbol = _runtime.Compilation.GetTypeByMetadataName("System.Runtime.InteropServices.OptionalAttribute")!;
+      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, optionalAttributeSymbol));
     }
     if (Symbol.RefKind is RefKind.In)
     {
-      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, _runtime.Compilation.GetTypeByMetadataName("System.Runtime.InteropServices.InAttribute")!));
-      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, _runtime.Compilation.GetTypeByMetadataName("System.Runtime.CompilerServices.IsReadOnlyAttribute")!));
+      INamedTypeSymbol inAttributeSymbol = _runtime.Compilation.GetTypeByMetadataName("System.Runtime.InteropServices.InAttribute")!;
+      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, inAttributeSymbol));
+
+      INamedTypeSymbol isReadOnlyAttributeSymbol = _runtime.Compilation.GetTypeByMetadataName("System.Runtime.CompilerServices.IsReadOnlyAttribute")!;
+      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, isReadOnlyAttributeSymbol));
     }
     if (Symbol.RefKind is RefKind.Out)
     {
-      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, _runtime.Compilation.GetTypeByMetadataName("System.Runtime.InteropServices.OutAttribute")!));
+      INamedTypeSymbol outAttributeSymbol = _runtime.Compilation.GetTypeByMetadataName("System.Runtime.InteropServices.OutAttribute")!;
+      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, outAttributeSymbol));
     }
     return new ReadOnlyCollection<CustomAttributeData>(result);
   }

@@ -22,16 +22,6 @@ namespace " + Namespace + @"
     private string _initField = ""_initField"";
     private object? _field;
 
-    static Class()
-    {
-      _staticField = 1;
-    }
-
-    public Class(int readonlyField)
-    {
-      _readonlyField = readonlyField;
-    }
-
     public long Property { get => throw null; set => throw null; }
     public string AutoProperty { get; set; }
 
@@ -57,7 +47,15 @@ namespace " + Namespace + @"
     _runtime = new FakeGeneratorRuntime(output.Compilation);
 
     INamedTypeSymbol objectTypeSymbol = output.Compilation.GetSpecialType(SpecialType.System_Object);
+    INamedTypeSymbol intTypeSymbol = output.Compilation.GetSpecialType(SpecialType.System_Int32);
+    INamedTypeSymbol voidTypeSymbol = output.Compilation.GetSpecialType(SpecialType.System_Void);
+    INamedTypeSymbol longTypeSymbol = output.Compilation.GetSpecialType(SpecialType.System_Int64);
+    INamedTypeSymbol stringTypeSymbol = output.Compilation.GetSpecialType(SpecialType.System_String);
     _runtime.AddType(objectTypeSymbol, typeof(object));
+    _runtime.AddType(intTypeSymbol, typeof(int));
+    _runtime.AddType(voidTypeSymbol, typeof(void));
+    _runtime.AddType(longTypeSymbol, typeof(long));
+    _runtime.AddType(stringTypeSymbol, typeof(string));
   }
 
   internal GeneratorRuntime Runtime => _runtime;

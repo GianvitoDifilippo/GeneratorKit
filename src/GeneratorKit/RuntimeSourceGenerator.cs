@@ -17,7 +17,7 @@ public abstract class RuntimeSourceGenerator : ISourceGenerator
     Execute(context, runtime);
   }
 
-  public abstract void Initialize(GeneratorInitializationContext context);
+  public abstract void Execute(GeneratorExecutionContext context, IGeneratorRuntime runtime);
 
-  protected abstract void Execute(GeneratorExecutionContext context, IGeneratorRuntime runtime);
+  public abstract void Initialize(GeneratorInitializationContext context);
 }

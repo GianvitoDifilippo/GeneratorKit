@@ -42,12 +42,12 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
 
         if (!IsGenericMethodDefinition && IsGenericMethod)
         {
-          Type[] genericArguments = GetGenericArguments().Select(x => x.UnderlyingSystemType).ToArray();
+          Type[] genericArguments = GetGenericArguments().Select(x => x.RuntimeType).ToArray();
           return GetGenericMethodDefinitionCore(true).RuntimeMethod.MakeGenericMethod(genericArguments);
         }
 
         int genericParameterCount = IsGenericMethod ? GetGenericArgumentsCore().Length : 0;
-        _runtimeMethod = ReflectedTypeCore.GetRuntimeTypeOrThrow().GetMethod(Name, bindingAttr, new DelegatorBinder(genericParameterCount), CallingConvention, GetParametersCore().Select(x => x.ParameterType).ToArray(), null);
+        _runtimeMethod = ReflectedTypeCore.RuntimeType.GetMethod(Name, bindingAttr, new DelegatorBinder(genericParameterCount), CallingConvention, GetParametersCore().Select(x => x.ParameterType).ToArray(), null);
       }
       return _runtimeMethod;
     }
