@@ -1,8 +1,9 @@
 ﻿using FluentAssertions;
 using GeneratorKit.Comparers;
+using GeneratorKit.TestHelpers;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System;
 using Xunit;
 
 namespace GeneratorKit.Reflection;

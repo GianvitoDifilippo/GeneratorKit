@@ -40,7 +40,7 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public sealed override StructLayoutAttribute StructLayoutAttribute => throw new NotSupportedException();
 
-  public sealed override RuntimeTypeHandle TypeHandle => GetRuntimeTypeOrThrow().TypeHandle;
+  public sealed override RuntimeTypeHandle TypeHandle => RuntimeType.TypeHandle;
 
   public sealed override Type UnderlyingSystemType => _runtime.GetRuntimeType(this) ?? this;
 
@@ -265,7 +265,7 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public sealed override object InvokeMember(string name, BindingFlags invokeAttr, Binder binder, object target, object[] args, ParameterModifier[] modifiers, CultureInfo culture, string[] namedParameters)
   {
-    return GetRuntimeTypeOrThrow().InvokeMember(name, invokeAttr, binder, target, args, modifiers, culture, namedParameters);
+    return RuntimeType.InvokeMember(name, invokeAttr, binder, target, args, modifiers, culture, namedParameters);
   }
 
   protected sealed override bool IsCOMObjectImpl()
@@ -349,11 +349,6 @@ internal abstract class SymbolType : SymbolTypeBase
     return GetPropertiesEnumerable(bindingAttr).ToArray();
   }
 
-  protected sealed override SymbolType MakeArrayTypeCore()
-  {
-    return MakeArrayTypeCore(1);
-  }
-
   protected sealed override SymbolType MakePointerTypeCore()
   {
     throw new NotSupportedException();
@@ -432,10 +427,7 @@ internal abstract class SymbolType : SymbolTypeBase
 
   // Other members
 
-  internal Type GetRuntimeTypeOrThrow()
-  {
-    return _runtime.GetRuntimeType(this) ?? throw new InvalidOperationException("Could not create runtime type.");
-  }
+  internal Type RuntimeType => _runtime.GetRuntimeType(this) ?? throw new InvalidOperationException("Could not create runtime type.");
 
   private IEnumerable<SymbolConstructorInfo> GetConstructorsEnumerable(BindingFlags bindingAttr)
   {

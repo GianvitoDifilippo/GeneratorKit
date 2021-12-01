@@ -1,10 +1,9 @@
-﻿using GeneratorKit.Comparers;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Reflection;
 
 namespace GeneratorKit.Comparers;
 
-public class CustomAttributeDataEqualityComparer : IEqualityComparer<CustomAttributeData>
+internal class CustomAttributeDataEqualityComparer : IEqualityComparer<CustomAttributeData?>
 {
   public static readonly CustomAttributeDataEqualityComparer Default = new CustomAttributeDataEqualityComparer();
 

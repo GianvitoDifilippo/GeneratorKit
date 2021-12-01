@@ -9,9 +9,18 @@ internal abstract class SymbolParameterInfo : SymbolParameterInfoBase
   protected readonly GeneratorRuntime _runtime;
 
   public SymbolParameterInfo(GeneratorRuntime runtime)
-{
+  {
     _runtime = runtime;
   }
+
+
+  // New members
+
+  public new SymbolType ParameterType => ParameterTypeCore;
+
+  public new SymbolType[] GetOptionalCustomModifiers() => GetOptionalCustomModifiersCore();
+
+  public new SymbolType[] GetRequiredCustomModifiers() => GetRequiredCustomModifiersCore();
 }
 
 internal abstract class SymbolParameterInfoBase : ParameterInfo

@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using GeneratorKit.Comparers;
+using GeneratorKit.TestHelpers;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -2061,6 +2062,23 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
 
     // Act
     Type actual = sut.MakeArrayType();
+
+    // Assert
+    actual.Should().Equal(expected, TypeEqualityComparer.Default);
+  }
+
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
+  public void MakeArrayType2_ShouldBeCorrect(TypeCategory category)
+  {
+    // Arrange
+    SymbolType sut = _fixture.GetDelegator(category);
+    Type reference = _fixture.GetReference(category);
+
+    Type expected = reference.MakeArrayType(2);
+
+    // Act
+    Type actual = sut.MakeArrayType(2);
 
     // Assert
     actual.Should().Equal(expected, TypeEqualityComparer.Default);

@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace GeneratorKit;
+namespace GeneratorKit.TestHelpers;
 
 public static class AssertionsExtensions
 {
@@ -16,7 +16,7 @@ public static class AssertionsExtensions
     return assertions.Match(x => comparer.Equals(x, other), because, becauseArgs);
   }
 
-  public static AndConstraint<ObjectAssertions> Equal<TSubject>(this ObjectAssertions assertions, TSubject? other, IEqualityComparer<TSubject> comparer, string because = "", params object[] becauseArgs)
+  public static AndConstraint<ObjectAssertions> Equal<TSubject>(this ObjectAssertions assertions, TSubject? other, IEqualityComparer<TSubject?> comparer, string because = "", params object[] becauseArgs)
     where TSubject : class
   {
     return assertions.Match(x => comparer.Equals(x as TSubject, other), because, becauseArgs);

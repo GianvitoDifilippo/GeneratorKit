@@ -1,5 +1,6 @@
 ﻿using GeneratorKit.Comparers;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -216,7 +217,7 @@ internal sealed class SymbolNamedType : SymbolType
     if (!IsEnum)
       throw new InvalidOperationException();
 
-    return _runtime.CreateTypeDelegator(_symbol.EnumUnderlyingType!).GetRuntimeTypeOrThrow();
+    return _runtime.CreateTypeDelegator(_symbol.EnumUnderlyingType!).RuntimeType;
   }
 
   public override Array GetEnumValues()
@@ -224,7 +225,7 @@ internal sealed class SymbolNamedType : SymbolType
     if (!IsEnum)
       throw new InvalidOperationException();
 
-    return GetRuntimeTypeOrThrow().GetEnumValues();
+    return RuntimeType.GetEnumValues();
   }
 
   protected override SymbolType GetGenericTypeDefinitionCore()
@@ -407,8 +408,16 @@ internal sealed class SymbolNamedType : SymbolType
     return _symbol.AllInterfaces.Select(x => _runtime.CreateTypeDelegator(x)).ToArray();
   }
 
+  protected override SymbolType MakeArrayTypeCore()
+  {
+    return _runtime.CreateTypeDelegator(_runtime.Compilation.CreateArrayTypeSymbol(Symbol));
+  }
+
   protected override SymbolType MakeArrayTypeCore(int rank)
   {
+    if (rank == 1)
+      throw new NotSupportedException("MDArrays of rank 1 are currently not supported.");
+
     return _runtime.CreateTypeDelegator(_runtime.Compilation.CreateArrayTypeSymbol(Symbol, rank));
   }
 

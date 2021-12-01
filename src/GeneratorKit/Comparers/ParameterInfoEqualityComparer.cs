@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace GeneratorKit.Comparers;
 
-public class ParameterInfoEqualityComparer : IEqualityComparer<ParameterInfo>
+internal class ParameterInfoEqualityComparer : IEqualityComparer<ParameterInfo?>
 {
   public static readonly ParameterInfoEqualityComparer Default = new ParameterInfoEqualityComparer();
 

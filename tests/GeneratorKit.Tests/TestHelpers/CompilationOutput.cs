@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 
-namespace GeneratorKit;
+namespace GeneratorKit.TestHelpers;
 
 public record CompilationOutput(bool IsValid, Compilation Compilation, ImmutableArray<Diagnostic> Diagnostics, Assembly? Assembly)
 {

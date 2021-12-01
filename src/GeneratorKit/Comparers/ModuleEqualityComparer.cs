@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace GeneratorKit.Comparers;
 
-public class ModuleEqualityComparer : IEqualityComparer<Module>
+internal class ModuleEqualityComparer : IEqualityComparer<Module?>
 {
   public static readonly ModuleEqualityComparer Default = new ModuleEqualityComparer();
 

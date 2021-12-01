@@ -39,7 +39,7 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
           (Symbol.DeclaredAccessibility is Accessibility.Public ? BindingFlags.Public : BindingFlags.NonPublic) |
           (Symbol.IsStatic ? BindingFlags.Static : BindingFlags.Instance);
 
-        _runtimeField = ReflectedTypeCore.UnderlyingSystemType.GetField(Name, bindingAttr);
+        _runtimeField = ReflectedTypeCore.RuntimeType.GetField(Name, bindingAttr);
       }
       return _runtimeField;
     }

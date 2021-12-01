@@ -41,8 +41,8 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
           (Symbol.IsStatic ? BindingFlags.Static : BindingFlags.Instance);
 
         _runtimeProperty = Symbol.Name is "this[]"
-          ? ReflectedTypeCore.UnderlyingSystemType.GetProperty("Item", bindingAttr, new DelegatorBinder(0), PropertyType, GetIndexParametersCore().Select(x => x.ParameterType).ToArray(), null)
-          : ReflectedTypeCore.UnderlyingSystemType.GetProperty(Symbol.Name, bindingAttr);
+          ? ReflectedTypeCore.RuntimeType.GetProperty("Item", bindingAttr, new DelegatorBinder(0), PropertyType, GetIndexParametersCore().Select(x => x.ParameterType).ToArray(), null)
+          : ReflectedTypeCore.RuntimeType.GetProperty(Symbol.Name, bindingAttr);
       }
       return _runtimeProperty;
     }

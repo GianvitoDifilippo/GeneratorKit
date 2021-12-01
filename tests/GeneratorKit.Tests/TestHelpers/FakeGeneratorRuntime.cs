@@ -1,11 +1,12 @@
-﻿using GeneratorKit.Reflection;
+﻿#pragma warning disable RS1024 // Compare symbols correctly
+
+using GeneratorKit.Reflection;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
-namespace GeneratorKit;
-
-#pragma warning disable RS1024 // Compare symbols correctly
+namespace GeneratorKit.TestHelpers;
 
 internal class FakeGeneratorRuntime : GeneratorRuntime
 {
@@ -18,6 +19,10 @@ internal class FakeGeneratorRuntime : GeneratorRuntime
     _typeMap = new Dictionary<ITypeSymbol, Type>(SymbolEqualityComparer.Default);
     _symbolMap = new Dictionary<Type, ITypeSymbol>();
   }
+
+  public override SymbolAssembly CompilationAssembly => throw new NotImplementedException();
+
+  public override CancellationToken CancellationToken => CancellationToken.None;
 
   public override Type? GetRuntimeType(SymbolType type)
   {

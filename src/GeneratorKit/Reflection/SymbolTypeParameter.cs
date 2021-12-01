@@ -173,8 +173,16 @@ internal sealed class SymbolTypeParameter : SymbolType
     }
   }
 
+  protected override SymbolType MakeArrayTypeCore()
+  {
+    return _runtime.CreateTypeDelegator(_runtime.Compilation.CreateArrayTypeSymbol(Symbol));
+  }
+
   protected override SymbolType MakeArrayTypeCore(int rank)
   {
+    if (rank == 1)
+      throw new NotSupportedException("MDArrays of rank 1 are currently not supported.");
+
     return _runtime.CreateTypeDelegator(_runtime.Compilation.CreateArrayTypeSymbol(Symbol, rank));
   }
 
