@@ -6,7 +6,13 @@
     <Nullable>enable</Nullable>
     <Authors>Gianvito Difilippo</Authors>
     <Company />
+    <Summary>A library to write C# source generators more easily.</Summary>
     <Description>A library to write C# source generators more easily.</Description>
+    <PackageProjectUrl>https://github.com/GianvitoDifilippo/GeneratorKit</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/GianvitoDifilippo/GeneratorKit</RepositoryUrl>
+    <PackageTags>source;generators;reflection;compile;</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <ItemGroup>
