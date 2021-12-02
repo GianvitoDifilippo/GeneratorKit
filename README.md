@@ -42,7 +42,7 @@ Same goes for `IPropertySymbol`/`PropertyInfo`, `IMethodSymbol`/`MethodInfo`, an
 
 ## Executing user's code (preview)
 
-> Note: This is how this feature should look like when complete.
+> Note: This is how this feature should look like when finished.
 
 Once you got your type delegator, you can use the activator class to instantiate it.
 
