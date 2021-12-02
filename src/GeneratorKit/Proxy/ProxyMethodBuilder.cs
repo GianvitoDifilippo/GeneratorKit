@@ -82,7 +82,7 @@ internal class ProxyMethodBuilder
     foreach (SymbolMethodInfo method in methods)
     {
       IMethodSymbol methodSymbol = method.Symbol;
-
+      
       MethodBuilder methodBuilder = typeBuilder.DefineMethod(
         name: method.Name,
         attributes: method.Attributes,
@@ -98,6 +98,16 @@ internal class ProxyMethodBuilder
         case MethodKind.PropertySet:
           setters.Add((IPropertySymbol)methodSymbol.AssociatedSymbol!, methodBuilder);
           break;
+      }
+
+      if (methodSymbol.IsOverride)
+      {
+        SymbolMethodInfo overriddenMethod = method.OverriddenMethod!;
+        typeBuilder.DefineMethodOverride(methodBuilder, overriddenMethod.RuntimeMethod);
+      }
+      foreach (SymbolMethodInfo interfaceMethod in method.ImplementedMethods)
+      {
+        typeBuilder.DefineMethodOverride(methodBuilder, interfaceMethod.RuntimeMethod);
       }
 
       methodList.Add(new MethodData(methodBuilder, methodSymbol));

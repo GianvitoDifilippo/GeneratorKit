@@ -15,7 +15,19 @@ public class ProxyTypeFactoryFixture
 
 namespace " + Namespace + @"
 {
-  public class Class
+  public interface IInterface
+  {
+    void PublicMethod();
+    void ExplicitMethod();
+  }
+
+  public abstract class BaseClass
+  {
+    public abstract void AbstractMethod();
+    public virtual void VirtualMethod() => throw null;
+  }
+
+  public class Class : BaseClass, IInterface
   {
     private static int _staticField;
     private readonly int _readonlyField;
@@ -27,6 +39,12 @@ namespace " + Namespace + @"
 
     public string StringMethod(int arg1, string arg2) => throw null;
     public void VoidMethod() => throw null;
+
+    public override void AbstractMethod() => throw null;
+    public override void VirtualMethod() => throw null;
+
+    public void PublicMethod() => throw null;
+    void IInterface.ExplicitMethod() => throw null;
   }
 }
 
@@ -51,11 +69,19 @@ namespace " + Namespace + @"
     INamedTypeSymbol voidTypeSymbol = output.Compilation.GetSpecialType(SpecialType.System_Void);
     INamedTypeSymbol longTypeSymbol = output.Compilation.GetSpecialType(SpecialType.System_Int64);
     INamedTypeSymbol stringTypeSymbol = output.Compilation.GetSpecialType(SpecialType.System_String);
+    INamedTypeSymbol baseClassSymbol = output.Compilation.GetTypeByMetadataName($"{Namespace}.BaseClass") ?? throw new Exception("Could not find type BaseClass");
+    INamedTypeSymbol interfaceSymbol = output.Compilation.GetTypeByMetadataName($"{Namespace}.IInterface") ?? throw new Exception("Could not find type IInterface");
+    
+    Type baseClassType = output.Assembly!.GetType($"{Namespace}.BaseClass") ?? throw new Exception("Could not find type BaseClass");
+    Type interfaceType = output.Assembly!.GetType($"{Namespace}.IInterface") ?? throw new Exception("Could not find type BaseClass");
+
     _runtime.AddType(objectTypeSymbol, typeof(object));
     _runtime.AddType(intTypeSymbol, typeof(int));
     _runtime.AddType(voidTypeSymbol, typeof(void));
     _runtime.AddType(longTypeSymbol, typeof(long));
     _runtime.AddType(stringTypeSymbol, typeof(string));
+    _runtime.AddType(baseClassSymbol, baseClassType);
+    _runtime.AddType(interfaceSymbol, interfaceType);
   }
 
   internal GeneratorRuntime Runtime => _runtime;

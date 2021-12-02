@@ -45,6 +45,7 @@ namespace " + Namespace + @"
   {
     int PublicProperty { get; set; }
     int PublicMethod(int arg1, string arg2);
+    int ExplicitMethod();
   }
 
   public struct Struct { }
@@ -249,6 +250,8 @@ namespace " + Namespace + @"
     protected class NestedProtectedClass { }
     private protected class NestedPrivateProtectedClass { }
     protected internal class NestedProtectedInternalClass { }
+
+    int IDerivedInterface.ExplicitMethod() => throw null;
   }
 
   [System.Reflection.DefaultMember(""DefaultMember"")]

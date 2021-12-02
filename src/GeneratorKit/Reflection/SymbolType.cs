@@ -420,8 +420,12 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public new SymbolType[] GetInterfaces() => GetInterfacesCore();
 
+  public new SymbolMethodInfo GetMethod(string name, BindingFlags bindingAttr, Binder binder, CallingConventions callConvention, Type[] types, ParameterModifier[]? modifiers) => (SymbolMethodInfo)base.GetMethod(name, bindingAttr, binder, callConvention, types, modifiers);
+
+  public new SymbolMethodInfo[] GetMethods() => (SymbolMethodInfo[])base.GetMethods();
+
   public new SymbolMethodInfo[] GetMethods(BindingFlags bindingAttr) => GetMethodsCore(bindingAttr);
-  
+
   public new SymbolPropertyInfo[] GetProperties(BindingFlags bindingAttr) => GetPropertiesCore(bindingAttr);
 
   public new SymbolType? GetNestedType(string name, BindingFlags bindingAttr) => GetNestedTypeCore(name, bindingAttr);
