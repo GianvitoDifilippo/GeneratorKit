@@ -1,4 +1,5 @@
-﻿using GeneratorKit.Utils;
+﻿using GeneratorKit.Comparers;
+using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -157,10 +158,26 @@ internal sealed class SymbolModule : SymbolModuleBase
 
   protected override SymbolType[] GetTypesCore()
   {
-    HashSet<SymbolType> types = new HashSet<SymbolType>();
+    HashSet<SymbolType> types = new HashSet<SymbolType>(TypeEqualityComparer.Default);
     GetAllTypesVisitor visitor = new GetAllTypesVisitor(_runtime, types);
     visitor.VisitNamespace(Symbol.GlobalNamespace);
     return types.ToArray();
+  }
+
+
+  // System.Object overrides
+
+  public override bool Equals(object? obj)
+  {
+    if (obj is not Module module)
+      return false;
+
+    return ModuleEqualityComparer.Default.Equals(this, module);
+  }
+
+  public override int GetHashCode()
+  {
+    return ModuleEqualityComparer.Default.GetHashCode(this);
   }
 
 

@@ -1,4 +1,5 @@
-﻿using GeneratorKit.Utils;
+﻿using GeneratorKit.Comparers;
+using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -249,6 +250,22 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
     return _reflectedType is null
       ? _runtime.CreateMethodInfoDelegator(constructed)
       : new SymbolMethodInfo(_runtime, constructed, _reflectedType);
+  }
+
+
+  // System.Object overrides
+
+  public override bool Equals(object? obj)
+  {
+    if (obj is not MethodInfo methodInfo)
+      return false;
+
+    return MethodInfoEqualityComparer.Default.Equals(this, methodInfo);
+  }
+
+  public override int GetHashCode()
+  {
+    return MethodInfoEqualityComparer.Default.GetHashCode(this);
   }
 
 

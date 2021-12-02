@@ -1,4 +1,5 @@
-﻿using GeneratorKit.Utils;
+﻿using GeneratorKit.Comparers;
+using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -146,6 +147,22 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
   protected override SymbolArgumentParameter[] GetParametersCore()
   {
     return Symbol.Parameters.Select(x => new SymbolArgumentParameter(_runtime, x)).ToArray();
+  }
+
+
+  // System.Object overrides
+
+  public override bool Equals(object? obj)
+  {
+    if (obj is not ConstructorInfo constructorInfo)
+      return false;
+
+    return ConstructorInfoEqualityComparer.Default.Equals(this, constructorInfo);
+  }
+
+  public override int GetHashCode()
+  {
+    return ConstructorInfoEqualityComparer.Default.GetHashCode(this);
   }
 
 

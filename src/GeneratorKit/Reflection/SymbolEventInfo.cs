@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using GeneratorKit.Comparers;
+using Microsoft.CodeAnalysis;
 using System;
 using System.Diagnostics;
 using System.Reflection;
@@ -70,6 +71,22 @@ internal sealed class SymbolEventInfo : SymbolEventInfoBase
   protected override SymbolMethodInfo? GetRemoveMethodCore(bool nonPublic)
   {
     throw new NotImplementedException();
+  }
+
+
+  // System.Object overrides
+
+  public override bool Equals(object? obj)
+  {
+    if (obj is not EventInfo eventInfo)
+      return false;
+
+    return EventInfoEqualityComparer.Default.Equals(this, eventInfo);
+  }
+
+  public override int GetHashCode()
+  {
+    return EventInfoEqualityComparer.Default.GetHashCode(this);
   }
 }
 

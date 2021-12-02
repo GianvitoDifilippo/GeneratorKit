@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using GeneratorKit.Comparers;
+using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -43,6 +44,11 @@ internal abstract class SymbolType : SymbolTypeBase
   public sealed override RuntimeTypeHandle TypeHandle => RuntimeType.TypeHandle;
 
   public sealed override Type UnderlyingSystemType => _runtime.GetRuntimeType(this) ?? this;
+
+  public override bool Equals(Type? o)
+  {
+    return TypeEqualityComparer.Default.Equals(this, o);
+  }
 
   protected sealed override ConstructorInfo? GetConstructorImpl(BindingFlags bindingAttr, Binder binder, CallingConventions callConvention, Type[] types, ParameterModifier[] modifiers)
   {
@@ -352,6 +358,14 @@ internal abstract class SymbolType : SymbolTypeBase
   protected sealed override SymbolType MakePointerTypeCore()
   {
     throw new NotSupportedException();
+  }
+
+
+  // System.Object overrides
+
+  public override int GetHashCode()
+  {
+    return TypeEqualityComparer.Default.GetHashCode(this);
   }
 
 
