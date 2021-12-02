@@ -1,4 +1,5 @@
-﻿using GeneratorKit.Utils;
+﻿using GeneratorKit.Comparers;
+using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -185,6 +186,22 @@ internal sealed class SymbolAssembly : SymbolAssemblyBase
     return type is not null
       ? type
       : throwOnError ? throw new TypeLoadException() : null;
+  }
+
+
+  // System.Object overrides
+
+  public override bool Equals(object? obj)
+  {
+    if (obj is not Assembly assembly)
+      return false;
+
+    return AssemblyEqualityComparer.Default.Equals(this, assembly);
+  }
+
+  public override int GetHashCode()
+  {
+    return AssemblyEqualityComparer.Default.GetHashCode(this);
   }
 
 

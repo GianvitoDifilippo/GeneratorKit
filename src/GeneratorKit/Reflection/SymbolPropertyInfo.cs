@@ -1,4 +1,5 @@
-﻿using GeneratorKit.Utils;
+﻿using GeneratorKit.Comparers;
+using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -163,6 +164,22 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
         ? new SymbolMethodInfo(_runtime, Symbol.SetMethod, _reflectedType)
         : _runtime.CreateMethodInfoDelegator(Symbol.SetMethod)
       : null;
+  }
+
+
+  // System.Object overrides
+
+  public override bool Equals(object? obj)
+  {
+    if (obj is not PropertyInfo propertyInfo)
+      return false;
+
+    return PropertyInfoEqualityComparer.Default.Equals(this, propertyInfo);
+  }
+
+  public override int GetHashCode()
+  {
+    return PropertyInfoEqualityComparer.Default.GetHashCode(this);
   }
 
 

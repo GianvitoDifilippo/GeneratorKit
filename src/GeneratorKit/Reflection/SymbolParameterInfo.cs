@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GeneratorKit.Comparers;
+using System;
 using System.Diagnostics;
 using System.Reflection;
 
@@ -11,6 +12,22 @@ internal abstract class SymbolParameterInfo : SymbolParameterInfoBase
   public SymbolParameterInfo(GeneratorRuntime runtime)
   {
     _runtime = runtime;
+  }
+
+
+  // System.Object overrides
+
+  public override bool Equals(object? obj)
+  {
+    if (obj is not ParameterInfo parameterInfo)
+      return false;
+
+    return ParameterInfoEqualityComparer.Default.Equals(this, parameterInfo);
+  }
+
+  public override int GetHashCode()
+  {
+    return ParameterInfoEqualityComparer.Default.GetHashCode(this);
   }
 
 

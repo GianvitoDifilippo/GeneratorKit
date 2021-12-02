@@ -65,7 +65,7 @@ Assembly assembly = runtime.CompilationAssembly;
 Type baseConfigurationType = runtime.TypeOf<GeneratorConfiguration>();
 Type configurationType = assembly
     .GetTypes()
-    .FirstOrDefault(type => generatorConfigurationType.IsAssignableFrom(type));
+    .FirstOrDefault(type => baseConfigurationType.IsAssignableFrom(type));
 
 if (configurationType != null)
 {

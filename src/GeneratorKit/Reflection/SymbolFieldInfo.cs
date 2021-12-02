@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using GeneratorKit.Comparers;
+using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -169,6 +170,22 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
   protected override SymbolModule ModuleCore => _runtime.CreateModuleDelegator(Symbol.ContainingModule);
 
   protected override SymbolType ReflectedTypeCore => _reflectedType ?? DeclaringTypeCore;
+
+
+  // System.Object overrides
+
+  public override bool Equals(object? obj)
+  {
+    if (obj is not FieldInfo fieldInfo)
+      return false;
+
+    return FieldInfoEqualityComparer.Default.Equals(this, fieldInfo);
+  }
+
+  public override int GetHashCode()
+  {
+    return FieldInfoEqualityComparer.Default.GetHashCode(this);
+  }
 
 
   // New members
