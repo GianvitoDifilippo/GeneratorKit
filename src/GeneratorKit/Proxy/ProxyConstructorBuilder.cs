@@ -1,87 +1,52 @@
-﻿using Microsoft.CodeAnalysis;
-using System.Collections.Generic;
-using System.Reflection.Emit;
-using System.Reflection;
-using GeneratorKit.Reflection;
-using System.Linq;
+﻿using GeneratorKit.Reflection;
+using Microsoft.CodeAnalysis;
 using System;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Linq;
+using System.Reflection.Emit;
 
 namespace GeneratorKit.Proxy;
 
 internal class ProxyConstructorBuilder
 {
-  private const MethodAttributes s_defaultConstructorAttributes = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName;
-  private const BindingFlags s_allDeclared = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
+  private readonly IBuilderContext _context;
+  private readonly TypeBuilder _typeBuilder;
 
-  private readonly IReadOnlyCollection<ConstructorData> _constructors;
-  private readonly ConstructorBuilder? _defaultCtorBuilder;
-
-  private ProxyConstructorBuilder(IReadOnlyCollection<ConstructorData> constructors)
+  public ProxyConstructorBuilder(IBuilderContext context)
   {
-    _constructors = constructors;
+    _context = context;
+    _typeBuilder = context.TypeBuilder;
   }
 
-  private ProxyConstructorBuilder(ConstructorBuilder? defaultCtorBuilder)
+  public void BuildConstructor(SymbolConstructorInfo constructor)
   {
-    _constructors = Array.Empty<ConstructorData>();
-    _defaultCtorBuilder = defaultCtorBuilder;
-  }
-
-  public void Build(IReadOnlyDictionary<FieldBuilder, ExpressionSyntax> initializers)
-  {
-    foreach ((ConstructorBuilder builder, IMethodSymbol symbol) in _constructors)
+    if (constructor.IsStatic)
     {
-      BuildConstructor(builder, symbol, initializers);
+      BuildStaticConstructor(constructor);
     }
-
-    if (_defaultCtorBuilder is not null)
+    else
     {
-      BuildDefaultConstructor(_defaultCtorBuilder, initializers);
+      BuildInstanceConstructor(constructor);
     }
   }
 
-  private void BuildConstructor(ConstructorBuilder builder, IMethodSymbol symbol, IReadOnlyDictionary<FieldBuilder, ExpressionSyntax> initializers)
+  private void BuildInstanceConstructor(SymbolConstructorInfo constructor)
   {
-    ILGenerator il = builder.GetILGenerator();
+    IMethodSymbol constructorSymbol = constructor.Symbol;
+
+    Type[] parameterTypes = constructor.GetParameters().Select(x => _context.ResolveType(x.ParameterType)).ToArray();
+    ConstructorBuilder constructorBuilder = _typeBuilder.DefineConstructor(constructor.Attributes, constructor.CallingConvention, parameterTypes);
+
+    ILGenerator il = constructorBuilder.GetILGenerator();
 
     il.Emit(OpCodes.Ret);
   }
 
-  private void BuildDefaultConstructor(ConstructorBuilder builder, IReadOnlyDictionary<FieldBuilder, ExpressionSyntax> initializers)
+  private void BuildStaticConstructor(SymbolConstructorInfo constructor)
   {
-    ILGenerator il = builder.GetILGenerator();
+    ConstructorBuilder constructorBuilder = _typeBuilder.DefineTypeInitializer();
+
+    ILGenerator il = constructorBuilder.GetILGenerator();
 
     il.Emit(OpCodes.Ret);
   }
-
-  public static ProxyConstructorBuilder Create(TypeBuilder typeBuilder, SymbolType type)
-  {
-    SymbolConstructorInfo[] constructors = type.GetConstructors(s_allDeclared);
-
-    if (constructors.Length == 0)
-    {
-      return new ProxyConstructorBuilder(typeBuilder.DefineDefaultConstructor(s_defaultConstructorAttributes));
-    }
-
-    List<ConstructorData> constructorList = new List<ConstructorData>(constructors.Length);
-
-    foreach (SymbolConstructorInfo constructor in constructors)
-    {
-      IMethodSymbol constructorSymbol = constructor.Symbol;
-
-      ConstructorBuilder constructorBuilder = constructorSymbol.MethodKind is MethodKind.StaticConstructor
-        ? typeBuilder.DefineTypeInitializer()
-        : typeBuilder.DefineConstructor(
-            attributes: constructor.Attributes,
-            callingConvention: constructor.CallingConvention,
-            parameterTypes: constructor.GetParameters().Select(x => x.ParameterType.RuntimeType).ToArray());
-
-      constructorList.Add(new ConstructorData(constructorBuilder, constructorSymbol));
-    }
-
-    return new ProxyConstructorBuilder(constructorList);
-  }
-
-  private readonly record struct ConstructorData(ConstructorBuilder Builder, IMethodSymbol Symbol);
 }

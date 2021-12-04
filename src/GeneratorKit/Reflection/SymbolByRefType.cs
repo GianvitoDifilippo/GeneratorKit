@@ -72,8 +72,6 @@ internal class SymbolByRefType : SymbolType
 
   protected override SymbolType? BaseTypeCore => null;
 
-  protected override SymbolType[] GenericTypeArgumentsCore => Array.Empty<SymbolType>();
-
   protected override SymbolModule ModuleCore => _elementType.Module;
 
   protected override SymbolType? GetElementTypeCore()

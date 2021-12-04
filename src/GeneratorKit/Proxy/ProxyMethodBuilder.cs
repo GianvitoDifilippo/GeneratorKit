@@ -1,8 +1,8 @@
 ﻿#pragma warning disable RS1024 // Compare symbols correctly
 
 using GeneratorKit.Reflection;
-using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -10,61 +10,89 @@ using System.Reflection.Emit;
 
 namespace GeneratorKit.Proxy;
 
+
 internal class ProxyMethodBuilder
 {
-  private const BindingFlags s_allDeclared = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
+  private readonly IBuilderContext _context;
+  private readonly TypeBuilder _typeBuilder;
+  private readonly IReadOnlyDictionary<IPropertySymbol, FieldBuilder> _backingFields;
+  private readonly Dictionary<IPropertySymbol, MethodBuilder> _getters;
+  private readonly Dictionary<IPropertySymbol, MethodBuilder> _setters;
 
-  private readonly IReadOnlyCollection<MethodData> _methods;
-
-  private ProxyMethodBuilder(IReadOnlyCollection<MethodData> methods, IReadOnlyDictionary<IPropertySymbol, MethodBuilder> getters, IReadOnlyDictionary<IPropertySymbol, MethodBuilder> setters)
+  public ProxyMethodBuilder(IBuilderContext context, IReadOnlyDictionary<IPropertySymbol, FieldBuilder> backingFields)
   {
-    _methods = methods;
-    Getters = getters;
-    Setters = setters;
+    _context = context;
+    _typeBuilder = context.TypeBuilder;
+    _backingFields = backingFields;
+    _getters = new Dictionary<IPropertySymbol, MethodBuilder>(SymbolEqualityComparer.Default);
+    _setters = new Dictionary<IPropertySymbol, MethodBuilder>(SymbolEqualityComparer.Default);
   }
 
-  public IReadOnlyDictionary<IPropertySymbol, MethodBuilder> Getters { get; }
+  public IReadOnlyDictionary<IPropertySymbol, MethodBuilder> Getters => _getters;
 
-  public IReadOnlyDictionary<IPropertySymbol, MethodBuilder> Setters { get; }
+  public IReadOnlyDictionary<IPropertySymbol, MethodBuilder> Setters => _setters;
 
-  public void Build(IReadOnlyDictionary<IPropertySymbol, FieldBuilder> backingFields)
+  public void BuildMethod(SymbolMethodInfo method)
   {
-    foreach ((MethodBuilder builder, IMethodSymbol symbol) in _methods)
+    IMethodSymbol methodSymbol = method.Symbol;
+
+    MethodBuilder methodBuilder = _typeBuilder.DefineMethod(method.Name, method.Attributes, method.CallingConvention);
+
+    IReadOnlyDictionary<string, Type> genericTypes = CreateGenericTypeDictionary(methodBuilder, method);
+
+    methodBuilder.SetReturnType(_context.ResolveType(method.ReturnType, genericTypes));
+    methodBuilder.SetParameters(method.GetParameters().Select(x => _context.ResolveType(x.ParameterType, genericTypes)).ToArray());
+
+    if (method.Symbol.ExplicitInterfaceImplementations.Length != 0)
     {
-      switch (symbol.MethodKind)
-      {
-        case MethodKind.PropertyGet when backingFields.TryGetValue((IPropertySymbol)symbol.AssociatedSymbol!, out FieldBuilder backingField):
-          BuildAutoGetter(builder, backingField);
-          break;
-        case MethodKind.PropertySet when backingFields.TryGetValue((IPropertySymbol)symbol.AssociatedSymbol!, out FieldBuilder backingField):
-          BuildAutoSetter(builder, backingField);
-          break;
-        default:
-          BuildMethod(builder, symbol);
-          break;
-      }
+      throw new NotSupportedException("Explicit implementation of interfaces is not supported.");
+    }
+
+    switch (methodSymbol.MethodKind)
+    {
+      case MethodKind.PropertyGet:
+        _getters.Add((IPropertySymbol)methodSymbol.AssociatedSymbol!, methodBuilder);
+        break;
+      case MethodKind.PropertySet:
+        _setters.Add((IPropertySymbol)methodSymbol.AssociatedSymbol!, methodBuilder);
+        break;
+      default:
+        break;
+    }
+
+    switch (methodSymbol.MethodKind)
+    {
+      case MethodKind.PropertyGet when _backingFields.TryGetValue((IPropertySymbol)methodSymbol.AssociatedSymbol!, out FieldBuilder backingField):
+        BuildAutoGetter(methodBuilder, backingField);
+        break;
+      case MethodKind.PropertySet when _backingFields.TryGetValue((IPropertySymbol)methodSymbol.AssociatedSymbol!, out FieldBuilder backingField):
+        BuildAutoSetter(methodBuilder, backingField);
+        break;
+      default:
+        BuildOrdinaryMethod(methodBuilder, methodSymbol);
+        break;
     }
   }
 
-  private void BuildMethod(MethodBuilder builder, IMethodSymbol methodSymbol)
+  private void BuildOrdinaryMethod(MethodBuilder methodBuilder, IMethodSymbol methodSymbol)
   {
-    ILGenerator il = builder.GetILGenerator();
+    ILGenerator il = methodBuilder.GetILGenerator();
 
     il.Emit(OpCodes.Ret);
   }
 
-  private void BuildAutoGetter(MethodBuilder builder, FieldBuilder backingField)
+  private void BuildAutoGetter(MethodBuilder methodBuilder, FieldInfo backingField)
   {
-    ILGenerator il = builder.GetILGenerator();
+    ILGenerator il = methodBuilder.GetILGenerator();
 
     il.Emit(OpCodes.Ldarg_0);
     il.Emit(OpCodes.Ldfld, backingField);
     il.Emit(OpCodes.Ret);
   }
 
-  private void BuildAutoSetter(MethodBuilder builder, FieldBuilder backingField)
+  private void BuildAutoSetter(MethodBuilder methodBuilder, FieldInfo backingField)
   {
-    ILGenerator il = builder.GetILGenerator();
+    ILGenerator il = methodBuilder.GetILGenerator();
 
     il.Emit(OpCodes.Ldarg_0);
     il.Emit(OpCodes.Ldarg_1);
@@ -72,39 +100,24 @@ internal class ProxyMethodBuilder
     il.Emit(OpCodes.Ret);
   }
 
-  public static ProxyMethodBuilder Create(TypeBuilder typeBuilder, SymbolType type)
+  private static IReadOnlyDictionary<string, Type> CreateGenericTypeDictionary(MethodBuilder methodBuilder, SymbolMethodInfo method)
   {
-    SymbolMethodInfo[] methods = type.GetMethods(s_allDeclared);
-    List<MethodData> methodList = new List<MethodData>(methods.Length);
-    Dictionary<IPropertySymbol, MethodBuilder> getters = new Dictionary<IPropertySymbol, MethodBuilder>(SymbolEqualityComparer.Default);
-    Dictionary<IPropertySymbol, MethodBuilder> setters = new Dictionary<IPropertySymbol, MethodBuilder>(SymbolEqualityComparer.Default);
+    Dictionary<string, Type> genericTypes = new Dictionary<string, Type>();
+    if (!method.IsGenericMethod)
+      return genericTypes;
 
-    foreach (SymbolMethodInfo method in methods)
+    SymbolType[] genericArguments = method.GetGenericArguments();
+    GenericTypeParameterBuilder[] genericTypeParameterBuilders = methodBuilder.DefineGenericParameters(genericArguments.Select(x => x.Name).ToArray());
+
+    for (int i = 0; i < genericArguments.Length; i++)
     {
-      IMethodSymbol methodSymbol = method.Symbol;
+      GenericTypeParameterBuilder genericTypeParameterBuilder = genericTypeParameterBuilders[i];
+      SymbolType genericArgument = genericArguments[i];
+      genericTypes.Add(genericArgument.Name, genericTypeParameterBuilder);
 
-      MethodBuilder methodBuilder = typeBuilder.DefineMethod(
-        name: method.Name,
-        attributes: method.Attributes,
-        callingConvention: method.CallingConvention,
-        returnType: method.ReturnType.RuntimeType,
-        parameterTypes: method.GetParameters().Select(x => x.ParameterType.RuntimeType).ToArray());
-
-      switch (methodSymbol.MethodKind)
-      {
-        case MethodKind.PropertyGet:
-          getters.Add((IPropertySymbol)methodSymbol.AssociatedSymbol!, methodBuilder);
-          break;
-        case MethodKind.PropertySet:
-          setters.Add((IPropertySymbol)methodSymbol.AssociatedSymbol!, methodBuilder);
-          break;
-      }
-
-      methodList.Add(new MethodData(methodBuilder, methodSymbol));
+      ProxyGenericTypeParameterBuilder.BuildGenericTypeParameter(genericTypeParameterBuilder, genericArgument);
     }
 
-    return new ProxyMethodBuilder(methodList, getters, setters);
+    return genericTypes;
   }
-
-  private record struct MethodData(MethodBuilder Builder, IMethodSymbol Symbol);
 }

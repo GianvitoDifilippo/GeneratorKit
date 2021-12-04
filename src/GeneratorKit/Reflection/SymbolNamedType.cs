@@ -37,6 +37,9 @@ internal sealed class SymbolNamedType : SymbolType
   {
     get
     {
+      if (!_symbol.IsDefinition && ContainsGenericParameters)
+        return null;
+
       StringBuilder builder = new StringBuilder(_symbol.ContainingNamespace.ToString());
       builder.Append('.');
       INamedTypeSymbol? symbol = _symbol.ContainingType;
@@ -381,10 +384,9 @@ internal sealed class SymbolNamedType : SymbolType
 
   protected override SymbolModule ModuleCore => _runtime.CreateModuleDelegator(_symbol.ContainingModule);
 
-  protected override SymbolType[] GenericTypeArgumentsCore => _symbol.TypeArguments
-    .Where(x => x.TypeKind is not TypeKind.TypeParameter)
-    .Select(x => _runtime.CreateTypeDelegator(x))
-    .ToArray();
+  // protected override SymbolType[] GenericTypeArgumentsCore => _symbol.TypeArguments
+  //   .Select(x => _runtime.CreateTypeDelegator(x))
+  //   .ToArray();
 
   protected override SymbolType? GetElementTypeCore()
   {

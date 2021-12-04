@@ -111,8 +111,6 @@ internal sealed class SymbolArrayType : SymbolType
 
   protected override SymbolType? BaseTypeCore => _runtime.CreateTypeDelegator(_symbol.BaseType!);
 
-  protected override SymbolType[] GenericTypeArgumentsCore => Array.Empty<SymbolType>();
-
   protected override SymbolModule ModuleCore => _elementType.Module;
 
   protected override SymbolType GetElementTypeCore()

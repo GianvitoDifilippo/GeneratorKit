@@ -20,6 +20,12 @@ public class SymbolMethodInfoFixture
 
 namespace " + Namespace + @"
 {
+  public interface IInterface
+  {
+    void InterfaceMethod();
+    int ExplicitMethod();
+  }
+
   public abstract class BaseClass
   {
     public void BaseMethod() => throw null;
@@ -31,7 +37,7 @@ namespace " + Namespace + @"
     public virtual T1 GenericMethodOverridden<T1, T2>() => throw null;
   }
 
-  public class DerivedClass : BaseClass
+  public class DerivedClass : BaseClass, IInterface
   {
     public int PublicMethod(int arg1, string arg2) => throw null;
     internal void InternalMethod() => throw null;
@@ -56,6 +62,9 @@ namespace " + Namespace + @"
     public override sealed void AbstractThenSealedMethod() => throw null;
     public override void VirtualMethodOverridden() => throw null;
     public override T1 GenericMethodOverridden<T1, T2>() => throw null;
+
+    public void InterfaceMethod() => throw null;
+    int IInterface.ExplicitMethod() => throw null;
   }
 }
 
@@ -197,8 +206,13 @@ namespace " + Namespace + @"
       MethodCategory.ConstructedGenericMethodOverriddenReflectedFromDerived
         => GetMethodFromType(_derivedType, "GenericMethodOverridden").MakeGenericMethod(typeof(int), typeof(string)),
 
-      _
-        => throw new InvalidOperationException()
+      MethodCategory.ExplicitMethod
+        => GetMethodFromType(_derivedType, "GeneratorKit.Reflection.Tests.SymbolMethodInfo.IInterface.ExplicitMethod"),
+
+      MethodCategory.InterfaceMethod
+        => GetMethodFromType(_derivedType, "InterfaceMethod"),
+
+      _ => throw new InvalidOperationException()
     };
 
     static MethodInfo GetMethodFromType(Type type, string name)
@@ -296,6 +310,12 @@ namespace " + Namespace + @"
       MethodCategory.ConstructedGenericMethodOverriddenReflectedFromDerived
         => GetMethodFromType(_derivedSymbol, "GenericMethodOverridden"),
 
+      MethodCategory.ExplicitMethod
+        => GetMethodFromType(_derivedSymbol, "GeneratorKit.Reflection.Tests.SymbolMethodInfo.IInterface.ExplicitMethod"),
+
+      MethodCategory.InterfaceMethod
+        => GetMethodFromType(_derivedSymbol, "InterfaceMethod"),
+
       _ => throw new InvalidOperationException()
     };
 
@@ -386,4 +406,6 @@ public enum MethodCategory
   ConstructedGenericMethodNotOverriddenReflectedFromDerived,
   ConstructedGenericMethodOverridden,
   ConstructedGenericMethodOverriddenReflectedFromDerived,
+  ExplicitMethod,
+  InterfaceMethod
 }

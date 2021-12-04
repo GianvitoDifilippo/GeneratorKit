@@ -45,6 +45,7 @@ namespace " + Namespace + @"
   {
     int PublicProperty { get; set; }
     int PublicMethod(int arg1, string arg2);
+    int ExplicitMethod();
   }
 
   public struct Struct { }
@@ -249,6 +250,8 @@ namespace " + Namespace + @"
     protected class NestedProtectedClass { }
     private protected class NestedPrivateProtectedClass { }
     protected internal class NestedProtectedInternalClass { }
+
+    int IDerivedInterface.ExplicitMethod() => throw null;
   }
 
   [System.Reflection.DefaultMember(""DefaultMember"")]
@@ -279,6 +282,10 @@ namespace " + Namespace + @"
     public void MethodWithOutArgument(out int arg) => throw null;
     public void MethodWithInArgument(in int arg) => throw null;
   }
+
+  public class GenericOpenConstructedClass<T1, T2> { }
+
+  public class GenericOpenConstructedDerivedClass<T1> : GenericOpenConstructedClass<T1, int> { }
 }
 
 ";
@@ -381,6 +388,9 @@ namespace " + Namespace + @"
         typeArg1Symbol = GetSymbolTypeFromCompilation("TypeArgument1");
         typeArg2Symbol = GetSymbolTypeFromCompilation("TypeArgument2");
         symbol = namedSymbol.Construct(namedSymbol.Construct(typeArg1Symbol, typeArg2Symbol), typeArg2Symbol);
+        break;
+      case TypeCategory.GenericOpenConstructed:
+        symbol = GetSymbolTypeFromCompilation("GenericOpenConstructedDerivedClass`1").BaseType!;
         break;
       case TypeCategory.WithAttributes:
         symbol = GetSymbolTypeFromCompilation("ClassWithAttributes");
@@ -598,6 +608,9 @@ namespace " + Namespace + @"
           GetType(TypeCategory.ClosedGeneric),
           GetTypeFromAssembly("TypeArgument2"));
         break;
+      case TypeCategory.GenericOpenConstructed:
+        type = GetTypeFromAssembly("GenericOpenConstructedDerivedClass`1").BaseType!;
+        break;
       case TypeCategory.WithAttributes:
         type = GetTypeFromAssembly("ClassWithAttributes");
         break;
@@ -776,6 +789,7 @@ public enum TypeCategory
   OpenGeneric = 64,
   ClosedGeneric,
   ClosedGenericWithGenericTypeArguments,
+  GenericOpenConstructed,
   WithAttributes,
   WithStaticConstructor,
   Internal,

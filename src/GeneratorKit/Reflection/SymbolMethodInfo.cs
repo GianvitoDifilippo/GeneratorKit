@@ -3,6 +3,7 @@ using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
@@ -85,6 +86,8 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
           break;
       }
 
+      if (ImplementsAnyInterfaceMethod)
+        result |= MethodAttributes.Final | MethodAttributes.Virtual | MethodAttributes.NewSlot;
       if (Symbol.IsStatic)
         result |= MethodAttributes.Static;
       if (Symbol.IsSealed)
@@ -200,7 +203,7 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
 
   protected override SymbolType ReflectedTypeCore => _reflectedType ?? DeclaringTypeCore;
 
-  protected override SymbolArgumentParameter ReturnParameterCore => throw new NotImplementedException();
+  protected override SymbolParameterInfo ReturnParameterCore => new SymbolReturnParameter(_runtime, Symbol);
 
   protected override SymbolType ReturnTypeCore => _runtime.CreateTypeDelegator(Symbol.ReturnType);
 
@@ -234,7 +237,7 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
       : _runtime.CreateMethodInfoDelegator(Symbol.OriginalDefinition);
   }
 
-  protected override SymbolArgumentParameter[] GetParametersCore()
+  protected override SymbolParameterInfo[] GetParametersCore()
   {
     return Symbol.Parameters.Select(x => new SymbolArgumentParameter(_runtime, x)).ToArray();
   }
@@ -281,7 +284,7 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
   public new SymbolType ReflectedType => ReflectedTypeCore;
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  public new SymbolArgumentParameter ReturnParameter => ReturnParameterCore;
+  public new SymbolParameterInfo ReturnParameter => ReturnParameterCore;
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   public new SymbolType ReturnType => ReturnTypeCore;
@@ -292,9 +295,86 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
 
   public new SymbolMethodInfo GetGenericMethodDefinition() => GetGenericMethodDefinitionCore(false);
 
-  public new SymbolArgumentParameter[] GetParameters() => GetParametersCore();
+  public new SymbolParameterInfo[] GetParameters() => GetParametersCore();
 
   public new SymbolMethodInfo MakeGenericMethod(params Type[] typeArguments) => MakeGenericMethodCore(typeArguments);
+
+
+  // Other members
+
+  // public SymbolMethodInfo? OverriddenMethod => Symbol.IsOverride
+  //   ? _runtime.CreateMethodInfoDelegator(Symbol.OverriddenMethod!)
+  //   : null;
+
+  // public IReadOnlyCollection<SymbolMethodInfo> ImplementedMethods
+  // {
+  //   get
+  //   {
+  //     if (_skipImplementedMethodSearch)
+  //       return Array.Empty<SymbolMethodInfo>();
+  // 
+  //     if (_implementedMethods is null)
+  //     {
+  //       _implementedMethods = FindImplementedMethods();
+  //     }
+  //     return _implementedMethods;
+  //   }
+  // }
+  // 
+  // private SymbolMethodInfo[] FindImplementedMethods()
+  // {
+  //   if (Symbol.ExplicitInterfaceImplementations.Length != 0)
+  //   {
+  //     return Symbol.ExplicitInterfaceImplementations.Select(x => _runtime.CreateMethodInfoDelegator(x)).ToArray();
+  //   }
+  // 
+  //   SymbolType[] interfaceTypes = DeclaringTypeCore.GetInterfaces();
+  //   if (interfaceTypes.Length == 0)
+  //   {
+  //     _skipImplementedMethodSearch = true;
+  //     return Array.Empty<SymbolMethodInfo>();
+  //   }
+  // 
+  //   string name = Name;
+  //   BindingFlags bindingAttr =
+  //     (Symbol.DeclaredAccessibility is Accessibility.Public ? BindingFlags.Public : BindingFlags.NonPublic) |
+  //     (Symbol.IsStatic ? BindingFlags.Static : BindingFlags.Instance);
+  //   int genericParameterCount = IsGenericMethod ? GetGenericArgumentsCore().Length : 0;
+  //   DelegatorBinder binder = new DelegatorBinder(genericParameterCount);
+  //   CallingConventions callConvention = CallingConvention;
+  //   Type[] types = GetParametersCore().Select(x => x.ParameterType).ToArray();
+  //   foreach (SymbolType interfaceType in interfaceTypes)
+  //   {
+  //     SymbolMethodInfo? method = interfaceType.GetMethod(name, bindingAttr, binder, callConvention, types, null);
+  //     if (method is not null)
+  //     {
+  //       return new[] { method };
+  //     }
+  //   }
+  // 
+  //   _skipImplementedMethodSearch = true;
+  //   return Array.Empty<SymbolMethodInfo>();
+  // }
+
+  private bool ImplementsAnyInterfaceMethod
+  {
+    get
+    {
+      if (Symbol.ExplicitInterfaceImplementations.Length != 0)
+        return true;
+
+      ITypeSymbol containingType = Symbol.ContainingType;
+      foreach (INamedTypeSymbol @interface in containingType.AllInterfaces)
+      {
+        if (@interface.GetMembers().Any(x => SymbolEqualityComparer.Default.Equals(containingType.FindImplementationForInterfaceMember(x), Symbol)))
+        {
+          return true;
+        }
+      }
+
+      return false;
+    }
+  }
 }
 
 internal abstract class SymbolMethodInfoBase : MethodInfo
@@ -340,7 +420,7 @@ internal abstract class SymbolMethodInfoBase : MethodInfo
   protected abstract SymbolType ReflectedTypeCore { get; }
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  protected abstract SymbolArgumentParameter ReturnParameterCore { get; }
+  protected abstract SymbolParameterInfo ReturnParameterCore { get; }
 
   protected abstract SymbolMethodInfo GetBaseDefinitionCore();
 
@@ -348,7 +428,7 @@ internal abstract class SymbolMethodInfoBase : MethodInfo
 
   protected abstract SymbolMethodInfo GetGenericMethodDefinitionCore(bool preserveReflectedType);
 
-  protected abstract SymbolArgumentParameter[] GetParametersCore();
+  protected abstract SymbolParameterInfo[] GetParametersCore();
 
   protected abstract SymbolMethodInfo MakeGenericMethodCore(params Type[] typeArguments);
 }
