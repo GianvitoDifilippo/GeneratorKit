@@ -29,7 +29,7 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
     if (type.Symbol.ContainingAssembly is not ISourceAssemblySymbol)
       return Type.GetType(type.AssemblyQualifiedName);
 
-    if (type.HasElementType || type.IsGenericType)
+    if (type.HasElementType || type.IsConstructedGenericType)
     {
       throw new NotSupportedException("To be supported.");
     }

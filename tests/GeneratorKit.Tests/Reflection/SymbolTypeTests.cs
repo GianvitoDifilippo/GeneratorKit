@@ -646,6 +646,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   [InlineData(TypeCategory.ClosedGeneric)]
   [InlineData(TypeCategory.ClosedGenericWithGenericTypeArguments)]
   [InlineData(TypeCategory.OpenGeneric)]
+  [InlineData(TypeCategory.GenericOpenConstructed)]
   public void GetGenericTypeDefinition_ShouldBeCorrect_WhenTypeIsGeneric(TypeCategory category)
   {
     // Arrange
@@ -662,7 +663,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesDataExcept(TypeCategory.ClosedGeneric, TypeCategory.ClosedGenericWithGenericTypeArguments, TypeCategory.OpenGeneric)]
+  [NamedTypesDataExcept(TypeCategory.ClosedGeneric, TypeCategory.ClosedGenericWithGenericTypeArguments, TypeCategory.OpenGeneric, TypeCategory.GenericOpenConstructed)]
   [SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void GetGenericTypeDefinition_ShouldThrow_WhenTypeIsNotGeneric(TypeCategory category)
   {
@@ -2186,7 +2187,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
   }
 
   [Theory]
-  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData]
   public void TypeHandle_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange

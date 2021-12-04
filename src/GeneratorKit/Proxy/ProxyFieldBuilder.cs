@@ -3,56 +3,50 @@
 using GeneratorKit.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Reflection.Emit;
 
 namespace GeneratorKit.Proxy;
 
 internal class ProxyFieldBuilder
 {
-  private const BindingFlags s_allDeclared = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
+  private readonly IBuilderContext _context;
+  private readonly TypeBuilder _typeBuilder;
+  private readonly Dictionary<IPropertySymbol, FieldBuilder> _backingFields;
+  private readonly Dictionary<FieldBuilder, ExpressionSyntax> _initializers;
 
-  private ProxyFieldBuilder(IReadOnlyDictionary<IPropertySymbol, FieldBuilder> backingFields, IReadOnlyDictionary<FieldBuilder, ExpressionSyntax> initializers)
+  public ProxyFieldBuilder(IBuilderContext context)
   {
-    BackingFields = backingFields;
-    Initializers = initializers;
+    _context = context;
+    _typeBuilder = context.TypeBuilder;
+    _backingFields = new Dictionary<IPropertySymbol, FieldBuilder>(SymbolEqualityComparer.Default);
+    _initializers = new Dictionary<FieldBuilder, ExpressionSyntax>();
   }
 
-  public IReadOnlyDictionary<IPropertySymbol, FieldBuilder> BackingFields { get; }
+  public IReadOnlyDictionary<IPropertySymbol, FieldBuilder> BackingFields => _backingFields;
 
-  public IReadOnlyDictionary<FieldBuilder, ExpressionSyntax> Initializers { get; }
+  public IReadOnlyDictionary<FieldBuilder, ExpressionSyntax> Initializers => _initializers;
 
-  public static ProxyFieldBuilder Create(TypeBuilder typeBuilder, SymbolType type)
+  public void BuildField(SymbolFieldInfo field)
   {
-    SymbolFieldInfo[] fields = type.GetFields(s_allDeclared);
-    Dictionary<IPropertySymbol, FieldBuilder> backingFields = new Dictionary<IPropertySymbol, FieldBuilder>(SymbolEqualityComparer.Default);
-    Dictionary<FieldBuilder, ExpressionSyntax> initializers = new Dictionary<FieldBuilder, ExpressionSyntax>(); 
+    IFieldSymbol fieldSymbol = field.Symbol;
 
-    foreach (SymbolFieldInfo field in fields)
+    Type fieldType = _context.ResolveType(field.FieldType);
+    FieldBuilder fieldBuilder = _typeBuilder.DefineField(field.Name, fieldType, field.Attributes);
+
+    if (fieldSymbol.IsImplicitlyDeclared && fieldSymbol.AssociatedSymbol is IPropertySymbol propertySymbol)
     {
-      IFieldSymbol fieldSymbol = field.Symbol;
-      
-      FieldBuilder fieldBuilder = typeBuilder.DefineField(
-        fieldName: field.Name,
-        type: field.FieldType.RuntimeType,
-        attributes: field.Attributes);
-
-      if (fieldSymbol.IsImplicitlyDeclared && fieldSymbol.AssociatedSymbol is IPropertySymbol propertySymbol)
-      {
-        backingFields.Add(propertySymbol, fieldBuilder);
-      }
-
-      if (field.Symbol.DeclaringSyntaxReferences.Length == 0)
-        continue;
-      if (field.Symbol.DeclaringSyntaxReferences[0].GetSyntax() is not VariableDeclaratorSyntax syntax)
-        continue;
-      if (syntax.Initializer?.Value is not ExpressionSyntax expression)
-        continue;
-      
-      initializers.Add(fieldBuilder, expression);
+      _backingFields.Add(propertySymbol, fieldBuilder);
     }
 
-    return new ProxyFieldBuilder(backingFields, initializers);
+    if (field.Symbol.DeclaringSyntaxReferences.Length == 0)
+      return;
+    if (field.Symbol.DeclaringSyntaxReferences[0].GetSyntax() is not VariableDeclaratorSyntax syntax)
+      return;
+    if (syntax.Initializer?.Value is not ExpressionSyntax expression)
+      return;
+
+    _initializers.Add(fieldBuilder, expression);
   }
 }

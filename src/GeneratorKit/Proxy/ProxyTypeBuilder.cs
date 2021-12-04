@@ -1,84 +1,138 @@
 ﻿using GeneratorKit.Reflection;
 using Microsoft.CodeAnalysis;
-using System.Reflection.Emit;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Reflection.Emit;
 
 namespace GeneratorKit.Proxy;
 
-internal class ProxyTypeBuilder
+internal class ProxyTypeBuilder : IBuilderContext
 {
-  private readonly GeneratorRuntime _runtime;
-  private readonly SemanticModel _semanticModel;
+  private const BindingFlags s_allDeclared = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
+  
   private readonly TypeBuilder _typeBuilder;
   private readonly SymbolType _type;
+  private readonly IReadOnlyDictionary<string, Type> _genericTypes;
+  private IReadOnlyDictionary<IPropertySymbol, FieldBuilder>? _backingFields;
+  private IReadOnlyDictionary<FieldBuilder, ExpressionSyntax>? _initializers;
+  private IReadOnlyDictionary<IPropertySymbol, MethodBuilder>? _getters;
+  private IReadOnlyDictionary<IPropertySymbol, MethodBuilder>? _setters;
 
-  private ProxyFieldBuilder? _fieldBuilder;
-  private ProxyMethodBuilder? _methodBuilder;
-  private ProxyPropertyBuilder? _propertyBuilder;
-  private ProxyConstructorBuilder? _constructorBuilder;
-
-  private ProxyTypeBuilder(GeneratorRuntime runtime, SemanticModel semanticModel, TypeBuilder typeBuilder, SymbolType type)
+  private ProxyTypeBuilder(TypeBuilder typeBuilder, SymbolType type, IReadOnlyDictionary<string, Type> genericTypes)
   {
-    _runtime = runtime;
-    _semanticModel = semanticModel;
     _typeBuilder = typeBuilder;
     _type = type;
+    _genericTypes = genericTypes;
   }
 
-  public void BuildFields()
-  {
-    _fieldBuilder = ProxyFieldBuilder.Create(_typeBuilder, _type);
-  }
+  public TypeBuilder TypeBuilder => _typeBuilder;
 
-  public void BuildMethods()
-  {
-    if (_fieldBuilder is null)
-    {
-      throw new InvalidOperationException("Fields must be initialized before methods.");
-    }
-    _methodBuilder = ProxyMethodBuilder.Create(_typeBuilder, _type);
-    _methodBuilder.Build(_fieldBuilder.BackingFields);
-  }
+  public SymbolType Type => _type;
 
-  public void BuildProperties()
+  private void SetParent()
   {
-    if ( _methodBuilder is null)
-    {
-      throw new InvalidOperationException("Methods must be initialized before properties.");
-    }
-    _propertyBuilder = ProxyPropertyBuilder.Create(_typeBuilder, _type);
-    _propertyBuilder.Build(_methodBuilder.Getters, _methodBuilder.Setters);
-  }
-
-  public void BuildConstructors()
-  {
-    if (_fieldBuilder is null)
-    {
-      throw new InvalidOperationException("Fields must be initialized before constructors.");
-    }
-    _constructorBuilder = ProxyConstructorBuilder.Create(_typeBuilder, _type);
-    _constructorBuilder.Build(_fieldBuilder.Initializers);
-  }
-
-  public static Type? BuildType(GeneratorRuntime runtime, SemanticModel semanticModel, ModuleBuilder moduleBuilder, SymbolType type)
-  {
-    if (type.BaseType is null)
-    {
+    if (_type.BaseType is null)
       throw new InvalidOperationException("Cannot build System.Object.");
+
+    Type baseType = ResolveType(_type.BaseType);
+    _typeBuilder.SetParent(baseType);
+  }
+
+  private void SetInterfaces()
+  {
+    Type[] interfaceTypes = _type.GetInterfaces().Select(x => ResolveType(x)).ToArray();
+    foreach (Type interfaceType in interfaceTypes!)
+    {
+      _typeBuilder.AddInterfaceImplementation(interfaceType);
+    }
+  }
+
+  private void BuildFields()
+  {
+    ProxyFieldBuilder builder = new ProxyFieldBuilder(this);
+
+    foreach (SymbolFieldInfo field in _type.GetFields(s_allDeclared))
+    {
+      builder.BuildField(field);
     }
 
-    string name = type.Name;
-    if (!TryGetRealType(type.BaseType, out Type? parent))
-    {
-      return null;
-    }
-    if (!TryGetRealTypes(type.GetInterfaces(), out Type[]? interfaces))
-    {
-      return null;
-    }
-    TypeBuilder typeBuilder = moduleBuilder.DefineType(name, type.Attributes, parent, interfaces);
+    _backingFields = builder.BackingFields;
+    _initializers = builder.Initializers;
+  }
 
-    ProxyTypeBuilder builder = new ProxyTypeBuilder(runtime, semanticModel, typeBuilder, type);
+  private void BuildMethods()
+  {
+    if (_backingFields is null)
+      throw new InvalidOperationException("Backing fields were not initialized.");
+
+    ProxyMethodBuilder builder = new ProxyMethodBuilder(this, _backingFields);
+
+    foreach (SymbolMethodInfo method in _type.GetMethods(s_allDeclared))
+    {
+      builder.BuildMethod(method);
+    }
+
+    _getters = builder.Getters;
+    _setters = builder.Setters;
+  }
+
+  private void BuildProperties()
+  {
+    if (_getters is null || _setters is null)
+      throw new InvalidOperationException("Getters and setters were not initialized.");
+
+    ProxyPropertyBuilder builder = new ProxyPropertyBuilder(this, _getters, _setters);
+
+    foreach (SymbolPropertyInfo property in _type.GetProperties(s_allDeclared))
+    {
+      builder.BuildProperty(property);
+    }
+  }
+
+  private void BuildConstructors()
+  {
+    ProxyConstructorBuilder builder = new ProxyConstructorBuilder(this);
+
+    foreach (SymbolConstructorInfo constructor in _type.GetConstructors(s_allDeclared))
+    {
+      builder.BuildConstructor(constructor);
+    }
+  }
+
+  public Type ResolveType(SymbolType type, IReadOnlyDictionary<string, Type>? genericTypes = null)
+  {
+    if (type.IsGenericType && !type.IsGenericTypeDefinition)
+    {
+      return ResolveGenericType(type, genericTypes);
+    }
+    if (type.IsGenericParameter)
+    {
+      return genericTypes is not null && genericTypes.TryGetValue(type.Name, out Type genericType)
+        ? genericType
+        : _genericTypes[type.Name];
+    }
+
+    return type.RuntimeType;
+  }
+
+  private Type ResolveGenericType(SymbolType type, IReadOnlyDictionary<string, Type>? genericTypes)
+  {
+    Type[] typeArguments = type.GenericTypeArguments.Select(x => ResolveType(x, genericTypes)).ToArray();
+    Type typeDefinition = ResolveType(type.GetGenericTypeDefinition(), genericTypes);
+    return typeDefinition.MakeGenericType(typeArguments);
+  }
+
+  public static Type? BuildType(ModuleBuilder moduleBuilder, SymbolType type)
+  {
+    TypeBuilder typeBuilder = moduleBuilder.DefineType(type.Name, type.Attributes);
+    IReadOnlyDictionary<string, Type> genericTypes = CreateGenericTypeDictionary(typeBuilder, type);
+
+    ProxyTypeBuilder builder = new ProxyTypeBuilder(typeBuilder, type, genericTypes);
+    builder.SetParent();
+    builder.SetInterfaces();
     builder.BuildFields();
     builder.BuildMethods();
     builder.BuildProperties();
@@ -87,32 +141,24 @@ internal class ProxyTypeBuilder
     return typeBuilder.CreateTypeInfo();
   }
 
-  private static bool TryGetRealType(Type type, out Type? realType)
+  private static IReadOnlyDictionary<string, Type> CreateGenericTypeDictionary(TypeBuilder typeBuilder, SymbolType type)
   {
-    Type underlyingType = type.UnderlyingSystemType;
-    if (underlyingType is not SymbolType)
-    {
-      realType = underlyingType;
-      return true;
-    }
-    realType = null;
-    return false;
-  }
+    Dictionary<string, Type> genericTypes = new Dictionary<string, Type>();
+    if (!type.IsGenericType)
+      return genericTypes;
 
-  private static bool TryGetRealTypes(Type[] types, out Type[]? realTypes)
-  {
-    Type[] result = new Type[types.Length];
-    for (int i = 0; i < types.Length; i++)
+    SymbolType[] genericArguments = type.GetGenericArguments();
+    GenericTypeParameterBuilder[] genericTypeParameterBuilders = typeBuilder.DefineGenericParameters(genericArguments.Select(x => x.Name).ToArray());
+
+    for (int i = 0; i < genericArguments.Length; i++)
     {
-      if (!TryGetRealType(types[i], out Type? realType))
-      {
-        realTypes = null;
-        return false;
-      }
-      result[i] = realType!;
+      GenericTypeParameterBuilder genericTypeParameterBuilder = genericTypeParameterBuilders[i];
+      SymbolType genericArgument = genericArguments[i];
+      genericTypes.Add(genericArgument.Name, genericTypeParameterBuilder);
+
+      ProxyGenericTypeParameterBuilder.BuildGenericTypeParameter(genericTypeParameterBuilder, genericArgument);
     }
 
-    realTypes = result;
-    return true;
+    return genericTypes;
   }
 }

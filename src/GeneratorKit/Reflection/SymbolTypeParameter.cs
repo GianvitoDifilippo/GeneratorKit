@@ -19,6 +19,10 @@ internal sealed class SymbolTypeParameter : SymbolType
   public override ITypeSymbol Symbol => _symbol;
 
 
+  // SymbolType overrides
+
+  internal override Type RuntimeType => throw new NotSupportedException($"Cannot create runtime type for type parameter.");
+
   // System.Type overrides
 
   protected override SymbolType? BaseTypeCore => _runtime.CreateTypeDelegator(BaseTypeSymbol);
@@ -124,8 +128,6 @@ internal sealed class SymbolTypeParameter : SymbolType
   protected override SymbolModule ModuleCore => _runtime.CreateModuleDelegator(_symbol.ContainingModule);
 
   public override string Namespace => _symbol.ContainingNamespace.ToDisplayString(s_namespaceFormat);
-
-  protected override SymbolType[] GenericTypeArgumentsCore => Array.Empty<SymbolType>();
 
   protected override SymbolType? GetElementTypeCore()
   {

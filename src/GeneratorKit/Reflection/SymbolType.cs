@@ -291,6 +291,10 @@ internal abstract class SymbolType : SymbolTypeBase
     ? _runtime.CreateTypeDelegator(containingType)
     : null;
 
+  protected sealed override SymbolType[] GenericTypeArgumentsCore => IsGenericType && !IsGenericTypeDefinition
+    ? GetGenericArgumentsCore()
+    : Array.Empty<SymbolType>();
+
   protected sealed override SymbolType? ReflectedTypeCore => DeclaringTypeCore;
 
   protected sealed override SymbolType[] FindInterfacesCore(TypeFilter filter, object filterCriteria)
@@ -445,7 +449,7 @@ internal abstract class SymbolType : SymbolTypeBase
 
   // Other members
 
-  internal Type RuntimeType => _runtime.GetRuntimeType(this) ?? throw new InvalidOperationException("Could not create runtime type.");
+  internal virtual Type RuntimeType => _runtime.GetRuntimeType(this) ?? throw new InvalidOperationException($"Could not create runtime type for {Symbol.ToDisplayString()}.");
 
   private IEnumerable<SymbolConstructorInfo> GetConstructorsEnumerable(BindingFlags bindingAttr)
   {
