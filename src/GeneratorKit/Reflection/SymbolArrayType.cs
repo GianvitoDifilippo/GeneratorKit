@@ -28,8 +28,6 @@ internal sealed class SymbolArrayType : SymbolType
 
   public override string Namespace => _elementType.Namespace;
 
-  public override string? FullName => WithArraySuffix(_elementType.FullName);
-
   public override GenericParameterAttributes GenericParameterAttributes => throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
 
   public override int GenericParameterPosition => throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
@@ -104,6 +102,19 @@ internal sealed class SymbolArrayType : SymbolType
     return false;
   }
 
+  public override Type MakeGenericType(params Type[] typeArguments)
+  {
+    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
+  }
+
+
+  // SymbolType overrides
+
+  public override SymbolType MakeGenericType(params SymbolType[] typeArguments)
+  {
+    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
+  }
+
 
   // SymbolTypeBase overrides
 
@@ -154,11 +165,6 @@ internal sealed class SymbolArrayType : SymbolType
   protected override SymbolType MakeByRefTypeCore()
   {
     return new SymbolByRefType(_runtime, this);
-  }
-
-  protected override SymbolType MakeGenericTypeCore(params Type[] typeArguments)
-  {
-    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
   }
 
   private string WithArraySuffix(string name)

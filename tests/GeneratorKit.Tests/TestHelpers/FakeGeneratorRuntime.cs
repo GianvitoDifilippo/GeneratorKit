@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using System.Threading;
 
 namespace GeneratorKit.TestHelpers;
@@ -43,5 +44,10 @@ internal class FakeGeneratorRuntime : GeneratorRuntime
   {
     _typeMap[symbol] = type;
     _symbolMap[type] = symbol;
+  }
+
+  public override MethodInfo? GetRuntimeMethod(SymbolMethodInfo method)
+  {
+    throw new NotImplementedException();
   }
 }

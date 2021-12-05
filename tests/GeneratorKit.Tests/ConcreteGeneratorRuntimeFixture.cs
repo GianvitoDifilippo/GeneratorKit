@@ -18,6 +18,10 @@ public class ConcreteGeneratorRuntimeFixture
 namespace " + Namespace + @"
 {
   public class Class { }
+
+  public class Base<T1, T2> { }
+
+  public class Derived<T> : Base<int, T> { }
 }
 
 ";

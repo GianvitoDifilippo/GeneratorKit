@@ -23,8 +23,6 @@ internal class SymbolByRefType : SymbolType
 
   public override MethodBase? DeclaringMethod => throw new InvalidOperationException($"Method may only be called on a Type for which Type.IsGenericParameter is true.");
 
-  public override string FullName => _elementType.FullName + "&";
-
   public override GenericParameterAttributes GenericParameterAttributes => throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
 
   public override int GenericParameterPosition => throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
@@ -67,6 +65,22 @@ internal class SymbolByRefType : SymbolType
   {
     return false;
   }
+
+  public override Type MakeGenericType(params Type[] typeArguments)
+  {
+    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
+  }
+
+
+  // SymbolType overrides
+
+  public override SymbolType MakeGenericType(params SymbolType[] typeArguments)
+  {
+    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
+  }
+
+
+  // SymbolTypeBase overrides
 
   protected override SymbolAssembly AssemblyCore => _elementType.Assembly;
 
@@ -112,10 +126,5 @@ internal class SymbolByRefType : SymbolType
   protected override SymbolType MakeByRefTypeCore()
   {
     throw new TypeLoadException();
-  }
-
-  protected override SymbolType MakeGenericTypeCore(params Type[] typeArguments)
-  {
-    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
   }
 }

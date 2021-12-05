@@ -1,4 +1,5 @@
 ﻿using GeneratorKit.Comparers;
+using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -27,9 +28,9 @@ internal abstract class SymbolType : SymbolTypeBase
 
   // Systm.Type overrides
 
-  public sealed override string? AssemblyQualifiedName => FullName is null
-    ? null
-    : System.Reflection.Assembly.CreateQualifiedName(Assembly.FullName, FullName);
+  public sealed override string? AssemblyQualifiedName => TypeNameBuilder.ToString(this, TypeNameBuilder.Format.AssemblyQualifiedName);
+
+  public sealed override string? FullName => TypeNameBuilder.ToString(this, TypeNameBuilder.Format.FullName);
 
   public sealed override Guid GUID => throw new NotImplementedException();
 
@@ -367,9 +368,14 @@ internal abstract class SymbolType : SymbolTypeBase
 
   // System.Object overrides
 
-  public override int GetHashCode()
+  public sealed override int GetHashCode()
   {
     return TypeEqualityComparer.Default.GetHashCode(this);
+  }
+
+  public sealed override string? ToString()
+  {
+    return TypeNameBuilder.ToString(this, TypeNameBuilder.Format.ToString);
   }
 
 
@@ -424,7 +430,7 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public new SymbolType[] GetInterfaces() => GetInterfacesCore();
 
-  public new SymbolMethodInfo GetMethod(string name, BindingFlags bindingAttr, Binder binder, CallingConventions callConvention, Type[] types, ParameterModifier[]? modifiers) => (SymbolMethodInfo)base.GetMethod(name, bindingAttr, binder, callConvention, types, modifiers);
+  public new SymbolMethodInfo GetMethod(string name, BindingFlags bindingAttr, Binder? binder, CallingConventions callConvention, Type[] types, ParameterModifier[]? modifiers) => (SymbolMethodInfo)base.GetMethod(name, bindingAttr, binder, callConvention, types, modifiers);
 
   public new SymbolMethodInfo[] GetMethods() => (SymbolMethodInfo[])base.GetMethods();
 
@@ -442,12 +448,12 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public new SymbolType MakeByRefType() => MakeByRefTypeCore();
 
-  public new SymbolType MakeGenericType(params Type[] typeArguments) => MakeGenericTypeCore(typeArguments);
-
   public new SymbolType MakePointerType() => MakePointerTypeCore();
 
 
   // Other members
+
+  public abstract SymbolType MakeGenericType(params SymbolType[] typeArguments);
 
   internal virtual Type RuntimeType => _runtime.GetRuntimeType(this) ?? throw new InvalidOperationException($"Could not create runtime type for {Symbol.ToDisplayString()}.");
 
@@ -633,8 +639,6 @@ internal abstract class SymbolTypeBase : Type
 
   public sealed override Type MakeByRefType() => MakeByRefTypeCore();
 
-  public sealed override Type MakeGenericType(params Type[] typeArguments) => MakeGenericTypeCore(typeArguments);
-
   public sealed override Type MakePointerType() => MakePointerTypeCore();
 
 
@@ -697,8 +701,6 @@ internal abstract class SymbolTypeBase : Type
   protected abstract SymbolType MakeArrayTypeCore(int rank);
 
   protected abstract SymbolType MakeByRefTypeCore();
-
-  protected abstract SymbolType MakeGenericTypeCore(params Type[] typeArguments);
 
   protected abstract SymbolType MakePointerTypeCore();
 }

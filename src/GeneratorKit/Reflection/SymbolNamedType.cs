@@ -1,6 +1,5 @@
 ﻿using GeneratorKit.Comparers;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -8,7 +7,6 @@ using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace GeneratorKit.Reflection;
 
@@ -32,44 +30,6 @@ internal sealed class SymbolNamedType : SymbolType
     _symbol.TypeArguments.Any(x => x.TypeKind is TypeKind.TypeParameter);
 
   public override MethodBase? DeclaringMethod => throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
-
-  public override string? FullName
-  {
-    get
-    {
-      if (!_symbol.IsDefinition && ContainsGenericParameters)
-        return null;
-
-      StringBuilder builder = new StringBuilder(_symbol.ContainingNamespace.ToString());
-      builder.Append('.');
-      INamedTypeSymbol? symbol = _symbol.ContainingType;
-      while (symbol is not null)
-      {
-        builder.Append(symbol.MetadataName);
-        builder.Append('+');
-        symbol = symbol.ContainingType;
-      }
-      builder.Append(_symbol.MetadataName);
-      
-      if (!_symbol.IsGenericType || _symbol.TypeArguments.Any(arg => arg.TypeKind is TypeKind.Error or TypeKind.TypeParameter))
-        return builder.ToString();
-
-      builder.Append('[');
-      builder.Append('[');
-      builder.Append(_runtime.CreateTypeDelegator(_symbol.TypeArguments[0]).AssemblyQualifiedName);
-      builder.Append(']');
-      for (int i = 1; i < _symbol.TypeArguments.Length; i++)
-      {
-        builder.Append(',');
-        builder.Append('[');
-        builder.Append(_runtime.CreateTypeDelegator(_symbol.TypeArguments[i]).AssemblyQualifiedName);
-        builder.Append(']');
-      }
-      builder.Append(']');
-
-      return builder.ToString();
-    }
-  }
 
   public override GenericParameterAttributes GenericParameterAttributes => throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
 
@@ -373,6 +333,22 @@ internal sealed class SymbolNamedType : SymbolType
     return Symbol.TypeKind is TypeKind.Enum or TypeKind.Struct;
   }
 
+  public override Type MakeGenericType(params Type[] typeArguments)
+  {
+    // TODO: Change to accomodate all types
+    if (!IsGenericTypeDefinition)
+      throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
+    
+    return new HybridGenericType(_runtime, this, typeArguments);
+  }
+
+
+  // SymbolType overrides
+
+  public override SymbolType MakeGenericType(params SymbolType[] typeArguments)
+  {
+    return _runtime.CreateTypeDelegator(_symbol.Construct(typeArguments.Select(x => x.Symbol).ToArray()));
+  }
 
   // SymbolTypeBase overrides
 
@@ -426,18 +402,6 @@ internal sealed class SymbolNamedType : SymbolType
   protected override SymbolType MakeByRefTypeCore()
   {
     return new SymbolByRefType(_runtime, this);
-  }
-
-  protected override SymbolType MakeGenericTypeCore(params Type[] typeArguments)
-  {
-    if (!IsGenericTypeDefinition)
-      throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
-
-    ITypeSymbol[] symbolTypeArguments = typeArguments
-      .Select(x => _runtime.GetTypeSymbol(x) ?? throw new InvalidOperationException($"Could not resolve symbol for type {x.FullName}"))
-      .ToArray();
-
-    return _runtime.CreateTypeDelegator(_symbol.Construct(symbolTypeArguments));
   }
 
   private static bool IsIntegerType(Type t)

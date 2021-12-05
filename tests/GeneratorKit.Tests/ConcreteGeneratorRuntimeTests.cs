@@ -104,4 +104,25 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
     // Assert
     actual.Should().Be(expected);
   }
+
+  [Fact]
+  public void GetRuntimeType_ShouldReturnType_WhenTypeIsArray()
+  {
+    // Arrange
+    ConcreteGeneratorRuntime sut = _fixture.GetGeneratorRuntime(_factoryMock.Object);
+
+    const string typeName = "Class";
+    Type elementType = _fixture.GetType(typeName);
+    Type expected = elementType.MakeArrayType();
+    SymbolType type = new SymbolNamedType(sut, (INamedTypeSymbol)_fixture.GetTypeSymbol(typeName));
+    _factoryMock
+      .Setup(x => x.CreateProxyType(sut, type))
+      .Returns(elementType);
+
+    // Act
+    Type? actual = sut.GetRuntimeType(type.MakeArrayType());
+
+    // Assert
+    actual.Should().Be(expected);
+  }
 }
