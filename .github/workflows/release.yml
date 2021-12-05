@@ -4,9 +4,9 @@ env:
   OUTPUT_DIRECTORY: ${{ github.workspace }}/output
 
 on:
-  push:
+  release:
     branches: [ master ]
-    tags: [ "v*.*.*" ]
+    tags: [ "*" ]
 
 jobs:
   release:
