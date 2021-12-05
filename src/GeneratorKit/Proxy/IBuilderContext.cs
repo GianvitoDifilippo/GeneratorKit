@@ -7,8 +7,9 @@ namespace GeneratorKit.Proxy;
 
 internal interface IBuilderContext
 {
-  public TypeBuilder TypeBuilder { get; }
-  public SymbolType Type { get; }
+  TypeBuilder TypeBuilder { get; }
+  SymbolType Type { get; }
+  GeneratorRuntime Runtime { get; }
 
   Type ResolveType(SymbolType type, IReadOnlyDictionary<string, Type>? genericTypes = null);
 }

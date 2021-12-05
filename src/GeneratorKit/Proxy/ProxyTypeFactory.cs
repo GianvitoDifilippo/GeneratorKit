@@ -39,7 +39,7 @@ internal class ProxyTypeFactory : IProxyTypeFactory
       return null;
     }
 
-    result = ProxyTypeBuilder.BuildType(_moduleBuilder, type);
+    result = ProxyTypeBuilder.BuildType(runtime, _moduleBuilder, type);
     if (result is not null)
     {
       _typeMap.Add(type.Symbol, result);

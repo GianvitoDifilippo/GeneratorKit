@@ -14,19 +14,19 @@ internal class ProxyFieldBuilder
   private readonly IBuilderContext _context;
   private readonly TypeBuilder _typeBuilder;
   private readonly Dictionary<IPropertySymbol, FieldBuilder> _backingFields;
-  private readonly Dictionary<FieldBuilder, ExpressionSyntax> _initializers;
+  private readonly List<InitializerData> _initializers;
 
   public ProxyFieldBuilder(IBuilderContext context)
   {
     _context = context;
     _typeBuilder = context.TypeBuilder;
     _backingFields = new Dictionary<IPropertySymbol, FieldBuilder>(SymbolEqualityComparer.Default);
-    _initializers = new Dictionary<FieldBuilder, ExpressionSyntax>();
+    _initializers = new List<InitializerData>();
   }
 
   public IReadOnlyDictionary<IPropertySymbol, FieldBuilder> BackingFields => _backingFields;
 
-  public IReadOnlyDictionary<FieldBuilder, ExpressionSyntax> Initializers => _initializers;
+  public IReadOnlyCollection<InitializerData> Initializers => _initializers;
 
   public void BuildField(SymbolFieldInfo field)
   {
@@ -47,6 +47,10 @@ internal class ProxyFieldBuilder
     if (syntax.Initializer?.Value is not ExpressionSyntax expression)
       return;
 
-    _initializers.Add(fieldBuilder, expression);
+    SemanticModel semanticModel = _context.Runtime.Compilation.GetSemanticModel(field.Symbol.DeclaringSyntaxReferences[0].SyntaxTree);
+    if (semanticModel.GetOperation(expression, _context.Runtime.CancellationToken) is not IOperation initOperation)
+      return;
+
+    _initializers.Add(new InitializerData(fieldBuilder, initOperation));
   }
 }

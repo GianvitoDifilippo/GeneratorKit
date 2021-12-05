@@ -1,6 +1,5 @@
 ﻿using GeneratorKit.Reflection;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,24 +12,22 @@ internal class ProxyTypeBuilder : IBuilderContext
 {
   private const BindingFlags s_allDeclared = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
   
+  private readonly GeneratorRuntime _runtime;
   private readonly TypeBuilder _typeBuilder;
   private readonly SymbolType _type;
   private readonly IReadOnlyDictionary<string, Type> _genericTypes;
   private IReadOnlyDictionary<IPropertySymbol, FieldBuilder>? _backingFields;
-  private IReadOnlyDictionary<FieldBuilder, ExpressionSyntax>? _initializers;
+  private IReadOnlyCollection<InitializerData>? _initializers;
   private IReadOnlyDictionary<IPropertySymbol, MethodBuilder>? _getters;
   private IReadOnlyDictionary<IPropertySymbol, MethodBuilder>? _setters;
 
-  private ProxyTypeBuilder(TypeBuilder typeBuilder, SymbolType type, IReadOnlyDictionary<string, Type> genericTypes)
+  private ProxyTypeBuilder(GeneratorRuntime runtime, TypeBuilder typeBuilder, SymbolType type, IReadOnlyDictionary<string, Type> genericTypes)
   {
+    _runtime = runtime;
     _typeBuilder = typeBuilder;
     _type = type;
     _genericTypes = genericTypes;
   }
-
-  public TypeBuilder TypeBuilder => _typeBuilder;
-
-  public SymbolType Type => _type;
 
   private void SetParent()
   {
@@ -94,7 +91,10 @@ internal class ProxyTypeBuilder : IBuilderContext
 
   private void BuildConstructors()
   {
-    ProxyConstructorBuilder builder = new ProxyConstructorBuilder(this);
+    if (_initializers is null)
+      throw new InvalidOperationException("Initializers were not initialized");
+
+    ProxyConstructorBuilder builder = new ProxyConstructorBuilder(this, _initializers);
 
     foreach (SymbolConstructorInfo constructor in _type.GetConstructors(s_allDeclared))
     {
@@ -125,12 +125,12 @@ internal class ProxyTypeBuilder : IBuilderContext
     return typeDefinition.MakeGenericType(typeArguments);
   }
 
-  public static Type? BuildType(ModuleBuilder moduleBuilder, SymbolType type)
+  public static Type? BuildType(GeneratorRuntime runtime, ModuleBuilder moduleBuilder, SymbolType type)
   {
     TypeBuilder typeBuilder = moduleBuilder.DefineType(type.Name, type.Attributes);
     IReadOnlyDictionary<string, Type> genericTypes = CreateGenericTypeDictionary(typeBuilder, type);
 
-    ProxyTypeBuilder builder = new ProxyTypeBuilder(typeBuilder, type, genericTypes);
+    ProxyTypeBuilder builder = new ProxyTypeBuilder(runtime, typeBuilder, type, genericTypes);
     builder.SetParent();
     builder.SetInterfaces();
     builder.BuildFields();
@@ -161,4 +161,10 @@ internal class ProxyTypeBuilder : IBuilderContext
 
     return genericTypes;
   }
+
+  TypeBuilder IBuilderContext.TypeBuilder => _typeBuilder;
+
+  SymbolType IBuilderContext.Type => _type;
+
+  GeneratorRuntime IBuilderContext.Runtime => _runtime;
 }

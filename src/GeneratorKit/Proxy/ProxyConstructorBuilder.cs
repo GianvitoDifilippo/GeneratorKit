@@ -1,6 +1,8 @@
 ﻿using GeneratorKit.Reflection;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 
@@ -9,11 +11,13 @@ namespace GeneratorKit.Proxy;
 internal class ProxyConstructorBuilder
 {
   private readonly IBuilderContext _context;
+  private readonly IReadOnlyCollection<InitializerData> _initializers;
   private readonly TypeBuilder _typeBuilder;
 
-  public ProxyConstructorBuilder(IBuilderContext context)
+  public ProxyConstructorBuilder(IBuilderContext context, IReadOnlyCollection<InitializerData> initializers)
   {
     _context = context;
+    _initializers = initializers;
     _typeBuilder = context.TypeBuilder;
   }
 
@@ -37,6 +41,13 @@ internal class ProxyConstructorBuilder
     ConstructorBuilder constructorBuilder = _typeBuilder.DefineConstructor(constructor.Attributes, constructor.CallingConvention, parameterTypes);
 
     ILGenerator il = constructorBuilder.GetILGenerator();
+
+    foreach ((FieldBuilder field, IOperation initOperation) in _initializers)
+    {
+      new FieldInitializerOperationVisitor(il, field).Visit(initOperation);
+    }
+
+    // new ConstructorInitializerOperationVisitor(_runtime, il, parameters).Visit(operation);
 
     il.Emit(OpCodes.Ret);
   }
