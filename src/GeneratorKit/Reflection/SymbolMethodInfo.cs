@@ -297,60 +297,6 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
 
   // Other members
 
-  // public SymbolMethodInfo? OverriddenMethod => Symbol.IsOverride
-  //   ? _runtime.CreateMethodInfoDelegator(Symbol.OverriddenMethod!)
-  //   : null;
-
-  // public IReadOnlyCollection<SymbolMethodInfo> ImplementedMethods
-  // {
-  //   get
-  //   {
-  //     if (_skipImplementedMethodSearch)
-  //       return Array.Empty<SymbolMethodInfo>();
-  // 
-  //     if (_implementedMethods is null)
-  //     {
-  //       _implementedMethods = FindImplementedMethods();
-  //     }
-  //     return _implementedMethods;
-  //   }
-  // }
-  // 
-  // private SymbolMethodInfo[] FindImplementedMethods()
-  // {
-  //   if (Symbol.ExplicitInterfaceImplementations.Length != 0)
-  //   {
-  //     return Symbol.ExplicitInterfaceImplementations.Select(x => _runtime.CreateMethodInfoDelegator(x)).ToArray();
-  //   }
-  // 
-  //   SymbolType[] interfaceTypes = DeclaringTypeCore.GetInterfaces();
-  //   if (interfaceTypes.Length == 0)
-  //   {
-  //     _skipImplementedMethodSearch = true;
-  //     return Array.Empty<SymbolMethodInfo>();
-  //   }
-  // 
-  //   string name = Name;
-  //   BindingFlags bindingAttr =
-  //     (Symbol.DeclaredAccessibility is Accessibility.Public ? BindingFlags.Public : BindingFlags.NonPublic) |
-  //     (Symbol.IsStatic ? BindingFlags.Static : BindingFlags.Instance);
-  //   int genericParameterCount = IsGenericMethod ? GetGenericArgumentsCore().Length : 0;
-  //   DelegatorBinder binder = new DelegatorBinder(genericParameterCount);
-  //   CallingConventions callConvention = CallingConvention;
-  //   Type[] types = GetParametersCore().Select(x => x.ParameterType).ToArray();
-  //   foreach (SymbolType interfaceType in interfaceTypes)
-  //   {
-  //     SymbolMethodInfo? method = interfaceType.GetMethod(name, bindingAttr, binder, callConvention, types, null);
-  //     if (method is not null)
-  //     {
-  //       return new[] { method };
-  //     }
-  //   }
-  // 
-  //   _skipImplementedMethodSearch = true;
-  //   return Array.Empty<SymbolMethodInfo>();
-  // }
-
   private bool ImplementsAnyInterfaceMethod
   {
     get

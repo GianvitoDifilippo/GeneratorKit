@@ -6,7 +6,7 @@ using System;
 using System.Reflection;
 using Xunit;
 
-namespace GeneratorKit.Proxy;
+namespace GeneratorKit;
 
 public class ProxyTypeFactoryTests : IClassFixture<ProxyTypeFactoryFixture>
 {

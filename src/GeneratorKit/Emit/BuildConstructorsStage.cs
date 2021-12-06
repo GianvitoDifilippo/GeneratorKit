@@ -5,21 +5,25 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 
-namespace GeneratorKit.Proxy;
+namespace GeneratorKit.Emit;
 
-internal class ProxyConstructorBuilder
+internal class BuildConstructorsStage
 {
-  private readonly IBuilderContext _context;
-  private readonly IReadOnlyCollection<InitializerData> _initializers;
+  private readonly IBuildContext _context;
   private readonly Type _baseType;
-  private readonly TypeBuilder _typeBuilder;
+  private readonly IReadOnlyCollection<InitializerData> _instanceInitializers;
+  private readonly IReadOnlyCollection<InitializerData> _staticInitializers;
 
-  public ProxyConstructorBuilder(IBuilderContext context, IReadOnlyCollection<InitializerData> initializers, Type baseType)
+  public BuildConstructorsStage(
+    IBuildContext context,
+    Type baseType,
+    IReadOnlyCollection<InitializerData> instanceInitializers,
+    IReadOnlyCollection<InitializerData> staticInitializers)
   {
     _context = context;
-    _initializers = initializers;
     _baseType = baseType;
-    _typeBuilder = context.TypeBuilder;
+    _instanceInitializers = instanceInitializers;
+    _staticInitializers = staticInitializers;
   }
 
   public void BuildConstructor(SymbolConstructorInfo constructor)
@@ -39,13 +43,15 @@ internal class ProxyConstructorBuilder
     IMethodSymbol constructorSymbol = constructor.Symbol;
 
     Type[] parameterTypes = constructor.GetParameters().Select(x => _context.ResolveType(x.ParameterType)).ToArray();
-    ConstructorBuilder constructorBuilder = _typeBuilder.DefineConstructor(constructor.Attributes, constructor.CallingConvention, parameterTypes);
+    ConstructorBuilder constructorBuilder = _context.TypeBuilder.DefineConstructor(constructor.Attributes, constructor.CallingConvention, parameterTypes);
 
     ILGenerator il = constructorBuilder.GetILGenerator();
 
-    foreach ((FieldBuilder field, IOperation initOperation) in _initializers)
+    foreach ((FieldBuilder field, IOperation initOperation) in _instanceInitializers)
     {
-      new FieldInitializerOperationVisitor(il, field).Visit(initOperation);
+      il.Emit(OpCodes.Ldarg_0);
+      new FieldInitializerOperationVisitor(il).Visit(initOperation);
+      il.Emit(OpCodes.Stfld, field);
     }
 
     if (!constructor.Symbol.IsImplicitlyDeclared)
@@ -53,17 +59,24 @@ internal class ProxyConstructorBuilder
       SemanticModel semanticModel = _context.Runtime.Compilation.GetSemanticModel(constructorSymbol.DeclaringSyntaxReferences[0].SyntaxTree);
       SyntaxNode syntax = constructor.Symbol.DeclaringSyntaxReferences[0].GetSyntax();
       IOperation operation = semanticModel.GetOperation(syntax, _context.Runtime.CancellationToken) ?? throw new InvalidOperationException();
-      new ConstructorInitializerOperationVisitor(_context.Runtime, il, _baseType, constructor.GetParameters()).Visit(operation);
+
+      new ConstructorInitializerOperationVisitor(_context.Runtime, il, _baseType).Visit(operation);
     }
 
     il.Emit(OpCodes.Ret);
-  }
+}
 
   private void BuildStaticConstructor(SymbolConstructorInfo constructor)
   {
-    ConstructorBuilder constructorBuilder = _typeBuilder.DefineTypeInitializer();
+    ConstructorBuilder constructorBuilder = _context.TypeBuilder.DefineTypeInitializer();
 
     ILGenerator il = constructorBuilder.GetILGenerator();
+
+    foreach ((FieldBuilder field, IOperation initOperation) in _staticInitializers)
+    {
+      new FieldInitializerOperationVisitor(il).Visit(initOperation);
+      il.Emit(OpCodes.Stfld, field);
+    }
 
     il.Emit(OpCodes.Ret);
   }

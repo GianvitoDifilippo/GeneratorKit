@@ -1,5 +1,4 @@
-﻿using GeneratorKit.Proxy;
-using GeneratorKit.Reflection;
+﻿using GeneratorKit.Reflection;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Reflection;

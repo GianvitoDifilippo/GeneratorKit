@@ -7,33 +7,35 @@ using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 
-namespace GeneratorKit.Proxy;
+namespace GeneratorKit.Emit;
 
-internal class ProxyFieldBuilder
+internal class BuildFieldsStage
 {
-  private readonly IBuilderContext _context;
-  private readonly TypeBuilder _typeBuilder;
+  private readonly IBuildContext _context;
   private readonly Dictionary<IPropertySymbol, FieldBuilder> _backingFields;
-  private readonly List<InitializerData> _initializers;
+  private readonly List<InitializerData> _instanceInitializers;
+  private readonly List<InitializerData> _staticInitializers;
 
-  public ProxyFieldBuilder(IBuilderContext context)
+  public BuildFieldsStage(IBuildContext context)
   {
     _context = context;
-    _typeBuilder = context.TypeBuilder;
     _backingFields = new Dictionary<IPropertySymbol, FieldBuilder>(SymbolEqualityComparer.Default);
-    _initializers = new List<InitializerData>();
+    _instanceInitializers = new List<InitializerData>();
+    _staticInitializers = new List<InitializerData>();
   }
 
   public IReadOnlyDictionary<IPropertySymbol, FieldBuilder> BackingFields => _backingFields;
 
-  public IReadOnlyCollection<InitializerData> Initializers => _initializers;
+  public IReadOnlyCollection<InitializerData> InstanceInitializers => _instanceInitializers;
+
+  public IReadOnlyCollection<InitializerData> StaticInitializers => _staticInitializers;
 
   public void BuildField(SymbolFieldInfo field)
   {
     IFieldSymbol fieldSymbol = field.Symbol;
 
     Type fieldType = _context.ResolveType(field.FieldType);
-    FieldBuilder fieldBuilder = _typeBuilder.DefineField(field.Name, fieldType, field.Attributes);
+    FieldBuilder fieldBuilder = _context.TypeBuilder.DefineField(field.Name, fieldType, field.Attributes);
 
     if (fieldSymbol.IsImplicitlyDeclared && fieldSymbol.AssociatedSymbol is IPropertySymbol propertySymbol)
     {
@@ -51,6 +53,14 @@ internal class ProxyFieldBuilder
     if (semanticModel.GetOperation(expression, _context.Runtime.CancellationToken) is not IOperation initOperation)
       return;
 
-    _initializers.Add(new InitializerData(fieldBuilder, initOperation));
+    InitializerData data = new InitializerData(fieldBuilder, initOperation);
+    if (field.IsStatic)
+    {
+      _staticInitializers.Add(data);
+    }
+    else
+    {
+      _instanceInitializers.Add(data);
+    }
   }
 }

@@ -8,22 +8,21 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 
-namespace GeneratorKit.Proxy;
+namespace GeneratorKit.Emit;
 
-
-internal class ProxyMethodBuilder
+internal class BuildMethodsStage
 {
-  private readonly IBuilderContext _context;
-  private readonly TypeBuilder _typeBuilder;
+  private readonly IBuildContext _context;
   private readonly IReadOnlyDictionary<IPropertySymbol, FieldBuilder> _backingFields;
+  private readonly IReadOnlyDictionary<ITypeSymbol, Type> _interfaceTypes;
   private readonly Dictionary<IPropertySymbol, MethodBuilder> _getters;
   private readonly Dictionary<IPropertySymbol, MethodBuilder> _setters;
 
-  public ProxyMethodBuilder(IBuilderContext context, IReadOnlyDictionary<IPropertySymbol, FieldBuilder> backingFields)
+  public BuildMethodsStage(IBuildContext context, IReadOnlyDictionary<IPropertySymbol, FieldBuilder> backingFields, IReadOnlyDictionary<ITypeSymbol, Type> interfaceTypes)
   {
     _context = context;
-    _typeBuilder = context.TypeBuilder;
     _backingFields = backingFields;
+    _interfaceTypes = interfaceTypes;
     _getters = new Dictionary<IPropertySymbol, MethodBuilder>(SymbolEqualityComparer.Default);
     _setters = new Dictionary<IPropertySymbol, MethodBuilder>(SymbolEqualityComparer.Default);
   }
@@ -36,16 +35,20 @@ internal class ProxyMethodBuilder
   {
     IMethodSymbol methodSymbol = method.Symbol;
 
-    MethodBuilder methodBuilder = _typeBuilder.DefineMethod(method.Name, method.Attributes, method.CallingConvention);
+    MethodBuilder methodBuilder = _context.TypeBuilder.DefineMethod(method.Name, method.Attributes, method.CallingConvention);
 
-    IReadOnlyDictionary<string, Type> genericTypes = CreateGenericTypeDictionary(methodBuilder, method);
+    IReadOnlyDictionary<string, Type> genericParameters = CreateGenericParameterDictionary(methodBuilder, method);
 
-    methodBuilder.SetReturnType(_context.ResolveType(method.ReturnType, genericTypes));
-    methodBuilder.SetParameters(method.GetParameters().Select(x => _context.ResolveType(x.ParameterType, genericTypes)).ToArray());
+    methodBuilder.SetReturnType(_context.ResolveType(method.ReturnType, genericParameters));
+    methodBuilder.SetParameters(method.GetParameters().Select(x => _context.ResolveType(x.ParameterType, genericParameters)).ToArray());
 
-    if (method.Symbol.ExplicitInterfaceImplementations.Length != 0)
+    foreach (IMethodSymbol explicitMethodSymbol in method.Symbol.ExplicitInterfaceImplementations)
     {
-      throw new NotSupportedException("Explicit implementation of interfaces is not supported.");
+      MethodInfo methodDefinition = _context.Runtime.CreateMethodInfoDelegator(explicitMethodSymbol.OriginalDefinition).RuntimeMethod;
+      Type interfaceType = _interfaceTypes[explicitMethodSymbol.ContainingType];
+      MethodInfo explicitMethod = TypeBuilder.GetMethod(interfaceType, methodDefinition);
+
+      _context.TypeBuilder.DefineMethodOverride(methodBuilder, explicitMethod);
     }
 
     switch (methodSymbol.MethodKind)
@@ -100,7 +103,7 @@ internal class ProxyMethodBuilder
     il.Emit(OpCodes.Ret);
   }
 
-  private static IReadOnlyDictionary<string, Type> CreateGenericTypeDictionary(MethodBuilder methodBuilder, SymbolMethodInfo method)
+  private static IReadOnlyDictionary<string, Type> CreateGenericParameterDictionary(MethodBuilder methodBuilder, SymbolMethodInfo method)
   {
     Dictionary<string, Type> genericTypes = new Dictionary<string, Type>();
     if (!method.IsGenericMethod)

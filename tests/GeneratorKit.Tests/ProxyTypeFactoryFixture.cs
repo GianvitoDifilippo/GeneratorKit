@@ -7,7 +7,7 @@ using System.Linq;
 using System.Reflection;
 using Xunit.Sdk;
 
-namespace GeneratorKit.Proxy;
+namespace GeneratorKit;
 
 public class ProxyTypeFactoryFixture
 {
@@ -23,6 +23,7 @@ namespace " + Namespace + @"
   {
     void PublicMethod();
     T2 GenericMethodInInterface<T>(T1 arg1);
+    void ExplicitMethod();
 
     T2 InterfaceProperty { get; }
   }
@@ -32,7 +33,7 @@ namespace " + Namespace + @"
     public readonly T1 _arg1;
     public readonly T2 _arg2;
 
-    public BaseClass(T1 arg1, T2 arg2)
+    public BaseClass(T1 arg1, T2 arg2, string arg3)
     {
       _arg1 = arg1;
       _arg2 = arg2;
@@ -52,7 +53,8 @@ namespace " + Namespace + @"
     private string _initField = ""_initField"";
     private object? _field;
 
-    public Class(T1 arg1, int arg2) : base(arg1, arg2) { }
+    public Class(T1 arg1) : base(arg1, 3, ""str"") { }
+    public Class(T1 arg1, int arg2) : base(arg1, arg2, null) { }
 
     public long Property { get => throw null; set => throw null; }
     public string AutoProperty { get; set; }
@@ -67,6 +69,7 @@ namespace " + Namespace + @"
     public void PublicMethod() => throw null;
     public T4 GenericMethod<T4, T5>(T1 arg1, int arg2, T5 arg3) => throw null;
     public string GenericMethodInInterface<T>(T2 arg1) => throw null;
+    void IInterface<T2, string>.ExplicitMethod() => throw null;
   }
 
   public class ClassWithDefaultConstructor { }

@@ -1,6 +1,5 @@
 ﻿using FluentAssertions;
 using GeneratorKit.Comparers;
-using GeneratorKit.Proxy;
 using GeneratorKit.Reflection;
 using GeneratorKit.TestHelpers;
 using Microsoft.CodeAnalysis;

@@ -1,5 +1,4 @@
-﻿using GeneratorKit.Proxy;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 
 namespace GeneratorKit;
 

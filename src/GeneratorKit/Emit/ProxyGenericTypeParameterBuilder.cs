@@ -1,7 +1,7 @@
 ﻿using GeneratorKit.Reflection;
 using System.Reflection.Emit;
 
-namespace GeneratorKit.Proxy;
+namespace GeneratorKit.Emit;
 
 internal class ProxyGenericTypeParameterBuilder
 {
