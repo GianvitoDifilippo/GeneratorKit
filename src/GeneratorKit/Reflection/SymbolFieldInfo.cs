@@ -174,6 +174,11 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
     return FieldInfoEqualityComparer.Default.GetHashCode(this);
   }
 
+  public override string ToString()
+  {
+    return $"{FieldType.Name} {Name}";
+  }
+
 
   // New members
 

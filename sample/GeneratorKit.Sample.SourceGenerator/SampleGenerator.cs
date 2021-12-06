@@ -22,11 +22,11 @@ namespace SourceGenerator
 
       GeneratorConfiguration configuration = (GeneratorConfiguration)Activator.CreateInstance(configurationType);
 
-      // This will fail because nothing is executed, not even the constructor... for now ;)
-      // foreach (string className in configuration.ClassNames)
-      // {
-      //   context.AddSource(className, $"namespace {configurationType.Namespace} {{ public class {className} {{  }} }}");
-      // }
+      // 'configuration.ClassNames' will be empty because nothing is executed... for now ;)
+      foreach (string className in configuration.ClassNames)
+      {
+        context.AddSource(className, $"namespace {configurationType.Namespace} {{ public class {className} {{  }} }}");
+      }
     }
 
     public override void Initialize(GeneratorInitializationContext context)

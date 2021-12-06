@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 
 namespace GeneratorKit.Reflection;
 
@@ -164,6 +165,26 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
   public override int GetHashCode()
   {
     return PropertyInfoEqualityComparer.Default.GetHashCode(this);
+  }
+
+  public override string ToString()
+  {
+    StringBuilder builder = new StringBuilder(PropertyType.Name);
+    builder.Append(" ");
+    builder.Append(Name);
+    ParameterInfo[] parameters = GetIndexParameters();
+    if (parameters.Length > 0)
+    {
+      builder.Append(" [");
+      builder.Append(parameters[0].ParameterType.Name);
+      for (int i = 1; i < parameters.Length; i++)
+      {
+        builder.Append(',');
+        builder.Append(parameters[i].ParameterType.Name);
+      }
+      builder.Append("]");
+    }
+    return builder.ToString();
   }
 
 

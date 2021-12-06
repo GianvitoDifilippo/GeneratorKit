@@ -68,7 +68,8 @@ internal class BuildConstructorsStage
 
   private void BuildStaticConstructor(SymbolConstructorInfo constructor)
   {
-    ConstructorBuilder constructorBuilder = _context.TypeBuilder.DefineTypeInitializer();
+    // Not using 'DefineTypeInitializers' because 'HideBySig' is missing in the constructor attributes.
+    ConstructorBuilder constructorBuilder = _context.TypeBuilder.DefineConstructor(constructor.Attributes, constructor.CallingConvention, null);
 
     ILGenerator il = constructorBuilder.GetILGenerator();
 

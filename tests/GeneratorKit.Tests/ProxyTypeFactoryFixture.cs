@@ -47,11 +47,14 @@ namespace " + Namespace + @"
 
   public class Class<T1, T2, T3> : BaseClass<T1, int>, IInterface<T2, string>
   {
+    private static readonly int _staticInitField = 3;
     private T1 _genericField;
     private static int _staticField;
     private readonly int _readonlyField;
     private string _initField = ""_initField"";
     private object? _field;
+
+    static Class() { }
 
     public Class(T1 arg1) : base(arg1, 3, ""str"") { }
     public Class(T1 arg1, int arg2) : base(arg1, arg2, null) { }
@@ -72,7 +75,17 @@ namespace " + Namespace + @"
     void IInterface<T2, string>.ExplicitMethod() => throw null;
   }
 
-  public class ClassWithDefaultConstructor { }
+  public class ClassWithDefaultCtor { }
+
+  public class ClassWithParameterlessCtor
+  {
+    public ClassWithParameterlessCtor() { }
+  }
+
+  public class MyBaseClassHasParameterlessCtor : ClassWithParameterlessCtor
+  {
+    public MyBaseClassHasParameterlessCtor(int arg) { }
+  }
 }
 
 ";
@@ -101,8 +114,10 @@ namespace " + Namespace + @"
 
     INamedTypeSymbol baseClassSymbol = GetSymbolTypeFromCompilation("BaseClass`2");
     INamedTypeSymbol interfaceSymbol = GetSymbolTypeFromCompilation("IInterface`2");
+    INamedTypeSymbol classWithParameterlessCtorSymbol = GetSymbolTypeFromCompilation("ClassWithParameterlessCtor");
     Type baseClassType = GetTypeFromAssembly("BaseClass`2");
     Type interfaceType = GetTypeFromAssembly("IInterface`2");
+    Type classWithParameterlessCtorType = GetTypeFromAssembly("ClassWithParameterlessCtor");
 
     _runtime.AddType(objectTypeSymbol, typeof(object));
     _runtime.AddType(intTypeSymbol, typeof(int));
@@ -111,6 +126,7 @@ namespace " + Namespace + @"
     _runtime.AddType(stringTypeSymbol, typeof(string));
     _runtime.AddType(baseClassSymbol, baseClassType);
     _runtime.AddType(interfaceSymbol, interfaceType);
+    _runtime.AddType(classWithParameterlessCtorSymbol, classWithParameterlessCtorType);
   }
 
   internal GeneratorRuntime Runtime => _runtime;
@@ -119,9 +135,10 @@ namespace " + Namespace + @"
   {
     INamedTypeSymbol symbol = category switch
     {
-      TypeCategory.WithAllMembers         => GetSymbolTypeFromCompilation("Class`3"),
-      TypeCategory.WithDefaultConstructor => GetSymbolTypeFromCompilation("ClassWithDefaultConstructor"),
-      _                                   => throw new InvalidOperationException()
+      TypeCategory.WithAllMembers                  => GetSymbolTypeFromCompilation("Class`3"),
+      TypeCategory.WithDefaultConstructor          => GetSymbolTypeFromCompilation("ClassWithDefaultCtor"),
+      TypeCategory.MyBaseClassHasParameterlessCtor => GetSymbolTypeFromCompilation("MyBaseClassHasParameterlessCtor"),
+      _                                            => throw new InvalidOperationException()
     };
 
     return new SymbolNamedType(_runtime, symbol);
@@ -143,7 +160,8 @@ namespace " + Namespace + @"
 public enum TypeCategory
 {
   WithAllMembers,
-  WithDefaultConstructor
+  WithDefaultConstructor,
+  MyBaseClassHasParameterlessCtor
 }
 
 public class AllCategoriesDataAttribute : DataAttribute

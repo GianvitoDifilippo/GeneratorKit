@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 
 namespace GeneratorKit.Reflection;
 
@@ -264,6 +265,40 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
   public override int GetHashCode()
   {
     return MethodInfoEqualityComparer.Default.GetHashCode(this);
+  }
+
+  public override string ToString()
+  {
+    StringBuilder builder = new StringBuilder(ReturnType.Name);
+    builder.Append(' ');
+    builder.Append(Name);
+    if (IsGenericMethod)
+    {
+      Type[] genericArguments = GetGenericArguments();
+      builder.Append('[');
+      builder.Append(genericArguments[0].Name);
+      for (int i = 1; i < genericArguments.Length; i++)
+      {
+        builder.Append(',');
+        builder.Append(genericArguments[i].Name);
+      }
+      builder.Append(']');
+    }
+    builder.Append('(');
+    ParameterInfo[] parameters = GetParameters();
+    if (parameters.Length > 0)
+    {
+      builder.Append(parameters[0].ParameterType.Name);
+      for (int i = 1; i < parameters.Length; i++)
+      {
+        builder.Append(',');
+        builder.Append(' ');
+        builder.Append(parameters[i].ParameterType.Name);
+      }
+    }
+    builder.Append(')');
+
+    return builder.ToString();
   }
 
 

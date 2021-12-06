@@ -433,7 +433,7 @@ public class SymbolFieldInfoTests : IClassFixture<SymbolFieldInfoFixture>
     Type? expected = reference.ReflectedType;
 
     // Act
-    Type actual = sut.ReflectedType;
+    Type? actual = sut.ReflectedType;
 
     // Assert
     actual.Should().Equal(expected, TypeEqualityComparer.Default);
@@ -446,12 +446,12 @@ public class SymbolFieldInfoTests : IClassFixture<SymbolFieldInfoFixture>
     // Arrange
     FieldInfo reference = _fixture.GetReference(category);
     SymbolFieldInfo sut = _fixture.GetDelegator(category);
-  
+
     FieldInfo expected = reference;
-  
+
     // Act
     FieldInfo actual = sut.RuntimeField;
-  
+
     // Assert
     actual.Should().Equal(expected, FieldInfoEqualityComparer.Default);
   }
