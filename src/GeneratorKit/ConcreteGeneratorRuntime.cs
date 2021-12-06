@@ -122,6 +122,13 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
 
   private Type? GetRuntimeTypeParameter(SymbolType type)
   {
-    throw new NotSupportedException("Cannot create runtime type for generic type parameters.");
+    if (type.DeclaringType is not SymbolType declaringType)
+      return null;
+
+    Type? runtimeDeclaringType = GetRuntimeType(declaringType);
+    if (runtimeDeclaringType is null)
+      return null;
+
+    return runtimeDeclaringType.GenericTypeArguments[type.GenericParameterPosition];
   }
 }

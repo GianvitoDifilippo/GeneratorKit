@@ -2,7 +2,10 @@
 using GeneratorKit.TestHelpers;
 using Microsoft.CodeAnalysis;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
+using Xunit.Sdk;
 
 namespace GeneratorKit.Proxy;
 
@@ -58,6 +61,8 @@ namespace " + Namespace + @"
     public T4 GenericMethod<T4, T5>(T1 arg1, int arg2, T5 arg3) => throw null;
     public string GenericMethodInInterface<T>(T2 arg1) => throw null;
   }
+
+  public class ClassWithDefaultConstructor { }
 }
 
 ";
@@ -104,8 +109,9 @@ namespace " + Namespace + @"
   {
     INamedTypeSymbol symbol = category switch
     {
-      TypeCategory.Class => GetSymbolTypeFromCompilation("Class`3"),
-      _                  => throw new InvalidOperationException()
+      TypeCategory.WithAllMembers         => GetSymbolTypeFromCompilation("Class`3"),
+      TypeCategory.WithDefaultConstructor => GetSymbolTypeFromCompilation("ClassWithDefaultConstructor"),
+      _                                   => throw new InvalidOperationException()
     };
 
     return new SymbolNamedType(_runtime, symbol);
@@ -126,5 +132,14 @@ namespace " + Namespace + @"
 
 public enum TypeCategory
 {
-  Class
+  WithAllMembers,
+  WithDefaultConstructor
+}
+
+public class AllCategoriesDataAttribute : DataAttribute
+{
+  public override IEnumerable<object[]> GetData(MethodInfo testMethod)
+  {
+    return Enum.GetValues<TypeCategory>().Select(x => new object[1] { x });
+  }
 }

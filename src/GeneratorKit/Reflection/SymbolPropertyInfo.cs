@@ -31,23 +31,7 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
 
   public IPropertySymbol Symbol { get; }
 
-  public PropertyInfo RuntimeProperty
-  {
-    get
-    {
-      if (_runtimeProperty is null)
-      {
-        BindingFlags bindingAttr =
-          (Symbol.DeclaredAccessibility is Accessibility.Public ? BindingFlags.Public : BindingFlags.NonPublic) |
-          (Symbol.IsStatic ? BindingFlags.Static : BindingFlags.Instance);
-
-        _runtimeProperty = Symbol.Name is "this[]"
-          ? ReflectedTypeCore.RuntimeType.GetProperty("Item", bindingAttr, new DelegatorBinder(0), PropertyType, GetIndexParametersCore().Select(x => x.ParameterType).ToArray(), null)
-          : ReflectedTypeCore.RuntimeType.GetProperty(Symbol.Name, bindingAttr);
-      }
-      return _runtimeProperty;
-    }
-  }
+  public PropertyInfo RuntimeProperty => _runtimeProperty ??= MemberResolver.ResolveProperty(ReflectedTypeCore.RuntimeType, this);
 
 
   // System.Reflection.PropertyInfo overrides

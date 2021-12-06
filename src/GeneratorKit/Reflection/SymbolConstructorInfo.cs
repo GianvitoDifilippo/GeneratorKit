@@ -24,22 +24,7 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
 
   public IMethodSymbol Symbol { get; }
 
-  internal ConstructorInfo RuntimeConstructor
-  {
-    get
-    {
-      if (_runtimeConstructor is null)
-      {
-        BindingFlags bindingAttr =
-          (Symbol.DeclaredAccessibility is Accessibility.Public ? BindingFlags.Public : BindingFlags.NonPublic) |
-          (Symbol.IsStatic ? BindingFlags.Static : BindingFlags.Instance) |
-          BindingFlags.DeclaredOnly;
-
-        _runtimeConstructor = DeclaringTypeCore.RuntimeType.GetConstructor(bindingAttr, new DelegatorBinder(0), GetParameters().Select(x => x.ParameterType).ToArray(), null);
-      }
-      return _runtimeConstructor;
-    }
-  }
+  internal ConstructorInfo RuntimeConstructor => _runtimeConstructor ??= MemberResolver.ResolveConstructor(ReflectedTypeCore.RuntimeType, this);
 
 
   // System.Reflection.ConstructorInfo overrides

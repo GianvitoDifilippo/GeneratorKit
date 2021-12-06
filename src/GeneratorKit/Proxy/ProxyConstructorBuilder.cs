@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
+using System.Threading;
 
 namespace GeneratorKit.Proxy;
 
@@ -47,7 +48,13 @@ internal class ProxyConstructorBuilder
       new FieldInitializerOperationVisitor(il, field).Visit(initOperation);
     }
 
-    // new ConstructorInitializerOperationVisitor(_runtime, il, parameters).Visit(operation);
+    if (!constructor.Symbol.IsImplicitlyDeclared)
+    {
+      SemanticModel semanticModel = _context.Runtime.Compilation.GetSemanticModel(constructorSymbol.DeclaringSyntaxReferences[0].SyntaxTree);
+      SyntaxNode syntax = constructor.Symbol.DeclaringSyntaxReferences[0].GetSyntax();
+      IOperation operation = semanticModel.GetOperation(syntax, _context.Runtime.CancellationToken) ?? throw new InvalidOperationException();
+      new ConstructorInitializerOperationVisitor(_context.Runtime, il, constructor.GetParameters()).Visit(operation);
+    }
 
     il.Emit(OpCodes.Ret);
   }

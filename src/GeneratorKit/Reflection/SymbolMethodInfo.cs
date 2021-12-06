@@ -38,18 +38,13 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
     {
       if (_runtimeMethod is null)
       {
-        BindingFlags bindingAttr =
-          (Symbol.DeclaredAccessibility is Accessibility.Public ? BindingFlags.Public : BindingFlags.NonPublic) |
-          (Symbol.IsStatic ? BindingFlags.Static : BindingFlags.Instance);
-
         if (!IsGenericMethodDefinition && IsGenericMethod)
         {
           Type[] genericArguments = GetGenericArguments().Select(x => x.RuntimeType).ToArray();
           return GetGenericMethodDefinitionCore(true).RuntimeMethod.MakeGenericMethod(genericArguments);
         }
 
-        int genericParameterCount = IsGenericMethod ? GetGenericArgumentsCore().Length : 0;
-        _runtimeMethod = ReflectedTypeCore.RuntimeType.GetMethod(Name, bindingAttr, new DelegatorBinder(genericParameterCount), CallingConvention, GetParametersCore().Select(x => x.ParameterType).ToArray(), null);
+        _runtimeMethod = MemberResolver.ResolveMethod(ReflectedTypeCore.RuntimeType, this);
       }
       return _runtimeMethod;
     }

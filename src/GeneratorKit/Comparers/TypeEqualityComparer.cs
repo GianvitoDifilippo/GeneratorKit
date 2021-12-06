@@ -58,7 +58,6 @@ internal abstract class TypeEqualityComparer : IEqualityComparer<Type?>
       }
       else if (y.IsGenericParameter) return false;
 
-
       return true;
     }
 

@@ -41,7 +41,7 @@ internal class ConstructorInitializerOperationVisitor : OperationVisitor
 
   public override void VisitInvocation(IInvocationOperation operation)
   {
-    // _constructor = _runtime.CreateConstructorInfoDelegator(operation.TargetMethod).UnderlyingConstructor;
+    _constructor = _runtime.CreateConstructorInfoDelegator(operation.TargetMethod).RuntimeConstructor;
 
     _il.Emit(OpCodes.Ldarg_0);
 
