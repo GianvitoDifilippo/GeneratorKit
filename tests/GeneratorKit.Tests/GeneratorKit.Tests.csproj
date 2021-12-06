@@ -28,8 +28,4 @@
     <ProjectReference Include="..\..\src\GeneratorKit\GeneratorKit.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Emit\" />
-  </ItemGroup>
-
 </Project>

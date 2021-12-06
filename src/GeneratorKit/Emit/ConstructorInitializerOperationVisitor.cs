@@ -8,6 +8,8 @@ namespace GeneratorKit.Emit;
 
 internal class ConstructorInitializerOperationVisitor : OperationVisitor
 {
+  private const BindingFlags s_allInstanceConstructors = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+
   private readonly GeneratorRuntime _runtime;
   private readonly ILGenerator _il;
   private readonly Type _baseType;
@@ -30,6 +32,12 @@ internal class ConstructorInitializerOperationVisitor : OperationVisitor
     {
       Visit(operation.Initializer);
     }
+    else
+    {
+      ConstructorInfo constructor = _baseType.GetConstructor(s_allInstanceConstructors, null, Type.EmptyTypes, null);
+      _il.Emit(OpCodes.Ldarg_0);
+      _il.Emit(OpCodes.Call, constructor);
+    }
   }
 
   public override void VisitExpressionStatement(IExpressionStatementOperation operation)
@@ -39,10 +47,7 @@ internal class ConstructorInitializerOperationVisitor : OperationVisitor
 
   public override void VisitInvocation(IInvocationOperation operation)
   {
-    IMethodSymbol targetMethodSymbol = operation.TargetMethod;
-    ConstructorInfo constructorDefinition = _runtime.CreateConstructorInfoDelegator(targetMethodSymbol.OriginalDefinition).RuntimeConstructor;
-
-    ConstructorInfo constructor = TypeBuilder.GetConstructor(_baseType, constructorDefinition);
+    ConstructorInfo constructor = GetBaseConstructor(operation.TargetMethod);
 
     _il.Emit(OpCodes.Ldarg_0);
 
@@ -131,5 +136,16 @@ internal class ConstructorInitializerOperationVisitor : OperationVisitor
         _il.Emit(OpCodes.Ldarg_S, position + 1);
         break;
     }
+  }
+
+  private ConstructorInfo GetBaseConstructor(IMethodSymbol baseConstructorSymbol)
+  {
+    if (_baseType.ContainsGenericParameters)
+    {
+      ConstructorInfo constructorDefinition = _runtime.CreateConstructorInfoDelegator(baseConstructorSymbol.OriginalDefinition).RuntimeConstructor;
+      return TypeBuilder.GetConstructor(_baseType, constructorDefinition);
+    }
+
+    return _runtime.CreateConstructorInfoDelegator(baseConstructorSymbol).RuntimeConstructor;
   }
 }
