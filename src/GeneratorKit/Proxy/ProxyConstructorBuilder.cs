@@ -1,11 +1,9 @@
 ﻿using GeneratorKit.Reflection;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
-using System.Threading;
 
 namespace GeneratorKit.Proxy;
 
@@ -13,12 +11,14 @@ internal class ProxyConstructorBuilder
 {
   private readonly IBuilderContext _context;
   private readonly IReadOnlyCollection<InitializerData> _initializers;
+  private readonly Type _baseType;
   private readonly TypeBuilder _typeBuilder;
 
-  public ProxyConstructorBuilder(IBuilderContext context, IReadOnlyCollection<InitializerData> initializers)
+  public ProxyConstructorBuilder(IBuilderContext context, IReadOnlyCollection<InitializerData> initializers, Type baseType)
   {
     _context = context;
     _initializers = initializers;
+    _baseType = baseType;
     _typeBuilder = context.TypeBuilder;
   }
 
@@ -53,7 +53,7 @@ internal class ProxyConstructorBuilder
       SemanticModel semanticModel = _context.Runtime.Compilation.GetSemanticModel(constructorSymbol.DeclaringSyntaxReferences[0].SyntaxTree);
       SyntaxNode syntax = constructor.Symbol.DeclaringSyntaxReferences[0].GetSyntax();
       IOperation operation = semanticModel.GetOperation(syntax, _context.Runtime.CancellationToken) ?? throw new InvalidOperationException();
-      new ConstructorInitializerOperationVisitor(_context.Runtime, il, constructor.GetParameters()).Visit(operation);
+      new ConstructorInitializerOperationVisitor(_context.Runtime, il, _baseType, constructor.GetParameters()).Visit(operation);
     }
 
     il.Emit(OpCodes.Ret);

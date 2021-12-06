@@ -1,23 +1,25 @@
 ﻿using GeneratorKit.Reflection;
+using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Operations;
+using System;
 using System.Reflection;
 using System.Reflection.Emit;
 
 namespace GeneratorKit.Proxy;
 
-
 internal class ConstructorInitializerOperationVisitor : OperationVisitor
 {
   private readonly GeneratorRuntime _runtime;
   private readonly ILGenerator _il;
+  private readonly Type _baseType;
   private readonly SymbolArgumentParameter[] _parameters;
-  private ConstructorInfo? _constructor;
 
-  public ConstructorInitializerOperationVisitor(GeneratorRuntime runtime, ILGenerator il, SymbolArgumentParameter[] parameters)
+  public ConstructorInitializerOperationVisitor(GeneratorRuntime runtime, ILGenerator il, Type baseType, SymbolArgumentParameter[] parameters)
   {
     _runtime = runtime;
     _il = il;
+    _baseType = baseType;
     _parameters = parameters;
   }
 
@@ -41,7 +43,10 @@ internal class ConstructorInitializerOperationVisitor : OperationVisitor
 
   public override void VisitInvocation(IInvocationOperation operation)
   {
-    _constructor = _runtime.CreateConstructorInfoDelegator(operation.TargetMethod).RuntimeConstructor;
+    IMethodSymbol targetMethodSymbol = operation.TargetMethod;
+    ConstructorInfo constructorDefinition = _runtime.CreateConstructorInfoDelegator(targetMethodSymbol.OriginalDefinition).RuntimeConstructor;
+
+    ConstructorInfo constructor = TypeBuilder.GetConstructor(_baseType, constructorDefinition);
 
     _il.Emit(OpCodes.Ldarg_0);
 
@@ -49,21 +54,14 @@ internal class ConstructorInitializerOperationVisitor : OperationVisitor
     {
       Visit(argument.Value);
     }
+
+    _il.Emit(OpCodes.Call, constructor);
   }
 
   public override void VisitParameterReference(IParameterReferenceOperation operation)
   {
-    int index = 0;
-    foreach (SymbolArgumentParameter parameter in _parameters)
-    {
-      if (parameter.Symbol.Equals(operation.Parameter, SymbolEqualityComparer.Default))
-      {
-        break;
-      }
-      index++;
-    }
-
-    switch (index)
+    int position = operation.Parameter.Ordinal;
+    switch (position)
     {
       case 0:
         _il.Emit(OpCodes.Ldarg_1);
@@ -75,10 +73,8 @@ internal class ConstructorInitializerOperationVisitor : OperationVisitor
         _il.Emit(OpCodes.Ldarg_3);
         break;
       default:
-        _il.Emit(OpCodes.Ldarg_S, index + 1);
+        _il.Emit(OpCodes.Ldarg_S, position + 1);
         break;
     }
-
-    _il.Emit(OpCodes.Call, _constructor!);
   }
 }

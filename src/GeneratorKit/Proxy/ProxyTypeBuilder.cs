@@ -16,6 +16,7 @@ internal class ProxyTypeBuilder : IBuilderContext
   private readonly TypeBuilder _typeBuilder;
   private readonly SymbolType _type;
   private readonly IReadOnlyDictionary<string, Type> _genericTypes;
+  private Type? _baseType;
   private IReadOnlyDictionary<IPropertySymbol, FieldBuilder>? _backingFields;
   private IReadOnlyCollection<InitializerData>? _initializers;
   private IReadOnlyDictionary<IPropertySymbol, MethodBuilder>? _getters;
@@ -34,8 +35,8 @@ internal class ProxyTypeBuilder : IBuilderContext
     if (_type.BaseType is null)
       throw new InvalidOperationException("Cannot build System.Object.");
 
-    Type baseType = ResolveType(_type.BaseType);
-    _typeBuilder.SetParent(baseType);
+    _baseType = ResolveType(_type.BaseType);
+    _typeBuilder.SetParent(_baseType);
   }
 
   private void SetInterfaces()
@@ -93,8 +94,10 @@ internal class ProxyTypeBuilder : IBuilderContext
   {
     if (_initializers is null)
       throw new InvalidOperationException("Initializers were not initialized");
+    if (_baseType is null)
+      throw new InvalidOperationException("Base type was not initialized");
 
-    ProxyConstructorBuilder builder = new ProxyConstructorBuilder(this, _initializers);
+    ProxyConstructorBuilder builder = new ProxyConstructorBuilder(this, _initializers, _baseType);
 
     foreach (SymbolConstructorInfo constructor in _type.GetConstructors(s_allDeclared))
     {

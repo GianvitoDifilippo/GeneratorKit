@@ -29,6 +29,15 @@ namespace " + Namespace + @"
 
   public abstract class BaseClass<T1, T2>
   {
+    public readonly T1 _arg1;
+    public readonly T2 _arg2;
+
+    public BaseClass(T1 arg1, T2 arg2)
+    {
+      _arg1 = arg1;
+      _arg2 = arg2;
+    }
+
     public abstract void AbstractMethod();
     public virtual void VirtualMethod() => throw null;
 
@@ -43,9 +52,7 @@ namespace " + Namespace + @"
     private string _initField = ""_initField"";
     private object? _field;
 
-    public Class(int arg1) { }
-    private Class(string arg1) { }
-    public Class(T1 arg1) { }
+    public Class(T1 arg1, int arg2) : base(arg1, arg2) { }
 
     public long Property { get => throw null; set => throw null; }
     public string AutoProperty { get; set; }
