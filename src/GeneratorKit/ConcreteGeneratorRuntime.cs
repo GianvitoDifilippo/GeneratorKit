@@ -41,11 +41,6 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
     return _typeFactory.CreateProxyType(this, type);
   }
 
-  public override MethodInfo? GetRuntimeMethod(SymbolMethodInfo method)
-  {
-    throw new NotImplementedException();
-  }
-
   public override ITypeSymbol? GetTypeSymbol(Type type)
   {
     if (type is SymbolType symbolType)

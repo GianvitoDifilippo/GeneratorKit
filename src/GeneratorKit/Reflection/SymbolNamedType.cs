@@ -335,7 +335,6 @@ internal sealed class SymbolNamedType : SymbolType
 
   public override Type MakeGenericType(params Type[] typeArguments)
   {
-    // TODO: Change to accomodate all types
     if (!IsGenericTypeDefinition)
       throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
     

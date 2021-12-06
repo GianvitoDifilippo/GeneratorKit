@@ -44,9 +44,4 @@ internal class FakeGeneratorRuntime : GeneratorRuntime
     _typeMap[symbol] = type;
     _symbolMap[type] = symbol;
   }
-
-  public override MethodInfo? GetRuntimeMethod(SymbolMethodInfo method)
-  {
-    throw new NotImplementedException();
-  }
 }

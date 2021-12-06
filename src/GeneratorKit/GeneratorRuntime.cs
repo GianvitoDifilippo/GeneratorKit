@@ -21,8 +21,6 @@ internal abstract class GeneratorRuntime : IGeneratorRuntime
 
   public abstract Type? GetRuntimeType(SymbolType type);
 
-  public abstract MethodInfo? GetRuntimeMethod(SymbolMethodInfo method);
-
   public abstract ITypeSymbol? GetTypeSymbol(Type type);
 
   public Type TypeOf<T>()
