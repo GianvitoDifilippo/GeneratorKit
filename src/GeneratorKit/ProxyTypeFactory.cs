@@ -1,5 +1,6 @@
 ﻿#pragma warning disable RS1024 // Compare symbols correctly
 
+using GeneratorKit.Emit;
 using GeneratorKit.Reflection;
 using Microsoft.CodeAnalysis;
 using System;
@@ -9,7 +10,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 
-namespace GeneratorKit.Proxy;
+namespace GeneratorKit;
 
 internal class ProxyTypeFactory : IProxyTypeFactory
 {
@@ -39,7 +40,7 @@ internal class ProxyTypeFactory : IProxyTypeFactory
       return null;
     }
 
-    result = ProxyTypeBuilder.BuildType(_moduleBuilder, type);
+    result = ProxyTypeBuilder.BuildType(runtime, _moduleBuilder, type);
     if (result is not null)
     {
       _typeMap.Add(type.Symbol, result);

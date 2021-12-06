@@ -1,4 +1,5 @@
 ﻿using GeneratorKit.Comparers;
+using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -30,21 +31,7 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
 
   public IFieldSymbol Symbol { get; }
 
-  public FieldInfo RuntimeField
-  {
-    get
-    {
-      if (_runtimeField is null)
-      {
-        BindingFlags bindingAttr =
-          (Symbol.DeclaredAccessibility is Accessibility.Public ? BindingFlags.Public : BindingFlags.NonPublic) |
-          (Symbol.IsStatic ? BindingFlags.Static : BindingFlags.Instance);
-
-        _runtimeField = ReflectedTypeCore.RuntimeType.GetField(Name, bindingAttr);
-      }
-      return _runtimeField;
-    }
-  }
+  public FieldInfo RuntimeField => _runtimeField ??= MemberResolver.ResolveField(ReflectedTypeCore.RuntimeType, this);
 
 
   // System.Reflection.FieldInfo overrides
@@ -185,6 +172,11 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
   public override int GetHashCode()
   {
     return FieldInfoEqualityComparer.Default.GetHashCode(this);
+  }
+
+  public override string ToString()
+  {
+    return $"{FieldType.Name} {Name}";
   }
 
 

@@ -6,7 +6,7 @@ using System;
 using System.Reflection;
 using Xunit;
 
-namespace GeneratorKit.Proxy;
+namespace GeneratorKit;
 
 public class ProxyTypeFactoryTests : IClassFixture<ProxyTypeFactoryFixture>
 {
@@ -20,13 +20,14 @@ public class ProxyTypeFactoryTests : IClassFixture<ProxyTypeFactoryFixture>
     _fixture = fixture;
   }
 
-  [Fact]
-  public void CreateProxyType_ShouldReturnRuntimeType()
+  [Theory]
+  [AllCategoriesData]
+  public void CreateProxyType_ShouldReturnRuntimeType(TypeCategory category)
   {
     // Arrange
     ProxyTypeFactory sut = new ProxyTypeFactory(s_assemblyName);
 
-    SymbolType type = _fixture.GetSymbolType(TypeCategory.Class);
+    SymbolType type = _fixture.GetSymbolType(category);
 
     // Act
     Type? actual = sut.CreateProxyType(_fixture.Runtime, type);
@@ -37,13 +38,14 @@ public class ProxyTypeFactoryTests : IClassFixture<ProxyTypeFactoryFixture>
     actual.Should().Equal(type, TypeEqualityComparer.Shallow);
   }
 
-  [Fact]
-  public void CreateProxyType_ShouldCreateTypeWithCorrectFields()
+  [Theory]
+  [AllCategoriesData]
+  public void CreateProxyType_ShouldCreateTypeWithCorrectFields(TypeCategory category)
   {
     // Arrange
     ProxyTypeFactory sut = new ProxyTypeFactory(s_assemblyName);
 
-    SymbolType type = _fixture.GetSymbolType(TypeCategory.Class);
+    SymbolType type = _fixture.GetSymbolType(category);
     FieldInfo[] expected = type.GetFields(s_allDeclared);
     
     // Act
@@ -53,13 +55,14 @@ public class ProxyTypeFactoryTests : IClassFixture<ProxyTypeFactoryFixture>
     actual.Should().BeEquivalentTo(expected, FieldInfoEqualityComparer.Shallow);
   }
 
-  [Fact]
-  public void CreateProxyType_ShouldCreateTypeWithCorrectProperties()
+  [Theory]
+  [AllCategoriesData]
+  public void CreateProxyType_ShouldCreateTypeWithCorrectProperties(TypeCategory category)
   {
     // Arrange
     ProxyTypeFactory sut = new ProxyTypeFactory(s_assemblyName);
 
-    SymbolType type = _fixture.GetSymbolType(TypeCategory.Class);
+    SymbolType type = _fixture.GetSymbolType(category);
     PropertyInfo[] expected = type.GetProperties(s_allDeclared);
 
     // Act
@@ -69,13 +72,14 @@ public class ProxyTypeFactoryTests : IClassFixture<ProxyTypeFactoryFixture>
     actual.Should().BeEquivalentTo(expected, PropertyInfoEqualityComparer.Shallow);
   }
 
-  [Fact]
-  public void CreateProxyType_ShouldCreateTypeWithCorrectMethods()
+  [Theory]
+  [AllCategoriesData]
+  public void CreateProxyType_ShouldCreateTypeWithCorrectMethods(TypeCategory category)
   {
     // Arrange
     ProxyTypeFactory sut = new ProxyTypeFactory(s_assemblyName);
 
-    SymbolType type = _fixture.GetSymbolType(TypeCategory.Class);
+    SymbolType type = _fixture.GetSymbolType(category);
     MethodInfo[] expected = type.GetMethods(s_allDeclared);
 
     // Act
@@ -85,13 +89,14 @@ public class ProxyTypeFactoryTests : IClassFixture<ProxyTypeFactoryFixture>
     actual.Should().BeEquivalentTo(expected, MethodInfoEqualityComparer.Shallow);
   }
 
-  [Fact]
-  public void CreateProxyType_ShouldCreateTypeWithCorrectConstructors()
+  [Theory]
+  [AllCategoriesData]
+  public void CreateProxyType_ShouldCreateTypeWithCorrectConstructors(TypeCategory category)
   {
     // Arrange
     ProxyTypeFactory sut = new ProxyTypeFactory(s_assemblyName);
 
-    SymbolType type = _fixture.GetSymbolType(TypeCategory.Class);
+    SymbolType type = _fixture.GetSymbolType(category);
     ConstructorInfo[] expected = type.GetConstructors(s_allDeclared);
 
     // Act

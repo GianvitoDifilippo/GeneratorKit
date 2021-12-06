@@ -180,6 +180,11 @@ internal sealed class SymbolModule : SymbolModuleBase
     return ModuleEqualityComparer.Default.GetHashCode(this);
   }
 
+  public override string ToString()
+  {
+    return ScopeName;
+  }
+
 
   // New members
 

@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 
 namespace GeneratorKit.Reflection;
 
@@ -31,23 +32,7 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
 
   public IPropertySymbol Symbol { get; }
 
-  public PropertyInfo RuntimeProperty
-  {
-    get
-    {
-      if (_runtimeProperty is null)
-      {
-        BindingFlags bindingAttr =
-          (Symbol.DeclaredAccessibility is Accessibility.Public ? BindingFlags.Public : BindingFlags.NonPublic) |
-          (Symbol.IsStatic ? BindingFlags.Static : BindingFlags.Instance);
-
-        _runtimeProperty = Symbol.Name is "this[]"
-          ? ReflectedTypeCore.RuntimeType.GetProperty("Item", bindingAttr, new DelegatorBinder(0), PropertyType, GetIndexParametersCore().Select(x => x.ParameterType).ToArray(), null)
-          : ReflectedTypeCore.RuntimeType.GetProperty(Symbol.Name, bindingAttr);
-      }
-      return _runtimeProperty;
-    }
-  }
+  public PropertyInfo RuntimeProperty => _runtimeProperty ??= MemberResolver.ResolveProperty(ReflectedTypeCore.RuntimeType, this);
 
 
   // System.Reflection.PropertyInfo overrides
@@ -180,6 +165,26 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
   public override int GetHashCode()
   {
     return PropertyInfoEqualityComparer.Default.GetHashCode(this);
+  }
+
+  public override string ToString()
+  {
+    StringBuilder builder = new StringBuilder(PropertyType.Name);
+    builder.Append(" ");
+    builder.Append(Name);
+    ParameterInfo[] parameters = GetIndexParameters();
+    if (parameters.Length > 0)
+    {
+      builder.Append(" [");
+      builder.Append(parameters[0].ParameterType.Name);
+      for (int i = 1; i < parameters.Length; i++)
+      {
+        builder.Append(',');
+        builder.Append(parameters[i].ParameterType.Name);
+      }
+      builder.Append("]");
+    }
+    return builder.ToString();
   }
 
 

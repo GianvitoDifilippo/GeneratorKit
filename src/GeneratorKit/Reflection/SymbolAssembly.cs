@@ -204,6 +204,11 @@ internal sealed class SymbolAssembly : SymbolAssemblyBase
     return AssemblyEqualityComparer.Default.GetHashCode(this);
   }
 
+  public override string ToString()
+  {
+    return FullName;
+  }
+
 
   // New members
 

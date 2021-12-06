@@ -2,9 +2,12 @@
 using GeneratorKit.TestHelpers;
 using Microsoft.CodeAnalysis;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
+using Xunit.Sdk;
 
-namespace GeneratorKit.Proxy;
+namespace GeneratorKit;
 
 public class ProxyTypeFactoryFixture
 {
@@ -20,12 +23,22 @@ namespace " + Namespace + @"
   {
     void PublicMethod();
     T2 GenericMethodInInterface<T>(T1 arg1);
+    void ExplicitMethod();
 
     T2 InterfaceProperty { get; }
   }
 
   public abstract class BaseClass<T1, T2>
   {
+    public readonly T1 _arg1;
+    public readonly T2 _arg2;
+
+    public BaseClass(T1 arg1, T2 arg2, string arg3)
+    {
+      _arg1 = arg1;
+      _arg2 = arg2;
+    }
+
     public abstract void AbstractMethod();
     public virtual void VirtualMethod() => throw null;
 
@@ -34,15 +47,17 @@ namespace " + Namespace + @"
 
   public class Class<T1, T2, T3> : BaseClass<T1, int>, IInterface<T2, string>
   {
+    private static readonly int _staticInitField = 3;
     private T1 _genericField;
     private static int _staticField;
     private readonly int _readonlyField;
     private string _initField = ""_initField"";
     private object? _field;
 
-    public Class(int arg1) { }
-    private Class(string arg1) { }
-    public Class(T1 arg1) { }
+    static Class() { }
+
+    public Class(T1 arg1) : base(arg1, 3, ""str"") { }
+    public Class(T1 arg1, int arg2) : base(arg1, arg2, null) { }
 
     public long Property { get => throw null; set => throw null; }
     public string AutoProperty { get; set; }
@@ -57,6 +72,19 @@ namespace " + Namespace + @"
     public void PublicMethod() => throw null;
     public T4 GenericMethod<T4, T5>(T1 arg1, int arg2, T5 arg3) => throw null;
     public string GenericMethodInInterface<T>(T2 arg1) => throw null;
+    void IInterface<T2, string>.ExplicitMethod() => throw null;
+  }
+
+  public class ClassWithDefaultCtor { }
+
+  public class ClassWithParameterlessCtor
+  {
+    public ClassWithParameterlessCtor() { }
+  }
+
+  public class MyBaseClassHasParameterlessCtor : ClassWithParameterlessCtor
+  {
+    public MyBaseClassHasParameterlessCtor(int arg) { }
   }
 }
 
@@ -86,8 +114,10 @@ namespace " + Namespace + @"
 
     INamedTypeSymbol baseClassSymbol = GetSymbolTypeFromCompilation("BaseClass`2");
     INamedTypeSymbol interfaceSymbol = GetSymbolTypeFromCompilation("IInterface`2");
+    INamedTypeSymbol classWithParameterlessCtorSymbol = GetSymbolTypeFromCompilation("ClassWithParameterlessCtor");
     Type baseClassType = GetTypeFromAssembly("BaseClass`2");
     Type interfaceType = GetTypeFromAssembly("IInterface`2");
+    Type classWithParameterlessCtorType = GetTypeFromAssembly("ClassWithParameterlessCtor");
 
     _runtime.AddType(objectTypeSymbol, typeof(object));
     _runtime.AddType(intTypeSymbol, typeof(int));
@@ -96,6 +126,7 @@ namespace " + Namespace + @"
     _runtime.AddType(stringTypeSymbol, typeof(string));
     _runtime.AddType(baseClassSymbol, baseClassType);
     _runtime.AddType(interfaceSymbol, interfaceType);
+    _runtime.AddType(classWithParameterlessCtorSymbol, classWithParameterlessCtorType);
   }
 
   internal GeneratorRuntime Runtime => _runtime;
@@ -104,8 +135,10 @@ namespace " + Namespace + @"
   {
     INamedTypeSymbol symbol = category switch
     {
-      TypeCategory.Class => GetSymbolTypeFromCompilation("Class`3"),
-      _                  => throw new InvalidOperationException()
+      TypeCategory.WithAllMembers                  => GetSymbolTypeFromCompilation("Class`3"),
+      TypeCategory.WithDefaultConstructor          => GetSymbolTypeFromCompilation("ClassWithDefaultCtor"),
+      TypeCategory.MyBaseClassHasParameterlessCtor => GetSymbolTypeFromCompilation("MyBaseClassHasParameterlessCtor"),
+      _                                            => throw new InvalidOperationException()
     };
 
     return new SymbolNamedType(_runtime, symbol);
@@ -126,5 +159,15 @@ namespace " + Namespace + @"
 
 public enum TypeCategory
 {
-  Class
+  WithAllMembers,
+  WithDefaultConstructor,
+  MyBaseClassHasParameterlessCtor
+}
+
+public class AllCategoriesDataAttribute : DataAttribute
+{
+  public override IEnumerable<object[]> GetData(MethodInfo testMethod)
+  {
+    return Enum.GetValues<TypeCategory>().Select(x => new object[1] { x });
+  }
 }

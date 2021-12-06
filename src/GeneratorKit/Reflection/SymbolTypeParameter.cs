@@ -18,11 +18,6 @@ internal sealed class SymbolTypeParameter : SymbolType
 
   public override ITypeSymbol Symbol => _symbol;
 
-
-  // SymbolType overrides
-
-  internal override Type RuntimeType => throw new NotSupportedException($"Cannot create runtime type for type parameter.");
-
   // System.Type overrides
 
   protected override SymbolType? BaseTypeCore => _runtime.CreateTypeDelegator(BaseTypeSymbol);
@@ -30,8 +25,6 @@ internal sealed class SymbolTypeParameter : SymbolType
   public override MethodBase? DeclaringMethod => _symbol.DeclaringMethod is not null
     ? _runtime.CreateMethodInfoDelegator(_symbol.DeclaringMethod)
     : null;
-
-  public override string? FullName => null;
 
   public override GenericParameterAttributes GenericParameterAttributes
   {
@@ -120,6 +113,21 @@ internal sealed class SymbolTypeParameter : SymbolType
     return _symbol.IsValueType || IsEnum;
   }
 
+  public override Type MakeGenericType(params Type[] typeArguments)
+  {
+    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
+  }
+
+
+  // SymbolType overrides
+
+  internal override Type RuntimeType => throw new NotSupportedException($"Cannot create runtime type for type parameter.");
+
+  public override SymbolType MakeGenericType(params SymbolType[] typeArguments)
+  {
+    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
+  }
+
 
   // SymbolTypeBase overrides
 
@@ -191,11 +199,6 @@ internal sealed class SymbolTypeParameter : SymbolType
   protected override SymbolType MakeByRefTypeCore()
   {
     return new SymbolByRefType(_runtime, this);
-  }
-
-  protected override SymbolType MakeGenericTypeCore(params Type[] typeArguments)
-  {
-    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
   }
 
   private ITypeSymbol BaseTypeSymbol => _symbol.HasValueTypeConstraint

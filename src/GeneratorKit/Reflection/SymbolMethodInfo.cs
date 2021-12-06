@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 
 namespace GeneratorKit.Reflection;
 
@@ -38,18 +39,13 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
     {
       if (_runtimeMethod is null)
       {
-        BindingFlags bindingAttr =
-          (Symbol.DeclaredAccessibility is Accessibility.Public ? BindingFlags.Public : BindingFlags.NonPublic) |
-          (Symbol.IsStatic ? BindingFlags.Static : BindingFlags.Instance);
-
         if (!IsGenericMethodDefinition && IsGenericMethod)
         {
           Type[] genericArguments = GetGenericArguments().Select(x => x.RuntimeType).ToArray();
           return GetGenericMethodDefinitionCore(true).RuntimeMethod.MakeGenericMethod(genericArguments);
         }
 
-        int genericParameterCount = IsGenericMethod ? GetGenericArgumentsCore().Length : 0;
-        _runtimeMethod = ReflectedTypeCore.RuntimeType.GetMethod(Name, bindingAttr, new DelegatorBinder(genericParameterCount), CallingConvention, GetParametersCore().Select(x => x.ParameterType).ToArray(), null);
+        _runtimeMethod = MemberResolver.ResolveMethod(ReflectedTypeCore.RuntimeType, this);
       }
       return _runtimeMethod;
     }
@@ -271,6 +267,40 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
     return MethodInfoEqualityComparer.Default.GetHashCode(this);
   }
 
+  public override string ToString()
+  {
+    StringBuilder builder = new StringBuilder(ReturnType.Name);
+    builder.Append(' ');
+    builder.Append(Name);
+    if (IsGenericMethod)
+    {
+      Type[] genericArguments = GetGenericArguments();
+      builder.Append('[');
+      builder.Append(genericArguments[0].Name);
+      for (int i = 1; i < genericArguments.Length; i++)
+      {
+        builder.Append(',');
+        builder.Append(genericArguments[i].Name);
+      }
+      builder.Append(']');
+    }
+    builder.Append('(');
+    ParameterInfo[] parameters = GetParameters();
+    if (parameters.Length > 0)
+    {
+      builder.Append(parameters[0].ParameterType.Name);
+      for (int i = 1; i < parameters.Length; i++)
+      {
+        builder.Append(',');
+        builder.Append(' ');
+        builder.Append(parameters[i].ParameterType.Name);
+      }
+    }
+    builder.Append(')');
+
+    return builder.ToString();
+  }
+
 
   // New members
 
@@ -301,60 +331,6 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
 
 
   // Other members
-
-  // public SymbolMethodInfo? OverriddenMethod => Symbol.IsOverride
-  //   ? _runtime.CreateMethodInfoDelegator(Symbol.OverriddenMethod!)
-  //   : null;
-
-  // public IReadOnlyCollection<SymbolMethodInfo> ImplementedMethods
-  // {
-  //   get
-  //   {
-  //     if (_skipImplementedMethodSearch)
-  //       return Array.Empty<SymbolMethodInfo>();
-  // 
-  //     if (_implementedMethods is null)
-  //     {
-  //       _implementedMethods = FindImplementedMethods();
-  //     }
-  //     return _implementedMethods;
-  //   }
-  // }
-  // 
-  // private SymbolMethodInfo[] FindImplementedMethods()
-  // {
-  //   if (Symbol.ExplicitInterfaceImplementations.Length != 0)
-  //   {
-  //     return Symbol.ExplicitInterfaceImplementations.Select(x => _runtime.CreateMethodInfoDelegator(x)).ToArray();
-  //   }
-  // 
-  //   SymbolType[] interfaceTypes = DeclaringTypeCore.GetInterfaces();
-  //   if (interfaceTypes.Length == 0)
-  //   {
-  //     _skipImplementedMethodSearch = true;
-  //     return Array.Empty<SymbolMethodInfo>();
-  //   }
-  // 
-  //   string name = Name;
-  //   BindingFlags bindingAttr =
-  //     (Symbol.DeclaredAccessibility is Accessibility.Public ? BindingFlags.Public : BindingFlags.NonPublic) |
-  //     (Symbol.IsStatic ? BindingFlags.Static : BindingFlags.Instance);
-  //   int genericParameterCount = IsGenericMethod ? GetGenericArgumentsCore().Length : 0;
-  //   DelegatorBinder binder = new DelegatorBinder(genericParameterCount);
-  //   CallingConventions callConvention = CallingConvention;
-  //   Type[] types = GetParametersCore().Select(x => x.ParameterType).ToArray();
-  //   foreach (SymbolType interfaceType in interfaceTypes)
-  //   {
-  //     SymbolMethodInfo? method = interfaceType.GetMethod(name, bindingAttr, binder, callConvention, types, null);
-  //     if (method is not null)
-  //     {
-  //       return new[] { method };
-  //     }
-  //   }
-  // 
-  //   _skipImplementedMethodSearch = true;
-  //   return Array.Empty<SymbolMethodInfo>();
-  // }
 
   private bool ImplementsAnyInterfaceMethod
   {

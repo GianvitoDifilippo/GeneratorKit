@@ -1,7 +1,7 @@
 ﻿using GeneratorKit.Reflection;
 using System;
 
-namespace GeneratorKit.Proxy;
+namespace GeneratorKit;
 
 internal interface IProxyTypeFactory
 {

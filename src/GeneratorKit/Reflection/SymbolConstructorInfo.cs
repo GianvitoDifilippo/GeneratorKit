@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 
 namespace GeneratorKit.Reflection;
 
@@ -24,22 +25,7 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
 
   public IMethodSymbol Symbol { get; }
 
-  internal ConstructorInfo RuntimeConstructor
-  {
-    get
-    {
-      if (_runtimeConstructor is null)
-      {
-        BindingFlags bindingAttr =
-          (Symbol.DeclaredAccessibility is Accessibility.Public ? BindingFlags.Public : BindingFlags.NonPublic) |
-          (Symbol.IsStatic ? BindingFlags.Static : BindingFlags.Instance) |
-          BindingFlags.DeclaredOnly;
-
-        _runtimeConstructor = DeclaringTypeCore.RuntimeType.GetConstructor(bindingAttr, new DelegatorBinder(0), GetParameters().Select(x => x.ParameterType).ToArray(), null);
-      }
-      return _runtimeConstructor;
-    }
-  }
+  internal ConstructorInfo RuntimeConstructor => _runtimeConstructor ??= MemberResolver.ResolveConstructor(ReflectedTypeCore.RuntimeType, this);
 
 
   // System.Reflection.ConstructorInfo overrides
@@ -163,6 +149,28 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
   public override int GetHashCode()
   {
     return ConstructorInfoEqualityComparer.Default.GetHashCode(this);
+  }
+
+  public override string ToString()
+  {
+    if (Symbol.IsStatic)
+    {
+      return "Void .cctor()";
+    }
+    StringBuilder builder = new StringBuilder("Void .ctor(");
+    ParameterInfo[] parameters = GetParameters();
+    if (parameters.Length > 0)
+    {
+      builder.Append(parameters[0].ParameterType.Name);
+      for (int i = 1; i < parameters.Length; i++)
+      {
+        builder.Append(',');
+        builder.Append(' ');
+        builder.Append(parameters[i].ParameterType.Name);
+      }
+    }
+    builder.Append(')');
+    return builder.ToString();
   }
 
 
