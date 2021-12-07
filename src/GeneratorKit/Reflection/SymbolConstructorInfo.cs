@@ -25,7 +25,7 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
 
   public IMethodSymbol Symbol { get; }
 
-  internal ConstructorInfo RuntimeConstructor => _runtimeConstructor ??= MemberResolver.ResolveConstructor(ReflectedTypeCore.RuntimeType, this);
+  internal ConstructorInfo RuntimeConstructor => _runtimeConstructor ??= MemberResolver.ResolveConstructor(ReflectedTypeCore.UnderlyingSystemType, this);
 
 
   // System.Reflection.ConstructorInfo overrides

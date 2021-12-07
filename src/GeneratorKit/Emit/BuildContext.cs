@@ -35,7 +35,7 @@ internal class BuildContext : IBuildContext
           : throw new InvalidOperationException($"Cannot resolve generic parameter {type.Name}.");
     }
 
-    return type.RuntimeType;
+    return type.UnderlyingSystemType;
   }
 
   private Type ResolveGenericType(SymbolType type, IReadOnlyDictionary<string, Type>? genericParameters)

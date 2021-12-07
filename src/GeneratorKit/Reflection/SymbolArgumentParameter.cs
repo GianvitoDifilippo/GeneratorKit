@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using GeneratorKit.Utils;
+using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -84,7 +85,7 @@ internal sealed class SymbolArgumentParameter : SymbolParameterInfo
     IMethodSymbol methodSymbol     => methodSymbol.MethodKind is MethodKind.Constructor or MethodKind.StaticConstructor
                                         ? _runtime.CreateConstructorInfoDelegator(methodSymbol)
                                         : _runtime.CreateMethodInfoDelegator(methodSymbol),
-    _                              => throw new NotSupportedException()
+    _                              => throw Errors.Unreacheable
   };
 
   public override string Name => Symbol.Name;

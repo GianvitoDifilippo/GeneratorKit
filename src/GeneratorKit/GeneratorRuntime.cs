@@ -19,18 +19,7 @@ internal abstract class GeneratorRuntime : IGeneratorRuntime
   
   public abstract SymbolAssembly CompilationAssembly { get; }
 
-  public abstract Type? GetRuntimeType(SymbolType type);
-
-  public abstract ITypeSymbol? GetTypeSymbol(Type type);
-
-  public Type TypeOf<T>()
-  {
-    Type type = typeof(T);
-    ITypeSymbol? symbol = GetTypeSymbol(type);
-    return symbol is null
-      ? type
-      : CreateTypeDelegator(symbol);
-  }
+  public abstract Type GetRuntimeType(SymbolType type);
 
   public SymbolAssembly CreateAssemblyDelegator(IAssemblySymbol symbol)
   {

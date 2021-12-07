@@ -32,7 +32,7 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
 
   public IPropertySymbol Symbol { get; }
 
-  public PropertyInfo RuntimeProperty => _runtimeProperty ??= MemberResolver.ResolveProperty(ReflectedTypeCore.RuntimeType, this);
+  public PropertyInfo RuntimeProperty => _runtimeProperty ??= MemberResolver.ResolveProperty(ReflectedTypeCore.UnderlyingSystemType, this);
 
 
   // System.Reflection.PropertyInfo overrides

@@ -31,7 +31,7 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
 
   public IFieldSymbol Symbol { get; }
 
-  public FieldInfo RuntimeField => _runtimeField ??= MemberResolver.ResolveField(ReflectedTypeCore.RuntimeType, this);
+  public FieldInfo RuntimeField => _runtimeField ??= MemberResolver.ResolveField(ReflectedTypeCore.UnderlyingSystemType, this);
 
 
   // System.Reflection.FieldInfo overrides

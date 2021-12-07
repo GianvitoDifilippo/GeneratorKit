@@ -1,7 +1,8 @@
-﻿using GeneratorKit.Reflection;
+﻿using GeneratorKit.Exceptions;
+using GeneratorKit.Reflection;
+using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
-using System.Reflection;
 using System.Threading;
 
 namespace GeneratorKit;
@@ -24,7 +25,19 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
 
   public override CancellationToken CancellationToken { get; }
 
-  public override Type? GetRuntimeType(SymbolType type)
+  public override Type GetRuntimeType(SymbolType type)
+  {
+    try
+    {
+      return GetRuntimeTypeNoCatch(type);
+    }
+    catch (Exception ex) when (ex is not OperationCanceledException)
+    {
+      throw new TypeCreationException(type, ex);
+    }
+  }
+
+  private Type GetRuntimeTypeNoCatch(SymbolType type)
   {
     if (type.HasElementType)
       return GetRuntimeTypeWithElement(type);
@@ -36,34 +49,19 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
       return GetRuntimeTypeParameter(type);
 
     if (type.Symbol.ContainingAssembly is not ISourceAssemblySymbol)
-      return Type.GetType(type.AssemblyQualifiedName);
+      return GetReferencedType(type);
 
     return _typeFactory.CreateProxyType(this, type);
   }
 
-  public override ITypeSymbol? GetTypeSymbol(Type type)
-  {
-    if (type is SymbolType symbolType)
-      return symbolType.Symbol;
-
-    if (type.HasElementType || type.IsGenericType)
-    {
-      throw new NotSupportedException("To be supported.");
-    }
-
-    return Compilation.GetTypeByMetadataName(type.FullName);
-  }
-
-  private Type? GetRuntimeTypeWithElement(SymbolType type)
+  private Type GetRuntimeTypeWithElement(SymbolType type)
   {
     SymbolType elementType = type.GetElementType()!;
 
     if (elementType.Symbol.ContainingAssembly is not ISourceAssemblySymbol)
       return Type.GetType(type.AssemblyQualifiedName);
 
-    Type? runtimeElementType = GetRuntimeType(elementType);
-    if (runtimeElementType is null)
-      return null;
+    Type runtimeElementType = GetRuntimeType(elementType);
 
     if (type.IsArray)
     {
@@ -81,14 +79,12 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
       return runtimeElementType.MakeByRefType();
     }
 
-    return null;
+    throw Errors.Unreacheable;
   }
 
-  private Type? GetRuntimeConstructedType(SymbolType type)
+  private Type GetRuntimeConstructedType(SymbolType type)
   {
-    Type? runtimeGenericDefinition = GetRuntimeType(type.GetGenericTypeDefinition());
-    if (runtimeGenericDefinition is null)
-      return null;
+    Type runtimeGenericDefinition = GetRuntimeType(type.GetGenericTypeDefinition());
 
     Type[]? runtimeDefinitionTypeArguments = null;
     SymbolType[] typeArguments = type.GenericTypeArguments;
@@ -103,9 +99,7 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
       }
       else
       {
-        Type? runtimeTypeArgument = GetRuntimeType(typeArgument);
-        if (runtimeTypeArgument is null)
-          return null;
+        Type runtimeTypeArgument = GetRuntimeType(typeArgument);
 
         runtimeTypeArguments[i] = runtimeTypeArgument;
       }
@@ -114,15 +108,18 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
     return runtimeGenericDefinition.MakeGenericType(runtimeTypeArguments);
   }
 
-  private Type? GetRuntimeTypeParameter(SymbolType type)
+  private Type GetRuntimeTypeParameter(SymbolType type)
   {
     if (type.DeclaringType is not SymbolType declaringType)
-      return null;
+      throw new NotSupportedException("Generic parameter was supposed to have a declaring type.");
 
-    Type? runtimeDeclaringType = GetRuntimeType(declaringType);
-    if (runtimeDeclaringType is null)
-      return null;
+    Type runtimeDeclaringType = GetRuntimeType(declaringType);
 
     return runtimeDeclaringType.GenericTypeArguments[type.GenericParameterPosition];
+  }
+
+  private static Type GetReferencedType(Type type)
+  {
+    return Type.GetType(type.AssemblyQualifiedName, true, false);
   }
 }

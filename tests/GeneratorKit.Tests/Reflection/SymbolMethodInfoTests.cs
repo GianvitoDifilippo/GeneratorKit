@@ -541,7 +541,7 @@ public class SymbolMethodInfoTests : IClassFixture<SymbolMethodInfoFixture>
     MethodInfo expected = reference.MakeGenericMethod(typeof(int), typeof(string));
 
     // Act
-    MethodInfo actual = sut.MakeGenericMethod(typeof(int), typeof(string));
+    MethodInfo actual = sut.MakeGenericMethod(_fixture.IntSymbolType, _fixture.StringSymbolType);
 
     // Assert
     actual.Should().Equal(expected, MethodInfoEqualityComparer.Default);

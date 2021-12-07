@@ -11,17 +11,17 @@ namespace GeneratorKit.Reflection;
 internal class HybridGenericType : Type
 {
   private readonly GeneratorRuntime _runtime;
-  private readonly SymbolNamedType _definitionType;
+  private readonly SymbolNamedType _definition;
   private readonly Type[] _typeArguments;
 
-  public HybridGenericType(GeneratorRuntime runtime, SymbolNamedType definitionType, Type[] typeArguments)
+  public HybridGenericType(GeneratorRuntime runtime, SymbolNamedType definition, Type[] typeArguments)
   {
     _runtime = runtime;
-    _definitionType = definitionType;
+    _definition = definition;
     _typeArguments = typeArguments;
   }
 
-  public override Assembly Assembly => _definitionType.Assembly;
+  public override Assembly Assembly => _definition.Assembly;
 
   public override string? AssemblyQualifiedName => TypeNameBuilder.ToString(this, TypeNameBuilder.Format.AssemblyQualifiedName);
 
@@ -29,7 +29,7 @@ internal class HybridGenericType : Type
   {
     get
     {
-      SymbolType definitionBaseType = _definitionType.BaseType!;
+      SymbolType definitionBaseType = _definition.BaseType!;
 
       if (!definitionBaseType.IsGenericType)
         return definitionBaseType;
@@ -58,15 +58,15 @@ internal class HybridGenericType : Type
 
   public override bool IsGenericTypeDefinition => false;
 
-  public override Module Module => _definitionType.Module;
+  public override Module Module => _definition.Module;
 
-  public override string Namespace => _definitionType.Namespace;
+  public override string Namespace => _definition.Namespace;
 
   public override Type UnderlyingSystemType
   {
     get
     {
-      Type? runtimeDefinitionType = _runtime.GetRuntimeType(_definitionType);
+      Type? runtimeDefinitionType = _runtime.GetRuntimeType(_definition);
       if (runtimeDefinitionType is null)
         return this;
 
@@ -77,7 +77,7 @@ internal class HybridGenericType : Type
     }
   }
 
-  public override string Name => _definitionType.Name;
+  public override string Name => _definition.Name;
 
   public override ConstructorInfo[] GetConstructors(BindingFlags bindingAttr)
   {

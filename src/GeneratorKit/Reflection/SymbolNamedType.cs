@@ -180,7 +180,7 @@ internal sealed class SymbolNamedType : SymbolType
     if (!IsEnum)
       throw new InvalidOperationException();
 
-    return _runtime.CreateTypeDelegator(_symbol.EnumUnderlyingType!).RuntimeType;
+    return _runtime.CreateTypeDelegator(_symbol.EnumUnderlyingType!).UnderlyingSystemType;
   }
 
   public override Array GetEnumValues()
@@ -188,7 +188,7 @@ internal sealed class SymbolNamedType : SymbolType
     if (!IsEnum)
       throw new InvalidOperationException();
 
-    return RuntimeType.GetEnumValues();
+    return UnderlyingSystemType.GetEnumValues();
   }
 
   protected override SymbolType GetGenericTypeDefinitionCore()
@@ -338,6 +338,9 @@ internal sealed class SymbolNamedType : SymbolType
     if (!IsGenericTypeDefinition)
       throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
     
+    if (typeArguments is SymbolType[] symbolTypeArguments)
+      return MakeGenericType(symbolTypeArguments);
+
     return new HybridGenericType(_runtime, this, typeArguments);
   }
 
@@ -358,10 +361,6 @@ internal sealed class SymbolNamedType : SymbolType
     : null;
 
   protected override SymbolModule ModuleCore => _runtime.CreateModuleDelegator(_symbol.ContainingModule);
-
-  // protected override SymbolType[] GenericTypeArgumentsCore => _symbol.TypeArguments
-  //   .Select(x => _runtime.CreateTypeDelegator(x))
-  //   .ToArray();
 
   protected override SymbolType? GetElementTypeCore()
   {
@@ -442,8 +441,7 @@ internal sealed class SymbolNamedType : SymbolType
         break;
 
       default:
-        Contract.Assert(false, "Invalid Object type in ToUInt64");
-        throw new InvalidOperationException();
+        throw new InvalidOperationException("Invalid object type in ToUInt64");
     }
     return result;
   }

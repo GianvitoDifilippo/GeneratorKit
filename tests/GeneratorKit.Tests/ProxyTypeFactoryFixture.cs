@@ -39,6 +39,8 @@ namespace " + Namespace + @"
       _arg2 = arg2;
     }
 
+    public BaseClass(int arg1, int arg2, int arg3, int arg4) { }
+
     public abstract void AbstractMethod();
     public virtual void VirtualMethod() => throw null;
 
@@ -58,6 +60,7 @@ namespace " + Namespace + @"
 
     public Class(T1 arg1) : base(arg1, 3, ""str"") { }
     public Class(T1 arg1, int arg2) : base(arg1, arg2, null) { }
+    public Class(int arg1, int arg2, int arg3, int arg4) : base(arg1, arg2, arg3, arg4) { }
 
     public long Property { get => throw null; set => throw null; }
     public string AutoProperty { get; set; }
@@ -80,11 +83,14 @@ namespace " + Namespace + @"
   public class ClassWithParameterlessCtor
   {
     public ClassWithParameterlessCtor() { }
+
+    public ClassWithParameterlessCtor(int arg) { }
   }
 
   public class MyBaseClassHasParameterlessCtor : ClassWithParameterlessCtor
   {
     public MyBaseClassHasParameterlessCtor(int arg) { }
+    public MyBaseClassHasParameterlessCtor() : base(1) { }
   }
 }
 

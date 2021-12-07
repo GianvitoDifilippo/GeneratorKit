@@ -42,9 +42,9 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public sealed override StructLayoutAttribute StructLayoutAttribute => throw new NotSupportedException();
 
-  public sealed override RuntimeTypeHandle TypeHandle => RuntimeType.TypeHandle;
+  public sealed override RuntimeTypeHandle TypeHandle => UnderlyingSystemType.TypeHandle;
 
-  public sealed override Type UnderlyingSystemType => _runtime.GetRuntimeType(this) ?? this;
+  public sealed override Type UnderlyingSystemType => _runtime.GetRuntimeType(this);
 
   public override bool Equals(Type? o)
   {
@@ -272,7 +272,7 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public sealed override object InvokeMember(string name, BindingFlags invokeAttr, Binder binder, object target, object[] args, ParameterModifier[] modifiers, CultureInfo culture, string[] namedParameters)
   {
-    return RuntimeType.InvokeMember(name, invokeAttr, binder, target, args, modifiers, culture, namedParameters);
+    return UnderlyingSystemType.InvokeMember(name, invokeAttr, binder, target, args, modifiers, culture, namedParameters);
   }
 
   protected sealed override bool IsCOMObjectImpl()
@@ -455,8 +455,6 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public abstract SymbolType MakeGenericType(params SymbolType[] typeArguments);
 
-  internal virtual Type RuntimeType => _runtime.GetRuntimeType(this) ?? throw new InvalidOperationException($"Could not create runtime type for {Symbol.ToDisplayString()}.");
-
   private IEnumerable<SymbolConstructorInfo> GetConstructorsEnumerable(BindingFlags bindingAttr)
   {
     return GetMembersSymbols(bindingAttr, true)
@@ -512,7 +510,7 @@ internal abstract class SymbolType : SymbolTypeBase
                                             ? _runtime.CreateConstructorInfoDelegator(methodSymbol)
                                             : new SymbolMethodInfo(_runtime, methodSymbol, this),
         INamedTypeSymbol namedTypeSymbol => _runtime.CreateTypeDelegator(namedTypeSymbol),
-        _ => throw new InvalidOperationException()
+        _                                => throw Errors.Unreacheable
       });
   }
 

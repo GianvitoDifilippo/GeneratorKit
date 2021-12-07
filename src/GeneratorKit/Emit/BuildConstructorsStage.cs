@@ -60,8 +60,11 @@ internal class BuildConstructorsStage
       il.Emit(OpCodes.Stfld, field);
     }
 
-    IOperation constructorOperation = GetOperation(constructorSymbol);
-    new ConstructorInitializerOperationVisitor(_context.Runtime, il, _baseType).Visit(constructorOperation);
+    IOperation? constructorOperation = GetOperation(constructorSymbol);
+    if (constructorOperation is not null)
+    {
+      new ConstructorInitializerOperationVisitor(_context.Runtime, il, _baseType).Visit(constructorOperation);
+    }
 
     il.Emit(OpCodes.Ret);
 }
@@ -82,7 +85,7 @@ internal class BuildConstructorsStage
     il.Emit(OpCodes.Ret);
   }
 
-  private IOperation GetOperation(IMethodSymbol constructorSymbol)
+  private IOperation? GetOperation(IMethodSymbol constructorSymbol)
   {
     if (constructorSymbol.IsImplicitlyDeclared)
     {
@@ -91,7 +94,7 @@ internal class BuildConstructorsStage
 
     SemanticModel semanticModel = _context.Runtime.Compilation.GetSemanticModel(constructorSymbol.DeclaringSyntaxReferences[0].SyntaxTree);
     SyntaxNode syntax = constructorSymbol.DeclaringSyntaxReferences[0].GetSyntax();
-    return semanticModel.GetOperation(syntax, _context.Runtime.CancellationToken) ?? throw new InvalidOperationException();
+    return semanticModel.GetOperation(syntax, _context.Runtime.CancellationToken);
   }
 
   private class ImplicitConstructorOperation : IConstructorBodyOperation

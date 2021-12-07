@@ -12,11 +12,11 @@ internal class ProxyGenericTypeParameterBuilder
     {
       if (constraint.IsClass)
       {
-        genericTypeParameterBuilder.SetBaseTypeConstraint(constraint.RuntimeType);
+        genericTypeParameterBuilder.SetBaseTypeConstraint(constraint.UnderlyingSystemType);
       }
       else
       {
-        genericTypeParameterBuilder.SetInterfaceConstraints(constraint.RuntimeType);
+        genericTypeParameterBuilder.SetInterfaceConstraints(constraint.UnderlyingSystemType);
       }
     }
   }

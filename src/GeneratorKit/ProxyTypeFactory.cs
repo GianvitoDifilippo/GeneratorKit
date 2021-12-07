@@ -1,6 +1,7 @@
 ﻿#pragma warning disable RS1024 // Compare symbols correctly
 
 using GeneratorKit.Emit;
+using GeneratorKit.Exceptions;
 using GeneratorKit.Reflection;
 using Microsoft.CodeAnalysis;
 using System;
@@ -21,30 +22,24 @@ internal class ProxyTypeFactory : IProxyTypeFactory
   {
     AssemblyBuilder assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(assemblyName), AssemblyBuilderAccess.RunAndCollect);
     _moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName);
-
+    
     _typeMap = new Dictionary<ITypeSymbol, Type>(SymbolEqualityComparer.Default);
   }
 
-  public Type? CreateProxyType(GeneratorRuntime runtime, SymbolType type)
+  public Type CreateProxyType(GeneratorRuntime runtime, SymbolType type)
   {
     if (_typeMap.TryGetValue(type.Symbol, out Type? result))
-    {
       return result;
-    }
 
     SemanticModel semanticModel = runtime.Compilation.GetSemanticModel(type.Symbol.DeclaringSyntaxReferences[0].SyntaxTree);
     ImmutableArray<Diagnostic> diagnostics = semanticModel.GetDiagnostics(cancellationToken: runtime.CancellationToken);
 
-    if (diagnostics.Any(x => x.Severity == DiagnosticSeverity.Error))
-    {
-      return null;
-    }
+    IEnumerable<Diagnostic> errors = diagnostics.Where(x => x.Severity is DiagnosticSeverity.Error);
+    if (errors.Any())
+      throw new InvalidCodeException(errors.ToArray());
 
     result = ProxyTypeBuilder.BuildType(runtime, _moduleBuilder, type);
-    if (result is not null)
-    {
-      _typeMap.Add(type.Symbol, result);
-    }
+    _typeMap.Add(type.Symbol, result);
 
     return result;
   }
