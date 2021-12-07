@@ -61,11 +61,14 @@ public class MyGeneratorConfiguration : GeneratorConfiguration
 The source generator can instantiate this class (or, rather, a class that mirrors it) and then access the result of the user's action.
 
 ```csharp
-Assembly assembly = runtime.CompilationAssembly;
-Type baseConfigurationType = runtime.TypeOf<GeneratorConfiguration>();
-Type configurationType = assembly
+Type configurationType = runtime.CompilationAssembly
     .GetTypes()
-    .FirstOrDefault(type => baseConfigurationType.IsAssignableFrom(type));
+    .FirstOrDefault(x => x.BaseType.Equals(typeof(GeneratorConfiguration)));
+
+if (configurationType == null)
+{
+  return;
+}
 
 if (configurationType != null)
 {
