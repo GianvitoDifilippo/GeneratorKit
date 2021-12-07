@@ -63,7 +63,7 @@ The source generator can instantiate this class (or, rather, a class that mirror
 ```csharp
 Type configurationType = runtime.CompilationAssembly
     .GetTypes()
-    .FirstOrDefault(x => x.BaseType.Equals(typeof(GeneratorConfiguration)));
+    .FirstOrDefault(t => t.BaseType.Equals(typeof(GeneratorConfiguration)));
 
 if (configurationType == null)
 {
