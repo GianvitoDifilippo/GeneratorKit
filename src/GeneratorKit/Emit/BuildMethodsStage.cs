@@ -1,6 +1,7 @@
 ﻿#pragma warning disable RS1024 // Compare symbols correctly
 
 using GeneratorKit.Reflection;
+using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -44,8 +45,10 @@ internal class BuildMethodsStage
 
     foreach (IMethodSymbol explicitMethodSymbol in method.Symbol.ExplicitInterfaceImplementations)
     {
-      MethodInfo methodDefinition = _context.Runtime.CreateMethodInfoDelegator(explicitMethodSymbol.OriginalDefinition).RuntimeMethod;
+      SymbolMethodInfo symbolMethodDefinition = _context.Runtime.CreateMethodInfoDelegator(explicitMethodSymbol.OriginalDefinition);
       Type interfaceType = _interfaceTypes[explicitMethodSymbol.ContainingType];
+      
+      MethodInfo methodDefinition = MemberResolver.ResolveMethod(interfaceType.GetGenericTypeDefinition(), symbolMethodDefinition);
       MethodInfo explicitMethod = TypeBuilder.GetMethod(interfaceType, methodDefinition);
 
       _context.TypeBuilder.DefineMethodOverride(methodBuilder, explicitMethod);

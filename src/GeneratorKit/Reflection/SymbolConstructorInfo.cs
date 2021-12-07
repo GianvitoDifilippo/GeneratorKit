@@ -15,7 +15,7 @@ namespace GeneratorKit.Reflection;
 internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
 {
   private readonly GeneratorRuntime _runtime;
-  private ConstructorInfo? _runtimeConstructor;
+  private ConstructorInfo? _underlyingSystemConstructor;
 
   public SymbolConstructorInfo(GeneratorRuntime runtime, IMethodSymbol symbol)
   {
@@ -25,7 +25,7 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
 
   public IMethodSymbol Symbol { get; }
 
-  internal ConstructorInfo RuntimeConstructor => _runtimeConstructor ??= MemberResolver.ResolveConstructor(ReflectedTypeCore.UnderlyingSystemType, this);
+  internal ConstructorInfo UnderlyingSystemConstructor => _underlyingSystemConstructor ??= MemberResolver.ResolveConstructor(ReflectedTypeCore.UnderlyingSystemType, this);
 
 
   // System.Reflection.ConstructorInfo overrides
@@ -103,12 +103,12 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
 
   public override object Invoke(BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
   {
-    return RuntimeConstructor.Invoke(invokeAttr, binder, parameters, culture);
+    return UnderlyingSystemConstructor.Invoke(invokeAttr, binder, parameters, culture);
   }
 
   public override object Invoke(object obj, BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
   {
-    return RuntimeConstructor.Invoke(obj, invokeAttr, binder, parameters, culture);
+    return UnderlyingSystemConstructor.Invoke(obj, invokeAttr, binder, parameters, culture);
   }
 
   public override bool IsDefined(Type attributeType, bool inherit)

@@ -441,7 +441,7 @@ public class SymbolFieldInfoTests : IClassFixture<SymbolFieldInfoFixture>
 
   [Theory]
   [FieldsData]
-  public void RuntimeField_ShouldBeCorrect(FieldCategory category)
+  public void UnderlyingSystemField_ShouldBeCorrect(FieldCategory category)
   {
     // Arrange
     FieldInfo reference = _fixture.GetReference(category);
@@ -450,7 +450,7 @@ public class SymbolFieldInfoTests : IClassFixture<SymbolFieldInfoFixture>
     FieldInfo expected = reference;
 
     // Act
-    FieldInfo actual = sut.RuntimeField;
+    FieldInfo actual = sut.UnderlyingSystemField;
 
     // Assert
     actual.Should().Equal(expected, FieldInfoEqualityComparer.Default);

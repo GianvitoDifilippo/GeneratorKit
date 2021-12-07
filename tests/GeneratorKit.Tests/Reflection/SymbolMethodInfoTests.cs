@@ -690,7 +690,7 @@ public class SymbolMethodInfoTests : IClassFixture<SymbolMethodInfoFixture>
 
   [Theory]
   [MethodsData]
-  public void RuntimeMethod_ShouldBeCorrect(MethodCategory category)
+  public void UnderlyingSystemMethod_ShouldBeCorrect(MethodCategory category)
   {
     // Arrange
     SymbolMethodInfo sut = _fixture.GetDelegator(category);
@@ -699,7 +699,7 @@ public class SymbolMethodInfoTests : IClassFixture<SymbolMethodInfoFixture>
     MethodInfo expected = reference;
 
     // Act
-    MethodInfo actual = sut.RuntimeMethod;
+    MethodInfo actual = sut.UnderlyingSystemMethod;
 
     // Assert
     actual.Should().Equal(expected, MethodInfoEqualityComparer.Default);

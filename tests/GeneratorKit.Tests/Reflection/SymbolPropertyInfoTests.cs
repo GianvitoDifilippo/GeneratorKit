@@ -322,23 +322,6 @@ public class SymbolPropertyInfoTests : IClassFixture<SymbolPropertyInfoFixture>
 
   [Theory]
   [PropertiesData]
-  public void RuntimeProperty_ShouldBeCorrect(PropertyCategory category)
-  {
-    // Arrange
-    PropertyInfo reference = _fixture.GetReference(category);
-    SymbolPropertyInfo sut = _fixture.GetDelegator(category);
-
-    PropertyInfo expected = reference;
-
-    // Act
-    PropertyInfo actual = sut.RuntimeProperty;
-
-    // Assert
-    actual.Should().Equal(expected, PropertyInfoEqualityComparer.Default);
-  }
-
-  [Theory]
-  [PropertiesData]
   public void SetMethod_ShouldBeCorrect(PropertyCategory category)
   {
     // Arrange
@@ -352,5 +335,22 @@ public class SymbolPropertyInfoTests : IClassFixture<SymbolPropertyInfoFixture>
 
     // Assert
     actual.Should().Equal(expected, MethodInfoEqualityComparer.Default);
+  }
+
+  [Theory]
+  [PropertiesData]
+  public void UnderlyingSystemProperty_ShouldBeCorrect(PropertyCategory category)
+  {
+    // Arrange
+    PropertyInfo reference = _fixture.GetReference(category);
+    SymbolPropertyInfo sut = _fixture.GetDelegator(category);
+
+    PropertyInfo expected = reference;
+
+    // Act
+    PropertyInfo actual = sut.UnderlyingSystemProperty;
+
+    // Assert
+    actual.Should().Equal(expected, PropertyInfoEqualityComparer.Default);
   }
 }

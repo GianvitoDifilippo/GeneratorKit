@@ -144,9 +144,8 @@ internal class ConstructorInitializerOperationVisitor : OperationVisitor
   {
     if (_baseType.ContainsGenericParameters)
     {
-      Type baseTypeDefinition = _baseType.GetGenericTypeDefinition();
       SymbolConstructorInfo symbolConstructorDefinition = _runtime.CreateConstructorInfoDelegator(baseConstructorSymbol.OriginalDefinition);
-      ConstructorInfo constructorDefinition = MemberResolver.ResolveConstructor(baseTypeDefinition, symbolConstructorDefinition);
+      ConstructorInfo constructorDefinition = MemberResolver.ResolveConstructor(_baseType.GetGenericTypeDefinition(), symbolConstructorDefinition);
       return TypeBuilder.GetConstructor(_baseType, constructorDefinition);
     }
 

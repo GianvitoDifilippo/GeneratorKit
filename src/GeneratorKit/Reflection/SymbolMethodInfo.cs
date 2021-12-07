@@ -16,7 +16,7 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
 {
   private readonly GeneratorRuntime _runtime;
   private readonly SymbolType? _reflectedType;
-  private MethodInfo? _runtimeMethod;
+  private MethodInfo? _underlyingSystemMethod;
 
   public SymbolMethodInfo(GeneratorRuntime runtime, IMethodSymbol symbol)
   {
@@ -32,21 +32,21 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
 
   public IMethodSymbol Symbol { get; }
 
-  internal MethodInfo RuntimeMethod
+  internal MethodInfo UnderlyingSystemMethod
   {
     get
     {
-      if (_runtimeMethod is null)
+      if (_underlyingSystemMethod is null)
       {
         if (!IsGenericMethodDefinition && IsGenericMethod)
         {
           Type[] genericArguments = GetGenericArguments().Select(x => x.UnderlyingSystemType).ToArray();
-          return GetGenericMethodDefinitionCore(true).RuntimeMethod.MakeGenericMethod(genericArguments);
+          return GetGenericMethodDefinitionCore(true).UnderlyingSystemMethod.MakeGenericMethod(genericArguments);
         }
 
-        _runtimeMethod = MemberResolver.ResolveMethod(ReflectedTypeCore.UnderlyingSystemType, this);
+        _underlyingSystemMethod = MemberResolver.ResolveMethod(ReflectedTypeCore.UnderlyingSystemType, this);
       }
-      return _runtimeMethod;
+      return _underlyingSystemMethod;
     }
   }
 
@@ -134,7 +134,7 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
 
   public override int MetadataToken => throw new NotSupportedException();
 
-  public override RuntimeMethodHandle MethodHandle => RuntimeMethod.MethodHandle;
+  public override RuntimeMethodHandle MethodHandle => UnderlyingSystemMethod.MethodHandle;
 
   public override string Name => Symbol.Name;
 
@@ -142,17 +142,17 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
 
   public override Delegate CreateDelegate(Type delegateType)
   {
-    return RuntimeMethod.CreateDelegate(delegateType);
+    return UnderlyingSystemMethod.CreateDelegate(delegateType);
   }
 
   public override Delegate CreateDelegate(Type delegateType, object target)
   {
-    return RuntimeMethod.CreateDelegate(delegateType, target);
+    return UnderlyingSystemMethod.CreateDelegate(delegateType, target);
   }
 
   public override MethodBody GetMethodBody()
   {
-    return RuntimeMethod.GetMethodBody();
+    return UnderlyingSystemMethod.GetMethodBody();
   }
 
   public override object[] GetCustomAttributes(bool inherit)
@@ -181,7 +181,7 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
 
   public override object Invoke(object obj, BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
   {
-    return RuntimeMethod.Invoke(obj, invokeAttr, binder, parameters, culture);
+    return UnderlyingSystemMethod.Invoke(obj, invokeAttr, binder, parameters, culture);
   }
 
   public override bool IsDefined(Type attributeType, bool inherit)
