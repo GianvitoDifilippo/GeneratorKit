@@ -5,5 +5,5 @@ namespace GeneratorKit;
 
 internal interface IProxyTypeFactory
 {
-  Type? CreateProxyType(GeneratorRuntime runtime, SymbolType type);
+  Type CreateProxyType(GeneratorRuntime runtime, SymbolType type);
 }

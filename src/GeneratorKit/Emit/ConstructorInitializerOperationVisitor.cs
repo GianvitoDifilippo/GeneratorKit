@@ -1,4 +1,6 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using GeneratorKit.Reflection;
+using GeneratorKit.Utils;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Operations;
 using System;
 using System.Reflection;
@@ -142,10 +144,11 @@ internal class ConstructorInitializerOperationVisitor : OperationVisitor
   {
     if (_baseType.ContainsGenericParameters)
     {
-      ConstructorInfo constructorDefinition = _runtime.CreateConstructorInfoDelegator(baseConstructorSymbol.OriginalDefinition).RuntimeConstructor;
+      SymbolConstructorInfo symbolConstructorDefinition = _runtime.CreateConstructorInfoDelegator(baseConstructorSymbol.OriginalDefinition);
+      ConstructorInfo constructorDefinition = MemberResolver.ResolveConstructor(_baseType.GetGenericTypeDefinition(), symbolConstructorDefinition);
       return TypeBuilder.GetConstructor(_baseType, constructorDefinition);
     }
 
-    return _runtime.CreateConstructorInfoDelegator(baseConstructorSymbol).RuntimeConstructor;
+    return MemberResolver.ResolveConstructor(_baseType, _runtime.CreateConstructorInfoDelegator(baseConstructorSymbol));
   }
 }

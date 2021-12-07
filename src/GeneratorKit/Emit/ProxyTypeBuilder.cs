@@ -1,4 +1,5 @@
-﻿using GeneratorKit.Reflection;
+﻿using GeneratorKit.Exceptions;
+using GeneratorKit.Reflection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +12,7 @@ internal class ProxyTypeBuilder
 {
   private const BindingFlags s_allDeclared = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
 
-  public static Type? BuildType(GeneratorRuntime runtime, ModuleBuilder moduleBuilder, SymbolType type)
+  public static Type BuildType(GeneratorRuntime runtime, ModuleBuilder moduleBuilder, SymbolType type)
   {
     TypeBuilder typeBuilder = moduleBuilder.DefineType(type.Name, type.Attributes);
     IReadOnlyDictionary<string, Type>? genericParameters = CreateGenericParameterDictionary(typeBuilder, type);
@@ -32,7 +33,7 @@ internal class ProxyTypeBuilder
     BuildConstructorsStage constructorsStage = new BuildConstructorsStage(context, typeStage.BaseType, fieldsStage.InstanceInitializers, fieldsStage.StaticInitializers);
     BuildConstructors(constructorsStage, type);
 
-    return typeBuilder.CreateTypeInfo();
+    return typeBuilder.CreateTypeInfo() ?? throw new NullEmitException(typeBuilder);
   }
 
   private static void BuildFields(BuildFieldsStage stage, SymbolType type)

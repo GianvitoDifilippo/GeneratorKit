@@ -37,38 +37,6 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
   }
 
   [Fact]
-  public void GetTypeSymbol_ShouldReturnCorrectSymbol_WhenTypeIsReferenced()
-  {
-    // Arrange
-    ConcreteGeneratorRuntime sut = _fixture.GetGeneratorRuntime(_factoryMock.Object);
-
-    ITypeSymbol expected = _fixture.Compilation.GetSpecialType(SpecialType.System_Object);
-
-    // Act
-    ITypeSymbol? actual = sut.GetTypeSymbol(typeof(object));
-
-    // Assert
-    actual.Should().Equal(expected, SymbolEqualityComparer.Default);
-  }
-
-  [Fact]
-  public void GetTypeSymbol_ShouldReturnCorrectSymbol_WhenTypeIsInCompilation()
-  {
-    // Arrange
-    ConcreteGeneratorRuntime sut = _fixture.GetGeneratorRuntime(_factoryMock.Object);
-
-    const string typeName = "Class";
-    Type type = _fixture.GetType(typeName);
-    ITypeSymbol expected = _fixture.GetTypeSymbol(typeName);
-
-    // Act
-    ITypeSymbol? actual = sut.GetTypeSymbol(type);
-
-    // Assert
-    actual.Should().Equal(expected, SymbolEqualityComparer.Default);
-  }
-
-  [Fact]
   public void GetRuntimeType_ShouldReturnType_WhenTypeIsInCompilation()
   {
     // Arrange

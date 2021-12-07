@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System;
 using System.Reflection;
 using System.Linq;
+using GeneratorKit.Utils;
 
 namespace GeneratorKit.Reflection;
 
@@ -60,7 +61,7 @@ internal class CompilationCustomAttributeData : CustomAttributeData
       {
         SymbolKind.Property => runtime.CreatePropertyInfoDelegator((IPropertySymbol)member),
         SymbolKind.Field    => runtime.CreateFieldInfoDelegator((IFieldSymbol)member),
-        _                   => throw new InvalidOperationException()
+        _                   => throw Errors.Unreacheable
       };
     }
 

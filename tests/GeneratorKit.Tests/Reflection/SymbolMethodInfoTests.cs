@@ -541,7 +541,7 @@ public class SymbolMethodInfoTests : IClassFixture<SymbolMethodInfoFixture>
     MethodInfo expected = reference.MakeGenericMethod(typeof(int), typeof(string));
 
     // Act
-    MethodInfo actual = sut.MakeGenericMethod(typeof(int), typeof(string));
+    MethodInfo actual = sut.MakeGenericMethod(_fixture.IntSymbolType, _fixture.StringSymbolType);
 
     // Assert
     actual.Should().Equal(expected, MethodInfoEqualityComparer.Default);
@@ -690,7 +690,7 @@ public class SymbolMethodInfoTests : IClassFixture<SymbolMethodInfoFixture>
 
   [Theory]
   [MethodsData]
-  public void RuntimeMethod_ShouldBeCorrect(MethodCategory category)
+  public void UnderlyingSystemMethod_ShouldBeCorrect(MethodCategory category)
   {
     // Arrange
     SymbolMethodInfo sut = _fixture.GetDelegator(category);
@@ -699,7 +699,7 @@ public class SymbolMethodInfoTests : IClassFixture<SymbolMethodInfoFixture>
     MethodInfo expected = reference;
 
     // Act
-    MethodInfo actual = sut.RuntimeMethod;
+    MethodInfo actual = sut.UnderlyingSystemMethod;
 
     // Assert
     actual.Should().Equal(expected, MethodInfoEqualityComparer.Default);

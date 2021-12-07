@@ -16,7 +16,7 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
 {
   private readonly GeneratorRuntime _runtime;
   private readonly SymbolType? _reflectedType;
-  private PropertyInfo? _runtimeProperty;
+  private PropertyInfo? _underlyingSystemProperty;
 
   public SymbolPropertyInfo(GeneratorRuntime runtime, IPropertySymbol symbol)
   {
@@ -32,7 +32,7 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
 
   public IPropertySymbol Symbol { get; }
 
-  public PropertyInfo RuntimeProperty => _runtimeProperty ??= MemberResolver.ResolveProperty(ReflectedTypeCore.RuntimeType, this);
+  public PropertyInfo UnderlyingSystemProperty => _underlyingSystemProperty ??= MemberResolver.ResolveProperty(ReflectedTypeCore.UnderlyingSystemType, this);
 
 
   // System.Reflection.PropertyInfo overrides
@@ -90,7 +90,7 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
 
   public override object GetValue(object obj, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
   {
-    return RuntimeProperty.GetValue(obj, invokeAttr, binder, index, culture);
+    return UnderlyingSystemProperty.GetValue(obj, invokeAttr, binder, index, culture);
   }
 
   public override bool IsDefined(Type attributeType, bool inherit)

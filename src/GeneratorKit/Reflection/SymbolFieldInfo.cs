@@ -15,7 +15,7 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
 {
   private readonly GeneratorRuntime _runtime;
   private readonly SymbolType? _reflectedType;
-  private FieldInfo? _runtimeField;
+  private FieldInfo? _underlyingSystemField;
 
   public SymbolFieldInfo(GeneratorRuntime runtime, IFieldSymbol symbol)
   {
@@ -31,7 +31,7 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
 
   public IFieldSymbol Symbol { get; }
 
-  public FieldInfo RuntimeField => _runtimeField ??= MemberResolver.ResolveField(ReflectedTypeCore.RuntimeType, this);
+  public FieldInfo UnderlyingSystemField => _underlyingSystemField ??= MemberResolver.ResolveField(ReflectedTypeCore.UnderlyingSystemType, this);
 
 
   // System.Reflection.FieldInfo overrides
@@ -79,7 +79,7 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
     }
   }
 
-  public override RuntimeFieldHandle FieldHandle => RuntimeField.FieldHandle;
+  public override RuntimeFieldHandle FieldHandle => UnderlyingSystemField.FieldHandle;
 
   public override bool IsSecurityCritical => true;
 
@@ -134,7 +134,7 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
 
   public override object GetValue(object obj)
   {
-    return RuntimeField.GetValue(obj);
+    return UnderlyingSystemField.GetValue(obj);
   }
 
   public override bool IsDefined(Type attributeType, bool inherit)
@@ -144,7 +144,7 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
 
   public override void SetValue(object obj, object value, BindingFlags invokeAttr, Binder binder, CultureInfo culture)
   {
-    RuntimeField.SetValue(obj, value, invokeAttr, binder, culture);
+    UnderlyingSystemField.SetValue(obj, value, invokeAttr, binder, culture);
   }
 
 

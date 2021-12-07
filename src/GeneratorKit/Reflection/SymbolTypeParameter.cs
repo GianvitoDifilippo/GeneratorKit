@@ -121,8 +121,6 @@ internal sealed class SymbolTypeParameter : SymbolType
 
   // SymbolType overrides
 
-  internal override Type RuntimeType => throw new NotSupportedException($"Cannot create runtime type for type parameter.");
-
   public override SymbolType MakeGenericType(params SymbolType[] typeArguments)
   {
     throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");

@@ -101,7 +101,13 @@ namespace " + Namespace + @"
     _runtime.AddType(_derivedSymbol, _derivedType);
     _runtime.AddType(_intSymbol, typeof(int));
     _runtime.AddType(_stringSymbol, typeof(string));
+
+    IntSymbolType = new SymbolNamedType(_runtime, _intSymbol);
+    StringSymbolType = new SymbolNamedType(_runtime, _stringSymbol);
   }
+
+  internal SymbolType IntSymbolType { get; }
+  internal SymbolType StringSymbolType { get; }
 
   public MethodInfo GetReference(MethodCategory category)
   {
@@ -324,7 +330,7 @@ namespace " + Namespace + @"
       : new SymbolMethodInfo(_runtime, symbol);
 
     return NeedsConstruction(category)
-      ? result.MakeGenericMethod(typeof(int), typeof(string))
+      ? result.MakeGenericMethod(IntSymbolType, StringSymbolType)
       : result;
 
     static IMethodSymbol GetMethodFromType(INamedTypeSymbol symbol, string name)

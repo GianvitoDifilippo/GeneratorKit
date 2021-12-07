@@ -560,7 +560,7 @@ public class SymbolConstructorInfoTests : IClassFixture<SymbolConstructorInfoFix
 
   [Theory]
   [ConstructorsData]
-  public void RuntimeConstructor_ShouldBeCorrect(ConstructorCategory category)
+  public void UnderlyingSystemConstructor_ShouldBeCorrect(ConstructorCategory category)
   {
     // Arrange
     SymbolConstructorInfo sut = _fixture.GetDelegator(category);
@@ -569,7 +569,7 @@ public class SymbolConstructorInfoTests : IClassFixture<SymbolConstructorInfoFix
     ConstructorInfo expected = reference;
   
     // Act
-    ConstructorInfo actual = sut.RuntimeConstructor;
+    ConstructorInfo actual = sut.UnderlyingSystemConstructor;
   
     // Assert
     actual.Should().Equal(expected, ConstructorInfoEqualityComparer.Default);

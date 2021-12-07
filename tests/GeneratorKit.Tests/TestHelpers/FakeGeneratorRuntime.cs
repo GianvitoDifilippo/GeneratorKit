@@ -26,17 +26,9 @@ internal class FakeGeneratorRuntime : GeneratorRuntime
 
   public override CancellationToken CancellationToken => CancellationToken.None;
 
-  public override Type? GetRuntimeType(SymbolType type)
+  public override Type GetRuntimeType(SymbolType type)
   {
-    return _typeMap.GetValueOrDefault(type.Symbol);
-  }
-
-  public override ITypeSymbol? GetTypeSymbol(Type type)
-  {
-    if (type is SymbolType symbolType)
-      return symbolType.Symbol;
-
-    return _symbolMap.GetValueOrDefault(type);
+    return _typeMap[type.Symbol];
   }
 
   public void AddType(ITypeSymbol symbol, Type type)
