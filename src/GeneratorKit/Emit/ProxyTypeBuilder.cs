@@ -1,5 +1,6 @@
 ﻿using GeneratorKit.Exceptions;
 using GeneratorKit.Reflection;
+using GeneratorKit.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +9,7 @@ using System.Reflection.Emit;
 
 namespace GeneratorKit.Emit;
 
-internal class ProxyTypeBuilder
+internal static class ProxyTypeBuilder
 {
   private const BindingFlags s_allDeclared = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
 
@@ -76,7 +77,7 @@ internal class ProxyTypeBuilder
     Dictionary<string, Type> genericTypes = new Dictionary<string, Type>();
 
     SymbolType[] genericArguments = type.GetGenericArguments();
-    GenericTypeParameterBuilder[] genericTypeParameterBuilders = typeBuilder.DefineGenericParameters(genericArguments.Select(x => x.Name).ToArray());
+    GenericTypeParameterBuilder[] genericTypeParameterBuilders = typeBuilder.DefineGenericParameters(genericArguments.Map(x => x.Name));
 
     for (int i = 0; i < genericArguments.Length; i++)
     {

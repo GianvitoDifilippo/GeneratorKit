@@ -132,7 +132,7 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
 
   protected override SymbolArgumentParameter[] GetParametersCore()
   {
-    return Symbol.Parameters.Select(x => new SymbolArgumentParameter(_runtime, x)).ToArray();
+    return Symbol.Parameters.Map(x => new SymbolArgumentParameter(_runtime, x));
   }
 
 

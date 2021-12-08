@@ -40,7 +40,7 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
       {
         if (!IsGenericMethodDefinition && IsGenericMethod)
         {
-          Type[] genericArguments = GetGenericArguments().Select(x => x.UnderlyingSystemType).ToArray();
+          Type[] genericArguments = GetGenericArguments().Map(x => x.UnderlyingSystemType);
           return GetGenericMethodDefinitionCore(true).UnderlyingSystemMethod.MakeGenericMethod(genericArguments);
         }
 
@@ -226,7 +226,7 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
 
   protected override SymbolType[] GetGenericArgumentsCore()
   {
-    return Symbol.TypeArguments.Select(x => _runtime.CreateTypeDelegator(x)).ToArray();
+    return Symbol.TypeArguments.Map(x => _runtime.CreateTypeDelegator(x));
   }
 
   // The 'preserveReflectedType' parameter is a hack to make the reflected types of 'RuntimeMethod' and 'GetGenericMethodDefinition'
@@ -245,7 +245,7 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
 
   protected override SymbolParameterInfo[] GetParametersCore()
   {
-    return Symbol.Parameters.Select(x => new SymbolArgumentParameter(_runtime, x)).ToArray();
+    return Symbol.Parameters.Map(x => new SymbolArgumentParameter(_runtime, x));
   }
 
 
@@ -349,7 +349,7 @@ internal sealed class SymbolMethodInfo : SymbolMethodInfoBase
 
   public SymbolMethodInfo MakeGenericMethod(params SymbolType[] typeArguments)
   {
-    ITypeSymbol[] typeSymbolArguments = typeArguments.Select(x => x.Symbol).ToArray();
+    ITypeSymbol[] typeSymbolArguments = typeArguments.Map(x => x.Symbol);
     IMethodSymbol constructed = Symbol.Construct(typeSymbolArguments);
 
     return _reflectedType is null

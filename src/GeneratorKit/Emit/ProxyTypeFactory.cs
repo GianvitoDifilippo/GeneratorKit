@@ -1,6 +1,5 @@
 ﻿#pragma warning disable RS1024 // Compare symbols correctly
 
-using GeneratorKit.Emit;
 using GeneratorKit.Exceptions;
 using GeneratorKit.Reflection;
 using Microsoft.CodeAnalysis;
@@ -11,7 +10,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 
-namespace GeneratorKit;
+namespace GeneratorKit.Emit;
 
 internal class ProxyTypeFactory : IProxyTypeFactory
 {

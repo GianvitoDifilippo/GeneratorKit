@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection.Emit;
 using System;
 using System.Linq;
+using GeneratorKit.Utils;
 
 namespace GeneratorKit.Emit;
 
@@ -40,7 +41,7 @@ internal class BuildContext : IBuildContext
 
   private Type ResolveGenericType(SymbolType type, IReadOnlyDictionary<string, Type>? genericParameters)
   {
-    Type[] typeArguments = type.GenericTypeArguments.Select(x => ResolveType(x, genericParameters)).ToArray();
+    Type[] typeArguments = type.GenericTypeArguments.Map(x => ResolveType(x, genericParameters));
     Type typeDefinition = ResolveType(type.GetGenericTypeDefinition(), genericParameters);
     return typeDefinition.MakeGenericType(typeArguments);
   }

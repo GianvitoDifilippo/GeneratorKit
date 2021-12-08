@@ -20,7 +20,7 @@ internal static class MemberResolver
     
     if (property.Name is "Item")
     {
-      SymbolType[] parameters = property.GetIndexParameters().Select(x => x.ParameterType).ToArray();
+      SymbolType[] parameters = property.GetIndexParameters().Map(x => x.ParameterType);
       return type.GetProperty("Item", bindingAttr, new DelegatorBinder(0), property.PropertyType, parameters, null);
     }
     return type.GetProperty(property.Name, bindingAttr) ?? throw new InvalidOperationException($"Cannot resolve property {property.Name} on type {type.Name}.");
@@ -30,7 +30,7 @@ internal static class MemberResolver
   {
     BindingFlags bindingAttr = GetBindingAttr(method.Symbol);
     int genericParameterCount = method.GetGenericArguments().Length;
-    SymbolType[] parameters = method.GetParameters().Select(x => x.ParameterType).ToArray();
+    SymbolType[] parameters = method.GetParameters().Map(x => x.ParameterType);
 
     return type.GetMethod(method.Name, bindingAttr, new DelegatorBinder(genericParameterCount), parameters, null) ?? throw new InvalidOperationException($"Cannot resolve method {method.Name} on type {type.Name}.");
   }
@@ -38,7 +38,7 @@ internal static class MemberResolver
   public static ConstructorInfo ResolveConstructor(Type type, SymbolConstructorInfo constructor)
   {
     BindingFlags bindingAttr = GetBindingAttr(constructor.Symbol);
-    SymbolType[] parameters = constructor.GetParameters().Select(x => x.ParameterType).ToArray();
+    SymbolType[] parameters = constructor.GetParameters().Map(x => x.ParameterType);
 
     return type.GetConstructor(bindingAttr, new DelegatorBinder(0), parameters, null) ?? throw new InvalidOperationException($"Cannot resolve constructor on type {type.Name}.");
   }

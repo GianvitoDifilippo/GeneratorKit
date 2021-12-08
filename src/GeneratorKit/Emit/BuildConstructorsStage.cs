@@ -1,12 +1,11 @@
-﻿#pragma warning disable RS1009 // Only internal implementations of this interface are allowed. Reason: Used only to extend the visitor to default constructors. We can find another solution if needed.
-
-using GeneratorKit.Reflection;
+﻿using GeneratorKit.Reflection;
+using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Operations;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection.Emit;
 
 namespace GeneratorKit.Emit;
@@ -48,7 +47,7 @@ internal class BuildConstructorsStage
   {
     IMethodSymbol constructorSymbol = constructor.Symbol;
 
-    Type[] parameterTypes = constructor.GetParameters().Select(x => _context.ResolveType(x.ParameterType)).ToArray();
+    Type[] parameterTypes = constructor.GetParameters().Map(x => _context.ResolveType(x.ParameterType));
     ConstructorBuilder constructorBuilder = _context.TypeBuilder.DefineConstructor(constructor.Attributes, constructor.CallingConvention, parameterTypes);
 
     ILGenerator il = constructorBuilder.GetILGenerator();
@@ -71,7 +70,7 @@ internal class BuildConstructorsStage
 
   private void BuildStaticConstructor(SymbolConstructorInfo constructor)
   {
-    // Not using 'DefineTypeInitializers' because 'HideBySig' is missing in the constructor attributes.
+    // Not using 'DefineTypeInitializer' because 'HideBySig' is missing in the constructor attributes.
     ConstructorBuilder constructorBuilder = _context.TypeBuilder.DefineConstructor(constructor.Attributes, constructor.CallingConvention, null);
 
     ILGenerator il = constructorBuilder.GetILGenerator();
@@ -97,25 +96,27 @@ internal class BuildConstructorsStage
     return semanticModel.GetOperation(syntax, _context.Runtime.CancellationToken);
   }
 
+#pragma warning disable RS1009 // Only internal implementations of this interface are allowed. Reason: Used only to extend the visitor to default constructors. We can find another solution if needed.
   private class ImplicitConstructorOperation : IConstructorBodyOperation
   {
     #region Not implemented
-    public ImmutableArray<ILocalSymbol> Locals => throw new NotImplementedException();
-    public IBlockOperation? BlockBody => throw new NotImplementedException();
-    public IBlockOperation? ExpressionBody => throw new NotImplementedException();
-    public IOperation? Parent => throw new NotImplementedException();
-    public OperationKind Kind => throw new NotImplementedException();
-    public SyntaxNode Syntax => throw new NotImplementedException();
-    public ITypeSymbol? Type => throw new NotImplementedException();
-    public Optional<object?> ConstantValue => throw new NotImplementedException();
-    public IEnumerable<IOperation> Children => throw new NotImplementedException();
-    public string Language => throw new NotImplementedException();
-    public bool IsImplicit => throw new NotImplementedException();
-    public SemanticModel? SemanticModel => throw new NotImplementedException();
-    public TResult? Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument) => throw new NotImplementedException();
+    [ExcludeFromCodeCoverage] public ImmutableArray<ILocalSymbol> Locals => throw new NotImplementedException();
+    [ExcludeFromCodeCoverage] public IBlockOperation? BlockBody => throw new NotImplementedException();
+    [ExcludeFromCodeCoverage] public IBlockOperation? ExpressionBody => throw new NotImplementedException();
+    [ExcludeFromCodeCoverage] public IOperation? Parent => throw new NotImplementedException();
+    [ExcludeFromCodeCoverage] public OperationKind Kind => throw new NotImplementedException();
+    [ExcludeFromCodeCoverage] public SyntaxNode Syntax => throw new NotImplementedException();
+    [ExcludeFromCodeCoverage] public ITypeSymbol? Type => throw new NotImplementedException();
+    [ExcludeFromCodeCoverage] public Optional<object?> ConstantValue => throw new NotImplementedException();
+    [ExcludeFromCodeCoverage] public IEnumerable<IOperation> Children => throw new NotImplementedException();
+    [ExcludeFromCodeCoverage] public string Language => throw new NotImplementedException();
+    [ExcludeFromCodeCoverage] public bool IsImplicit => throw new NotImplementedException();
+    [ExcludeFromCodeCoverage] public SemanticModel? SemanticModel => throw new NotImplementedException();
+    [ExcludeFromCodeCoverage] public TResult? Accept<TArgument, TResult>(OperationVisitor<TArgument, TResult> visitor, TArgument argument) => throw new NotImplementedException();
     #endregion
 
     public IOperation? Initializer => null;
     public void Accept(OperationVisitor visitor) => visitor.VisitConstructorBodyOperation(this);
   }
+#pragma warning restore RS1009 // Only internal implementations of this interface are allowed.
 }

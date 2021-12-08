@@ -139,7 +139,7 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
 
   protected override SymbolArgumentParameter[] GetIndexParametersCore()
   {
-    return Symbol.Parameters.Select(x => new SymbolArgumentParameter(_runtime, x)).ToArray();
+    return Symbol.Parameters.Map(x => new SymbolArgumentParameter(_runtime, x));
   }
 
   protected override SymbolMethodInfo? GetSetMethodCore(bool nonPublic)

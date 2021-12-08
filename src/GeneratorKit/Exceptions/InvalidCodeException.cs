@@ -6,7 +6,7 @@ namespace GeneratorKit.Exceptions;
 
 public class InvalidCodeException : Exception
 {
-  public InvalidCodeException(IReadOnlyCollection<Diagnostic> errors)
+  internal InvalidCodeException(IReadOnlyCollection<Diagnostic> errors)
     : base("User code had errors.")
   {
     Errors = errors;

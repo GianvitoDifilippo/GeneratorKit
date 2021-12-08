@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using GeneratorKit.Utils;
+using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -146,7 +147,7 @@ internal sealed class SymbolArrayType : SymbolType
 
   protected override SymbolType[] GetInterfacesCore()
   {
-    return _symbol.AllInterfaces.Select(x => _runtime.CreateTypeDelegator(x)).ToArray();
+    return _symbol.AllInterfaces.Map(x => _runtime.CreateTypeDelegator(x));
   }
 
   protected override SymbolType MakeArrayTypeCore()

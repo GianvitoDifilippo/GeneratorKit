@@ -5,7 +5,7 @@ namespace GeneratorKit.Exceptions;
 
 public class NullEmitException : Exception
 {
-  public NullEmitException(TypeBuilder typeBuilder)
+  internal NullEmitException(TypeBuilder typeBuilder)
     : base($"TypeBuilder returned null.")
   {
     TypeBuilder = typeBuilder;

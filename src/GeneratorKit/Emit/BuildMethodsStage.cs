@@ -38,10 +38,10 @@ internal class BuildMethodsStage
 
     MethodBuilder methodBuilder = _context.TypeBuilder.DefineMethod(method.Name, method.Attributes, method.CallingConvention);
 
-    IReadOnlyDictionary<string, Type> genericParameters = CreateGenericParameterDictionary(methodBuilder, method);
+    IReadOnlyDictionary<string, Type>? genericParameters = CreateGenericParameterDictionary(methodBuilder, method);
 
     methodBuilder.SetReturnType(_context.ResolveType(method.ReturnType, genericParameters));
-    methodBuilder.SetParameters(method.GetParameters().Select(x => _context.ResolveType(x.ParameterType, genericParameters)).ToArray());
+    methodBuilder.SetParameters(method.GetParameters().Map(x => _context.ResolveType(x.ParameterType, genericParameters)));
 
     foreach (IMethodSymbol explicitMethodSymbol in method.Symbol.ExplicitInterfaceImplementations)
     {
@@ -106,14 +106,15 @@ internal class BuildMethodsStage
     il.Emit(OpCodes.Ret);
   }
 
-  private static IReadOnlyDictionary<string, Type> CreateGenericParameterDictionary(MethodBuilder methodBuilder, SymbolMethodInfo method)
+  private static IReadOnlyDictionary<string, Type>? CreateGenericParameterDictionary(MethodBuilder methodBuilder, SymbolMethodInfo method)
   {
-    Dictionary<string, Type> genericTypes = new Dictionary<string, Type>();
     if (!method.IsGenericMethod)
-      return genericTypes;
+      return null;
+
+    Dictionary<string, Type> genericTypes = new Dictionary<string, Type>();
 
     SymbolType[] genericArguments = method.GetGenericArguments();
-    GenericTypeParameterBuilder[] genericTypeParameterBuilders = methodBuilder.DefineGenericParameters(genericArguments.Select(x => x.Name).ToArray());
+    GenericTypeParameterBuilder[] genericTypeParameterBuilders = methodBuilder.DefineGenericParameters(genericArguments.Map(x => x.Name));
 
     for (int i = 0; i < genericArguments.Length; i++)
     {

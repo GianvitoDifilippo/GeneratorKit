@@ -35,10 +35,9 @@ internal class HybridGenericType : Type
         return definitionBaseType;
 
       ImmutableArray<ITypeSymbol> baseTypeArgumentSymbols = ((INamedTypeSymbol)definitionBaseType.Symbol).TypeArguments;
-      Type[] baseTypeArguments = baseTypeArgumentSymbols.Select(x => x.TypeKind is TypeKind.TypeParameter
+      Type[] baseTypeArguments = baseTypeArgumentSymbols.Map(x => x.TypeKind is TypeKind.TypeParameter
         ? _typeArguments[((ITypeParameterSymbol)x).Ordinal]
-        : _runtime.CreateTypeDelegator(x))
-        .ToArray();
+        : _runtime.CreateTypeDelegator(x));
 
       return definitionBaseType.MakeGenericType(baseTypeArguments);
     }
@@ -66,13 +65,11 @@ internal class HybridGenericType : Type
   {
     get
     {
-      Type? runtimeDefinitionType = _runtime.GetRuntimeType(_definition);
-      if (runtimeDefinitionType is null)
-        return this;
+      Type runtimeDefinitionType = _runtime.GetRuntimeType(_definition);
 
-      Type[] typeArguments = _typeArguments
-        .Select(x => x is SymbolType symbolType ? _runtime.GetRuntimeType(symbolType) ?? symbolType : x)
-        .ToArray();
+      Type[] typeArguments = _typeArguments.Map(x => x is SymbolType symbolType
+        ? _runtime.GetRuntimeType(symbolType)
+        : x);
       return runtimeDefinitionType.MakeGenericType(typeArguments);
     }
   }

@@ -1,4 +1,5 @@
-﻿using GeneratorKit.Exceptions;
+﻿using GeneratorKit.Emit;
+using GeneratorKit.Exceptions;
 using Microsoft.CodeAnalysis;
 using System;
 

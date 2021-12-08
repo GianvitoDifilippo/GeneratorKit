@@ -4,13 +4,13 @@ namespace GeneratorKit.Exceptions;
 
 public class TypeCreationException : Exception
 {
-  public TypeCreationException(Type type)
+  internal TypeCreationException(Type type)
     : base(FormatMessage(type))
   {
     Type = type;
   }
 
-  public TypeCreationException(Type type, Exception innerException)
+  internal TypeCreationException(Type type, Exception innerException)
     : base(FormatMessage(type), innerException)
   {
     Type = type;

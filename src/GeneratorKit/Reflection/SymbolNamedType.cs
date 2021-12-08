@@ -1,4 +1,5 @@
 ﻿using GeneratorKit.Comparers;
+using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -349,7 +350,7 @@ internal sealed class SymbolNamedType : SymbolType
 
   public override SymbolType MakeGenericType(params SymbolType[] typeArguments)
   {
-    return _runtime.CreateTypeDelegator(_symbol.Construct(typeArguments.Select(x => x.Symbol).ToArray()));
+    return _runtime.CreateTypeDelegator(_symbol.Construct(typeArguments.Map(x => x.Symbol)));
   }
 
   // SymbolTypeBase overrides
@@ -369,9 +370,7 @@ internal sealed class SymbolNamedType : SymbolType
 
   protected override SymbolType[] GetGenericArgumentsCore()
   {
-    return _symbol.TypeArguments
-      .Select(x => _runtime.CreateTypeDelegator(x))
-      .ToArray();
+    return _symbol.TypeArguments.Map(x => _runtime.CreateTypeDelegator(x));
   }
 
   protected override SymbolType[] GetGenericParameterConstraintsCore()
@@ -381,7 +380,7 @@ internal sealed class SymbolNamedType : SymbolType
 
   protected override SymbolType[] GetInterfacesCore()
   {
-    return _symbol.AllInterfaces.Select(x => _runtime.CreateTypeDelegator(x)).ToArray();
+    return _symbol.AllInterfaces.Map(x => _runtime.CreateTypeDelegator(x));
   }
 
   protected override SymbolType MakeArrayTypeCore()

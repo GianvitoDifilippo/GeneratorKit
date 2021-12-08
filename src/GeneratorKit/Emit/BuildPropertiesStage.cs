@@ -1,8 +1,8 @@
 ﻿using GeneratorKit.Reflection;
+using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection.Emit;
 
 namespace GeneratorKit.Emit;
@@ -26,7 +26,7 @@ internal class BuildPropertiesStage
 
     Type returnType = _context.ResolveType(property.PropertyType);
     Type[]? parameterTypes = propertySymbol.IsIndexer
-      ? property.GetIndexParameters().Select(x => _context.ResolveType(x.ParameterType)).ToArray()
+      ? property.GetIndexParameters().Map(x => _context.ResolveType(x.ParameterType))
       : null;
     PropertyBuilder propertyBuilder = _context.TypeBuilder.DefineProperty(property.Name, property.Attributes, returnType, parameterTypes);
 
