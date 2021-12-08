@@ -5,7 +5,6 @@ using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -111,7 +110,7 @@ internal class BuildMethodsStage
     if (!method.IsGenericMethod)
       return null;
 
-    Dictionary<string, Type> genericTypes = new Dictionary<string, Type>();
+    Dictionary<string, Type> genericParameters = new Dictionary<string, Type>();
 
     SymbolType[] genericArguments = method.GetGenericArguments();
     GenericTypeParameterBuilder[] genericTypeParameterBuilders = methodBuilder.DefineGenericParameters(genericArguments.Map(x => x.Name));
@@ -120,11 +119,11 @@ internal class BuildMethodsStage
     {
       GenericTypeParameterBuilder genericTypeParameterBuilder = genericTypeParameterBuilders[i];
       SymbolType genericArgument = genericArguments[i];
-      genericTypes.Add(genericArgument.Name, genericTypeParameterBuilder);
+      genericParameters.Add(genericArgument.Name, genericTypeParameterBuilder);
 
       ProxyGenericTypeParameterBuilder.BuildGenericTypeParameter(genericTypeParameterBuilder, genericArgument);
     }
 
-    return genericTypes;
+    return genericParameters;
   }
 }

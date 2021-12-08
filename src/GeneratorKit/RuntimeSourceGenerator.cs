@@ -7,13 +7,15 @@ namespace GeneratorKit;
 
 public abstract class RuntimeSourceGenerator : ISourceGenerator
 {
+  private const string s_assemblySuffix = "GeneratorProxies";
+
   protected virtual IExceptionHandler? ExceptionHandler => null;
 
   public void Execute(GeneratorExecutionContext context)
   {
     string assemblyName = context.Compilation.AssemblyName is string name
-      ? $"{name}.GeneratorProxies"
-      : "GeneratorProxies";
+      ? $"{name}.{s_assemblySuffix}"
+      : s_assemblySuffix;
 
     ProxyTypeFactory typeFactory = new ProxyTypeFactory(assemblyName);
     ConcreteGeneratorRuntime runtime = new ConcreteGeneratorRuntime(context.Compilation, typeFactory, context.CancellationToken);

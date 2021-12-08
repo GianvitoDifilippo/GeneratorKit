@@ -1,9 +1,9 @@
-﻿using Microsoft.CodeAnalysis;
-using System.Collections.Generic;
+﻿using GeneratorKit.Utils;
+using Microsoft.CodeAnalysis;
 using System;
-using System.Reflection;
+using System.Collections.Generic;
 using System.Linq;
-using GeneratorKit.Utils;
+using System.Reflection;
 
 namespace GeneratorKit.Reflection;
 

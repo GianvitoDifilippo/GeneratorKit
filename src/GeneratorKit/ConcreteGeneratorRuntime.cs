@@ -1,8 +1,11 @@
-﻿using GeneratorKit.Exceptions;
+﻿#pragma warning disable RS1024 // Compare symbols correctly
+
+using GeneratorKit.Exceptions;
 using GeneratorKit.Reflection;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace GeneratorKit;
@@ -11,6 +14,7 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
 {
   private readonly IProxyTypeFactory _typeFactory;
   private readonly SymbolAssembly _compilationAssembly;
+  private readonly Dictionary<ITypeSymbol, SymbolType> _typeCache;
 
   public ConcreteGeneratorRuntime(Compilation compilation, IProxyTypeFactory typeFactory, CancellationToken cancellationToken)
     : base(compilation)
@@ -18,6 +22,7 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
     _typeFactory = typeFactory;
     CancellationToken = cancellationToken;
 
+    _typeCache = new Dictionary<ITypeSymbol, SymbolType>(SymbolEqualityComparer.Default);
     _compilationAssembly = new SymbolAssembly(this, compilation.Assembly, compilation.GetEntryPoint(cancellationToken));
   }
 
@@ -25,11 +30,21 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
 
   public override CancellationToken CancellationToken { get; }
 
+  public override SymbolType CreateTypeDelegator(ITypeSymbol symbol)
+  {
+    if (_typeCache.TryGetValue(symbol, out SymbolType? type))
+      return type;
+
+    return base.CreateTypeDelegator(symbol);
+  }
+
   public override Type GetRuntimeType(SymbolType type)
   {
     try
     {
-      return GetRuntimeTypeNoCatch(type);
+      Type result = GetRuntimeTypeNoCatch(type);
+      _typeCache[type.Symbol] = type;
+      return result;
     }
     catch (Exception ex) when (ex is not OperationCanceledException)
     {
@@ -49,7 +64,7 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
       return GetRuntimeTypeParameter(type);
 
     if (type.Symbol.ContainingAssembly is not ISourceAssemblySymbol)
-      return GetReferencedType(type);
+      return GetLoadedType(type);
 
     return _typeFactory.CreateProxyType(this, type);
   }
@@ -118,7 +133,7 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
     return runtimeDeclaringType.GenericTypeArguments[type.GenericParameterPosition];
   }
 
-  private static Type GetReferencedType(Type type)
+  private static Type GetLoadedType(Type type)
   {
     return Type.GetType(type.AssemblyQualifiedName, true, false);
   }

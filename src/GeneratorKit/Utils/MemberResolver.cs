@@ -1,7 +1,6 @@
 ﻿using GeneratorKit.Reflection;
 using Microsoft.CodeAnalysis;
 using System;
-using System.Linq;
 using System.Reflection;
 
 namespace GeneratorKit.Utils;

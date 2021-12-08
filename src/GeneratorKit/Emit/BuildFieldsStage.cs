@@ -44,13 +44,12 @@ internal class BuildFieldsStage
 
     if (fieldSymbol.DeclaringSyntaxReferences.Length == 0)
       return;
-    if (fieldSymbol.DeclaringSyntaxReferences[0].GetSyntax() is not VariableDeclaratorSyntax syntax)
+    if (fieldSymbol.DeclaringSyntaxReferences[0].GetSyntax(_context.Runtime.CancellationToken) is not VariableDeclaratorSyntax syntax)
       return;
     if (syntax.Initializer?.Value is not ExpressionSyntax expression)
       return;
 
-    SemanticModel semanticModel = _context.Runtime.Compilation.GetSemanticModel(fieldSymbol.DeclaringSyntaxReferences[0].SyntaxTree);
-    if (semanticModel.GetOperation(expression, _context.Runtime.CancellationToken) is not IOperation initOperation)
+    if (_context.GetOperation(expression) is not IOperation initOperation)
       return;
 
     InitializerData data = new InitializerData(fieldBuilder, initOperation);

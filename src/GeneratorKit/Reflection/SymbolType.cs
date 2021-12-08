@@ -17,6 +17,7 @@ internal abstract class SymbolType : SymbolTypeBase
   protected static readonly SymbolDisplayFormat s_namespaceFormat = new SymbolDisplayFormat(typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces);
 
   protected readonly GeneratorRuntime _runtime;
+  private Type? _underlyingSystemType;
 
   protected SymbolType(GeneratorRuntime runtime)
   {
@@ -44,7 +45,7 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public sealed override RuntimeTypeHandle TypeHandle => UnderlyingSystemType.TypeHandle;
 
-  public sealed override Type UnderlyingSystemType => _runtime.GetRuntimeType(this);
+  public sealed override Type UnderlyingSystemType => _underlyingSystemType ??= _runtime.GetRuntimeType(this);
 
   public override bool Equals(Type? o)
   {

@@ -59,7 +59,9 @@ internal class BuildConstructorsStage
       il.Emit(OpCodes.Stfld, field);
     }
 
-    IOperation? constructorOperation = GetOperation(constructorSymbol);
+    IOperation? constructorOperation = constructorSymbol.IsImplicitlyDeclared
+      ? s_implicitConstructorOperation
+      : _context.GetOperation(constructorSymbol);
     if (constructorOperation is not null)
     {
       new ConstructorInitializerOperationVisitor(_context.Runtime, il, _baseType).Visit(constructorOperation);
@@ -82,18 +84,6 @@ internal class BuildConstructorsStage
     }
 
     il.Emit(OpCodes.Ret);
-  }
-
-  private IOperation? GetOperation(IMethodSymbol constructorSymbol)
-  {
-    if (constructorSymbol.IsImplicitlyDeclared)
-    {
-      return s_implicitConstructorOperation;
-    }
-
-    SemanticModel semanticModel = _context.Runtime.Compilation.GetSemanticModel(constructorSymbol.DeclaringSyntaxReferences[0].SyntaxTree);
-    SyntaxNode syntax = constructorSymbol.DeclaringSyntaxReferences[0].GetSyntax();
-    return semanticModel.GetOperation(syntax, _context.Runtime.CancellationToken);
   }
 
 #pragma warning disable RS1009 // Only internal implementations of this interface are allowed. Reason: Used only to extend the visitor to default constructors. We can find another solution if needed.

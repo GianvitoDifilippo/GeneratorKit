@@ -21,7 +21,7 @@ internal abstract class GeneratorRuntime : IGeneratorRuntime
 
   public abstract Type GetRuntimeType(SymbolType type);
 
-  public SymbolAssembly CreateAssemblyDelegator(IAssemblySymbol symbol)
+  public virtual SymbolAssembly CreateAssemblyDelegator(IAssemblySymbol symbol)
   {
     if (symbol is null)
       throw new ArgumentNullException(nameof(symbol));
@@ -29,7 +29,7 @@ internal abstract class GeneratorRuntime : IGeneratorRuntime
     return new SymbolAssembly(this, symbol, null);
   }
 
-  public SymbolConstructorInfo CreateConstructorInfoDelegator(IMethodSymbol symbol)
+  public virtual SymbolConstructorInfo CreateConstructorInfoDelegator(IMethodSymbol symbol)
   {
     if (symbol is null)
       throw new ArgumentNullException(nameof(symbol));
@@ -39,7 +39,7 @@ internal abstract class GeneratorRuntime : IGeneratorRuntime
     return new SymbolConstructorInfo(this, symbol);
   }
 
-  public SymbolEventInfo CreateEventInfoDelegator(IEventSymbol symbol)
+  public virtual SymbolEventInfo CreateEventInfoDelegator(IEventSymbol symbol)
   {
     if (symbol is null)
       throw new ArgumentNullException(nameof(symbol));
@@ -47,7 +47,7 @@ internal abstract class GeneratorRuntime : IGeneratorRuntime
     return new SymbolEventInfo(this, symbol);
   }
 
-  public SymbolFieldInfo CreateFieldInfoDelegator(IFieldSymbol symbol)
+  public virtual SymbolFieldInfo CreateFieldInfoDelegator(IFieldSymbol symbol)
   {
     if (symbol is null)
       throw new ArgumentNullException(nameof(symbol));
@@ -55,7 +55,7 @@ internal abstract class GeneratorRuntime : IGeneratorRuntime
     return new SymbolFieldInfo(this, symbol);
   }
 
-  public SymbolMethodInfo CreateMethodInfoDelegator(IMethodSymbol symbol)
+  public virtual SymbolMethodInfo CreateMethodInfoDelegator(IMethodSymbol symbol)
   {
     if (symbol is null)
       throw new ArgumentNullException(nameof(symbol));
@@ -65,7 +65,7 @@ internal abstract class GeneratorRuntime : IGeneratorRuntime
     return new SymbolMethodInfo(this, symbol);
   }
 
-  public SymbolModule CreateModuleDelegator(IModuleSymbol symbol)
+  public virtual SymbolModule CreateModuleDelegator(IModuleSymbol symbol)
   {
     if (symbol is null)
       throw new ArgumentNullException(nameof(symbol));
@@ -73,7 +73,7 @@ internal abstract class GeneratorRuntime : IGeneratorRuntime
     return new SymbolModule(this, symbol);
   }
 
-  public SymbolPropertyInfo CreatePropertyInfoDelegator(IPropertySymbol symbol)
+  public virtual SymbolPropertyInfo CreatePropertyInfoDelegator(IPropertySymbol symbol)
   {
     if (symbol is null)
       throw new ArgumentNullException(nameof(symbol));
@@ -81,7 +81,7 @@ internal abstract class GeneratorRuntime : IGeneratorRuntime
     return new SymbolPropertyInfo(this, symbol);
   }
 
-  public SymbolType CreateTypeDelegator(ITypeSymbol symbol)
+  public virtual SymbolType CreateTypeDelegator(ITypeSymbol symbol)
   {
     if (symbol is null)
       throw new ArgumentNullException(nameof(symbol));
