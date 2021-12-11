@@ -70,9 +70,6 @@ if (configurationType == null)
   return;
 }
 
-if (configurationType != null)
-{
-    GeneratorConfiguration configuration = (GeneratorConfiguration)Activator.CreateInstance(configurationType);
-    // Do stuff with your instance
-}
+GeneratorConfiguration configuration = (GeneratorConfiguration)Activator.CreateInstance(configurationType);
+// Do stuff with your instance
 ```
