@@ -214,11 +214,13 @@ internal sealed class SymbolNamedType : SymbolType
     if (c is null)
       return false;
 
-    if (TypeEqualityComparer.Default.Equals(this, c))
-      return true;
-
-    if (c.IsSubclassOf(this))
-      return true;
+    Type? type = c;
+    while (type is not null)
+    {
+      if (TypeEqualityComparer.Default.Equals(type, this))
+        return true;
+      type = type.BaseType;
+    }
 
     if (IsInterface)
     {

@@ -1,5 +1,6 @@
 ﻿#pragma warning disable RS1024 // Compare symbols correctly
 
+using GeneratorKit.Exceptions;
 using GeneratorKit.Reflection;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
@@ -10,15 +11,15 @@ using System.Reflection.Emit;
 
 namespace GeneratorKit.Emit;
 
-internal class BuildMethodsStage
+internal class BuildMethodsStage : BuildOperationsStage
 {
-  private readonly IBuildContext _context;
   private readonly IReadOnlyDictionary<IPropertySymbol, FieldBuilder> _backingFields;
   private readonly IReadOnlyDictionary<ITypeSymbol, Type> _interfaceTypes;
   private readonly Dictionary<IPropertySymbol, MethodBuilder> _getters;
   private readonly Dictionary<IPropertySymbol, MethodBuilder> _setters;
 
   public BuildMethodsStage(IBuildContext context, IReadOnlyDictionary<IPropertySymbol, FieldBuilder> backingFields, IReadOnlyDictionary<ITypeSymbol, Type> interfaceTypes)
+    : base(context)
   {
     _context = context;
     _backingFields = backingFields;
@@ -39,8 +40,10 @@ internal class BuildMethodsStage
 
     IReadOnlyDictionary<string, Type>? genericParameters = CreateGenericParameterDictionary(methodBuilder, method);
 
-    methodBuilder.SetReturnType(_context.ResolveType(method.ReturnType, genericParameters));
-    methodBuilder.SetParameters(method.GetParameters().Map(x => _context.ResolveType(x.ParameterType, genericParameters)));
+    Type returnType = _context.ResolveType(method.ReturnType, genericParameters);
+    Type[] parameterTypes = method.GetParameters().Map(x => _context.ResolveType(x.ParameterType, genericParameters));
+    methodBuilder.SetReturnType(returnType);
+    methodBuilder.SetParameters(parameterTypes);
 
     foreach (IMethodSymbol explicitMethodSymbol in method.Symbol.ExplicitInterfaceImplementations)
     {
@@ -74,14 +77,17 @@ internal class BuildMethodsStage
         BuildAutoSetter(methodBuilder, backingField);
         break;
       default:
-        BuildOrdinaryMethod(methodBuilder, methodSymbol);
+        BuildOrdinaryMethod(methodBuilder, methodSymbol, returnType, parameterTypes);
         break;
     }
   }
 
-  private void BuildOrdinaryMethod(MethodBuilder methodBuilder, IMethodSymbol methodSymbol)
+  private void BuildOrdinaryMethod(MethodBuilder methodBuilder, IMethodSymbol methodSymbol, Type returnType, Type[] parameterTypes)
   {
     ILGenerator il = methodBuilder.GetILGenerator();
+
+    IOperation operation = _context.GetOperation(methodSymbol) ?? throw new OperationResolutionException(methodSymbol);
+    BuildMethodBody(il, returnType, parameterTypes, operation, methodSymbol);
 
     il.Emit(OpCodes.Ret);
   }

@@ -5,11 +5,11 @@ using System.Reflection.Emit;
 
 namespace GeneratorKit.Emit;
 
-internal class FieldInitializerOperationVisitor : OperationVisitor
+internal class FieldInitializerVisitor : OperationVisitor
 {
   private readonly ILGenerator _il;
 
-  public FieldInitializerOperationVisitor(ILGenerator il)
+  public FieldInitializerVisitor(ILGenerator il)
   {
     _il = il;
   }

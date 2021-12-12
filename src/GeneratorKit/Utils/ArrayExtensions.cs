@@ -17,6 +17,9 @@ internal static class ArrayExtensions
 
   public static TResult[] Map<TSource, TResult>(this ImmutableArray<TSource> source, Func<TSource, TResult> selector)
   {
+    if (source.Length == 0)
+      return Array.Empty<TResult>();
+
     TResult[] result = new TResult[source.Length];
     for (int i = 0; i < source.Length; i++)
     {

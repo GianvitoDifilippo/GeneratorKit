@@ -38,6 +38,7 @@ internal class DelegatorBinder : Binder
 
   public override MethodBase? SelectMethod(BindingFlags bindingAttr, MethodBase[] match, Type[] types, ParameterModifier[] modifiers)
   {
+    // TODO: This can't resolve method hidden by the 'new' keyword
     foreach (MethodBase method in match)
     {
       if (!method.IsConstructor && method.GetGenericArguments().Length != _genericParameterCount) continue;
@@ -53,6 +54,7 @@ internal class DelegatorBinder : Binder
 
   public override PropertyInfo? SelectProperty(BindingFlags bindingAttr, PropertyInfo[] match, Type returnType, Type[] indexes, ParameterModifier[] modifiers)
   {
+    // TODO: This can't resolve properties hidden by the 'new' keyword
     foreach (PropertyInfo property in match)
     {
       IEnumerable<Type> indexTypes = property.GetIndexParameters().Select(x => x.ParameterType);

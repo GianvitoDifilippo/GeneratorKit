@@ -76,7 +76,7 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
     if (elementType.Symbol.ContainingAssembly is not ISourceAssemblySymbol)
       return Type.GetType(type.AssemblyQualifiedName);
 
-    Type runtimeElementType = GetRuntimeType(elementType);
+    Type runtimeElementType = elementType.UnderlyingSystemType;
 
     if (type.IsArray)
     {
@@ -99,7 +99,7 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
 
   private Type GetRuntimeConstructedType(SymbolType type)
   {
-    Type runtimeGenericDefinition = GetRuntimeType(type.GetGenericTypeDefinition());
+    Type runtimeGenericDefinition = type.GetGenericTypeDefinition().UnderlyingSystemType;
 
     Type[]? runtimeDefinitionTypeArguments = null;
     SymbolType[] typeArguments = type.GenericTypeArguments;
@@ -114,9 +114,7 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
       }
       else
       {
-        Type runtimeTypeArgument = GetRuntimeType(typeArgument);
-
-        runtimeTypeArguments[i] = runtimeTypeArgument;
+        runtimeTypeArguments[i] = typeArgument.UnderlyingSystemType;
       }
     }
 
@@ -128,7 +126,7 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
     if (type.DeclaringType is not SymbolType declaringType)
       throw new NotSupportedException("Generic parameter was supposed to have a declaring type.");
 
-    Type runtimeDeclaringType = GetRuntimeType(declaringType);
+    Type runtimeDeclaringType = declaringType.UnderlyingSystemType;
 
     return runtimeDeclaringType.GenericTypeArguments[type.GenericParameterPosition];
   }

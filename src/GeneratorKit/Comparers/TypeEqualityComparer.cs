@@ -41,7 +41,9 @@ internal abstract class TypeEqualityComparer : IEqualityComparer<Type?>
 
       if (x.Name != y.Name) return false;
       if (x.Namespace != y.Namespace) return false;
-      if (!AssemblyEqualityComparer.Default.Equals(x.Assembly, y.Assembly)) return false;
+
+      // TODO: Here there should be a sort of assembly equivalence.
+      // if (!AssemblyEqualityComparer.Default.Equals(x.Assembly, y.Assembly)) return false;
 
       if (x.IsGenericType)
       {

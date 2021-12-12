@@ -2,39 +2,50 @@
 using GeneratorKit.Exceptions;
 using Microsoft.CodeAnalysis;
 using System;
+using System.Reflection;
 
 namespace GeneratorKit;
 
 public abstract class RuntimeSourceGenerator : ISourceGenerator
 {
-  private const string s_assemblySuffix = "GeneratorProxies";
-
-  protected virtual IExceptionHandler? ExceptionHandler => null;
+  protected virtual IExceptionHandler? ExceptionHandler => this as IExceptionHandler;
 
   public void Execute(GeneratorExecutionContext context)
   {
-    string assemblyName = context.Compilation.AssemblyName is string name
-      ? $"{name}.{s_assemblySuffix}"
-      : s_assemblySuffix;
-
-    ProxyTypeFactory typeFactory = new ProxyTypeFactory(assemblyName);
+    ProxyTypeFactory typeFactory = new ProxyTypeFactory(Constants.ProxiesAssemblyName);
     ConcreteGeneratorRuntime runtime = new ConcreteGeneratorRuntime(context.Compilation, typeFactory, context.CancellationToken);
     
     try
     {
       Execute(context, runtime);
     }
-    catch (TypeCreationException ex) when (ExceptionHandler is { } exceptionHandler)
+    catch (Exception ex)
     {
-      exceptionHandler.HandleTypeCreationException(ex);
-    }
-    catch (OperationCanceledException ex) when (ExceptionHandler is { } exceptionHandler)
-    {
-      exceptionHandler.HandleOperationCanceledException(ex);
+      if (ExceptionHandler is not IExceptionHandler exceptionHandler || !Catch(ex, exceptionHandler))
+        throw;
     }
   }
 
   public abstract void Execute(GeneratorExecutionContext context, IGeneratorRuntime runtime);
 
   public abstract void Initialize(GeneratorInitializationContext context);
+
+  private static bool Catch(Exception ex, IExceptionHandler exceptionHandler)
+  {
+    switch (ex)
+    {
+      case TargetInvocationException targetInvocationException:
+        Catch(targetInvocationException.InnerException, exceptionHandler);
+        break;
+      case TypeCreationException typeCreationException:
+        exceptionHandler.HandleTypeCreationException(typeCreationException);
+        break;
+      case OperationCanceledException operationCanceledException:
+        exceptionHandler.HandleOperationCanceledException(operationCanceledException);
+        break;
+      default:
+        return false;
+    }
+    return true;
+  }
 }

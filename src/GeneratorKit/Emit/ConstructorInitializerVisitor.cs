@@ -8,7 +8,7 @@ using System.Reflection.Emit;
 
 namespace GeneratorKit.Emit;
 
-internal class ConstructorInitializerOperationVisitor : OperationVisitor
+internal class ConstructorInitializerVisitor : OperationVisitor
 {
   private const BindingFlags s_allInstanceConstructors = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
@@ -16,11 +16,23 @@ internal class ConstructorInitializerOperationVisitor : OperationVisitor
   private readonly ILGenerator _il;
   private readonly Type _baseType;
 
-  public ConstructorInitializerOperationVisitor(GeneratorRuntime runtime, ILGenerator il, Type baseType)
+  public ConstructorInitializerVisitor(GeneratorRuntime runtime, ILGenerator il, Type baseType)
   {
     _runtime = runtime;
     _il = il;
     _baseType = baseType;
+  }
+
+  public override void Visit(IOperation? operation)
+  {
+    if (operation is not null)
+    {
+      operation.Accept(this);
+    }
+    else
+    {
+      CallDefaultBaseConstructor();
+    }
   }
 
   public override void DefaultVisit(IOperation operation)
@@ -32,19 +44,17 @@ internal class ConstructorInitializerOperationVisitor : OperationVisitor
   {
     if (operation.Initializer is not null)
     {
-      Visit(operation.Initializer);
+      operation.Initializer.Accept(this);
     }
     else
     {
-      ConstructorInfo constructor = _baseType.GetConstructor(s_allInstanceConstructors, null, Type.EmptyTypes, null);
-      _il.Emit(OpCodes.Ldarg_0);
-      _il.Emit(OpCodes.Call, constructor);
+      CallDefaultBaseConstructor();
     }
   }
 
   public override void VisitExpressionStatement(IExpressionStatementOperation operation)
   {
-    Visit(operation.Operation);
+    operation.Operation.Accept(this);
   }
 
   public override void VisitInvocation(IInvocationOperation operation)
@@ -62,7 +72,7 @@ internal class ConstructorInitializerOperationVisitor : OperationVisitor
       }
       else
       {
-        Visit(argument.Value);
+        argument.Value.Accept(this);
       }
     }
 
@@ -138,6 +148,13 @@ internal class ConstructorInitializerOperationVisitor : OperationVisitor
         _il.Emit(OpCodes.Ldarg_S, position + 1);
         break;
     }
+  }
+
+  private void CallDefaultBaseConstructor()
+  {
+    ConstructorInfo constructor = _baseType.GetConstructor(s_allInstanceConstructors, null, Type.EmptyTypes, null);
+    _il.Emit(OpCodes.Ldarg_0);
+    _il.Emit(OpCodes.Call, constructor);
   }
 
   private ConstructorInfo GetBaseConstructor(IMethodSymbol baseConstructorSymbol)

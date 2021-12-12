@@ -7,7 +7,7 @@ using System.Linq;
 using System.Reflection;
 using Xunit.Sdk;
 
-namespace GeneratorKit;
+namespace GeneratorKit.Emit;
 
 public class ProxyTypeFactoryFixture
 {

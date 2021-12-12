@@ -59,10 +59,17 @@ internal abstract class GeneratorRuntime : IGeneratorRuntime
   {
     if (symbol is null)
       throw new ArgumentNullException(nameof(symbol));
-    if (symbol.MethodKind is MethodKind.Constructor or MethodKind.StaticConstructor)
-      throw new ArgumentException($"Method kind should not be {MethodKind.Constructor} or {MethodKind.StaticConstructor}.", nameof(symbol));
 
-    return new SymbolMethodInfo(this, symbol);
+    return symbol.MethodKind switch
+    {
+      MethodKind.Constructor or
+      MethodKind.StaticConstructor => throw new ArgumentException($"Method kind should not be {MethodKind.Constructor} or {MethodKind.StaticConstructor}.", nameof(symbol)),
+      MethodKind.Ordinary or
+      MethodKind.PropertyGet or
+      MethodKind.PropertySet or
+      MethodKind.DelegateInvoke    => new SymbolMethodInfo(this, symbol),
+      _                            => throw new NotSupportedException($"Unsupported method kind: '{symbol.MethodKind}'.")
+    };
   }
 
   public virtual SymbolModule CreateModuleDelegator(IModuleSymbol symbol)

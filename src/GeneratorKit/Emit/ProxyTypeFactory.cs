@@ -28,8 +28,10 @@ internal class ProxyTypeFactory : IProxyTypeFactory
   {
     SemanticModel[] semanticModels = type.Symbol.DeclaringSyntaxReferences.Map(x => runtime.Compilation.GetSemanticModel(x.SyntaxTree));
     IReadOnlyCollection<Diagnostic> errors = GetErrors(semanticModels, runtime.CancellationToken);
+    if (errors.Count != 0)
+      throw new InvalidCodeException(errors);
 
-    TypeBuilder typeBuilder = _moduleBuilder.DefineType(type.Name, type.Attributes);
+    TypeBuilder typeBuilder = _moduleBuilder.DefineType($"{type.Namespace}.{type.Name}", type.Attributes);
     IReadOnlyDictionary<string, Type>? genericParameters = CreateGenericParameterDictionary(typeBuilder, type);
 
     BuildContext context = new BuildContext(runtime, typeBuilder, semanticModels, genericParameters);
@@ -112,7 +114,10 @@ internal class ProxyTypeFactory : IProxyTypeFactory
     {
       foreach (Diagnostic diagnostic in semanticModel.GetDiagnostics(cancellationToken: cancellationToken))
       {
-        diagnostics.Add(diagnostic);
+        if (diagnostic.Severity == DiagnosticSeverity.Error)
+        {
+          diagnostics.Add(diagnostic);
+        }
       }
     }
     return diagnostics;
