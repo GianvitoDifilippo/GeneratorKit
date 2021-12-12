@@ -100,7 +100,7 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
 
   public override void SetValue(object obj, object value, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
   {
-    SetValue(obj, value, invokeAttr, binder, index, culture);
+    UnderlyingSystemProperty.SetValue(obj, value, invokeAttr, binder, index, culture);
   }
 
 

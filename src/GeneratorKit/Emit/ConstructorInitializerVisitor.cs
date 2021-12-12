@@ -8,7 +8,7 @@ using System.Reflection.Emit;
 
 namespace GeneratorKit.Emit;
 
-internal class ConstructorInitializerOperationVisitor : OperationVisitor
+internal class ConstructorInitializerVisitor : OperationVisitor
 {
   private const BindingFlags s_allInstanceConstructors = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
@@ -16,7 +16,7 @@ internal class ConstructorInitializerOperationVisitor : OperationVisitor
   private readonly ILGenerator _il;
   private readonly Type _baseType;
 
-  public ConstructorInitializerOperationVisitor(GeneratorRuntime runtime, ILGenerator il, Type baseType)
+  public ConstructorInitializerVisitor(GeneratorRuntime runtime, ILGenerator il, Type baseType)
   {
     _runtime = runtime;
     _il = il;

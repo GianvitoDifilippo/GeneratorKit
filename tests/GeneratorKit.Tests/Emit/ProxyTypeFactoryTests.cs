@@ -1,13 +1,12 @@
 ﻿using FluentAssertions;
 using GeneratorKit.Comparers;
-using GeneratorKit.Emit;
 using GeneratorKit.Reflection;
 using GeneratorKit.TestHelpers;
 using System;
 using System.Reflection;
 using Xunit;
 
-namespace GeneratorKit;
+namespace GeneratorKit.Emit;
 
 public class ProxyTypeFactoryTests : IClassFixture<ProxyTypeFactoryFixture>
 {

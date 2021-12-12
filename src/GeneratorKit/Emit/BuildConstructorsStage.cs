@@ -55,7 +55,7 @@ internal class BuildConstructorsStage
     foreach ((FieldBuilder field, IOperation initOperation) in _instanceInitializers)
     {
       il.Emit(OpCodes.Ldarg_0);
-      new FieldInitializerOperationVisitor(il).Visit(initOperation);
+      new FieldInitializerVisitor(il).Visit(initOperation);
       il.Emit(OpCodes.Stfld, field);
     }
 
@@ -64,7 +64,7 @@ internal class BuildConstructorsStage
       : _context.GetOperation(constructorSymbol);
     if (constructorOperation is not null)
     {
-      new ConstructorInitializerOperationVisitor(_context.Runtime, il, _baseType).Visit(constructorOperation);
+      new ConstructorInitializerVisitor(_context.Runtime, il, _baseType).Visit(constructorOperation);
     }
 
     il.Emit(OpCodes.Ret);
@@ -79,7 +79,7 @@ internal class BuildConstructorsStage
 
     foreach ((FieldBuilder field, IOperation initOperation) in _staticInitializers)
     {
-      new FieldInitializerOperationVisitor(il).Visit(initOperation);
+      new FieldInitializerVisitor(il).Visit(initOperation);
       il.Emit(OpCodes.Stfld, field);
     }
 
