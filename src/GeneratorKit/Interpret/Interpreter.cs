@@ -21,32 +21,30 @@ internal partial class Interpreter
     return index;
   }
 
-  public T Interpret<T>(OperationContext context, object? target, object?[] arguments)
+  private T InterpretImpl<T>(int operationId, object? target, object?[] arguments)
   {
+    if (operationId < 0 || operationId >= _operations.Count)
+      throw new ArgumentException($"No registered operation matches id '{operationId}'.", nameof(operationId));
+
+    OperationContext context = _operations[operationId];
     context.Deconstruct(out GeneratorRuntime runtime, out IOperation operation, out IMethodSymbol method);
 
     ImmutableArray<IParameterSymbol> parameters = method.Parameters;
     if (arguments.Length != parameters.Length)
       throw new ArgumentException($"Wrong number of arguments supplied to method {method}.", nameof(arguments));
 
-    Environment environment = new Environment();
+    Environment environment = new Environment(target);
     for (int i = 0; i < arguments.Length; i++)
     {
       environment.Define(parameters[i], arguments[i]);
     }
 
-    InterpreterVisitor visitor = new InterpreterVisitor(runtime, this, target, environment);
+    InterpreterVisitor visitor = new InterpreterVisitor(runtime, environment);
 
     object? result = visitor.Visit(operation, default);
 
     return (T)result!;
   }
 
-  private T InterpretImpl<T>(int operationId, object? target, object?[] arguments)
-  {
-    if (operationId < 0 || operationId >= _operations.Count)
-      throw new ArgumentException($"No registered operation matches id '{operationId}'.", nameof(operationId));
-
-    return Interpret<T>(_operations[operationId], target, arguments);
-  }
+  private record OperationContext(GeneratorRuntime Runtime, IOperation Operation, IMethodSymbol Method);
 }

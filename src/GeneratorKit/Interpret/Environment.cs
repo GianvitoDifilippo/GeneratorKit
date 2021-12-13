@@ -13,16 +13,19 @@ internal class Environment
   private readonly Environment? _enclosing;
   private readonly Dictionary<ISymbol, object?> _values;
 
-  public Environment()
+  public Environment(object? containingTypeInstance)
   {
     _values = new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default);
+    ContainingTypeInstance = containingTypeInstance;
   }
 
   public Environment(Environment enclosing)
-    : this()
+    : this(enclosing.ContainingTypeInstance)
   {
     _enclosing = enclosing;
   }
+
+  public object? ContainingTypeInstance { get; }
 
   public void Declare(ISymbol name)
   {
@@ -95,9 +98,6 @@ internal class Environment
 
     private Undefined() { }
 
-    public override string ToString()
-    {
-      return "<undefined>";
-    }
+    public override string ToString() => "<undefined>";
   }
 }

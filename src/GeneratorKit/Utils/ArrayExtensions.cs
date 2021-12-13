@@ -27,4 +27,19 @@ internal static class ArrayExtensions
     }
     return result;
   }
+
+  public static Array GetSubArray(this Array array, Range range, Type? elementType = null)
+  {
+    if (array == null)
+      throw new ArgumentNullException(nameof(array));
+
+    Type arrayType = array.GetType();
+    elementType ??= arrayType.GetElementType();
+
+    (int offset, int length) = range.GetOffsetAndLength(array.Length);
+
+    Array dest = Array.CreateInstance(elementType, length);
+    Array.Copy(array, offset, dest, 0, length);
+    return dest;
+  }
 }

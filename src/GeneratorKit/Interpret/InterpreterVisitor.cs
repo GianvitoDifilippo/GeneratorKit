@@ -11,35 +11,21 @@ namespace GeneratorKit.Interpret;
 
 internal class InterpreterVisitor : OperationVisitor<Optional<object?>, object>
 {
-  private readonly static MethodInfo s_interpretMethod;
-
-  static InterpreterVisitor()
-  {
-    s_interpretMethod = typeof(Interpreter).GetMethod(
-      nameof(Interpreter.Interpret),
-      BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly,
-      null,
-      new Type[] { typeof(OperationContext), typeof(object), typeof(object[]) },
-      null) ?? throw new MissingMethodException(nameof(Interpreter), nameof(Interpreter.Interpret));
-  }
-
   private readonly GeneratorRuntime _runtime;
-  private readonly Interpreter _interpreter;
-  private readonly object? _target;
   private readonly Stack<Environment> _environments;
   private readonly Stack<object> _implicitReceivers;
+  private readonly Stack<object> _conditionalAccessInstances; // TODO: Maybe it can work with a single reference
   private Optional<object?> _returnValue;
   private bool _hitBreak;
   private bool _hitContinue;
 
-  public InterpreterVisitor(GeneratorRuntime runtime, Interpreter interpreter, object? target, Environment environment)
+  public InterpreterVisitor(GeneratorRuntime runtime, Environment environment)
   {
     _runtime = runtime;
-    _interpreter = interpreter;
-    _target = target;
     _environments = new Stack<Environment>(1);
     _environments.Push(environment);
     _implicitReceivers = new Stack<object>();
+    _conditionalAccessInstances = new Stack<object>();
   }
 
   public override object? DefaultVisit(IOperation operation, Optional<object?> argument)
@@ -54,6 +40,7 @@ internal class InterpreterVisitor : OperationVisitor<Optional<object?>, object>
     if (operation.Parent is not IDelegateCreationOperation)
       return lambda;
 
+    // TODO: Interpret the operation instead of compiling the lambda
     return lambda.Compile();
   }
 
@@ -64,6 +51,66 @@ internal class InterpreterVisitor : OperationVisitor<Optional<object?>, object>
       ArgumentKind.Explicit => operation.Value.Accept(this, default),
       _                     => throw new NotImplementedException()
     };
+  }
+
+  public override object? VisitArrayCreation(IArrayCreationOperation operation, Optional<object?> argument)
+  {
+    int rank = operation.DimensionSizes.Length;
+    int[] dimensionSizes = operation.DimensionSizes.Map(x => (int)x.Accept(this, default)!);
+    Type elementType = _runtime.CreateTypeDelegator(operation.Type!).GetElementType()!.UnderlyingSystemType;
+    Array array = Array.CreateInstance(elementType, dimensionSizes);
+    int[] indices = new int[rank];
+
+    if (operation.Initializer is IArrayInitializerOperation initializerOperation)
+    {
+      VisitArrayInitializer(initializerOperation, new ArrayInitializerContext(array, indices, 0));
+    }
+    return array;
+  }
+
+  public override object? VisitArrayElementReference(IArrayElementReferenceOperation operation, Optional<object?> argument)
+  {
+    Array array = (Array)operation.ArrayReference.Accept(this, default)!;
+
+    if (operation.Indices.Length == 1)
+    {
+      object index = operation.Indices[0].Accept(this, default)!;
+      if (index is int intIndex)
+      {
+        return array.GetValue(intIndex);
+      }
+      Range range = (Range)index;
+      Type elementType = _runtime.CreateTypeDelegator(operation.Type!).GetElementType()!.UnderlyingSystemType;
+
+      return array.GetSubArray(range, elementType);
+    }
+
+    int[] indices = operation.Indices.Map(index => (int)index.Accept(this, default)!);
+    return array.GetValue(indices);
+  }
+
+  public override object? VisitArrayInitializer(IArrayInitializerOperation operation, Optional<object?> argument)
+  {
+    // TODO: Needs refactoring
+    (Array array, int[] indices, int dimension) = (ArrayInitializerContext)argument.Value!;
+    if (dimension == indices.Length - 1)
+    {
+      for (int i = 0; i < operation.ElementValues.Length; i++)
+      {
+        indices[dimension] = i;
+        object? value = operation.ElementValues[i].Accept(this, default);
+        array.SetValue(value, indices);
+      }
+    }
+    else
+    {
+      for (int i = 0; i < operation.ElementValues.Length; i++)
+      {
+        indices[dimension] = i;
+        operation.ElementValues[i].Accept(this, new ArrayInitializerContext(array, indices, dimension + 1));
+      }
+    }
+    return null;
   }
 
   public override object? VisitBinaryOperator(IBinaryOperation operation, Optional<object?> argument)
@@ -137,6 +184,44 @@ internal class InterpreterVisitor : OperationVisitor<Optional<object?>, object>
         throw new NotImplementedException();
     }
     return null;
+  }
+
+  public override object? VisitCoalesce(ICoalesceOperation operation, Optional<object?> argument)
+  {
+    object? value = operation.Value.Accept(this, default);
+    return value is not null
+      ? value
+      : operation.WhenNull.Accept(this, default);
+  }
+
+  public override object? VisitCoalesceAssignment(ICoalesceAssignmentOperation operation, Optional<object?> argument)
+  {
+    object? target = operation.Target.Accept(this, default);
+    if (target is null)
+    {
+      object? value = operation.Value.Accept(this, default);
+      operation.Target.Accept(this, value);
+      return value;
+    }
+    return target;
+  }
+
+  public override object? VisitConditionalAccess(IConditionalAccessOperation operation, Optional<object?> argument)
+  {
+    object? instance = operation.Operation.Accept(this, default);
+    if (instance is null)
+      return null;
+
+    BeginConditionalAccessInstance(instance);
+    object? whenNotNull = operation.WhenNotNull.Accept(this, default);
+    EndConditionalAccessInstance();
+
+    return whenNotNull;
+  }
+
+  public override object? VisitConditionalAccessInstance(IConditionalAccessInstanceOperation operation, Optional<object?> argument)
+  {
+    return _conditionalAccessInstances.Peek();
   }
 
   public override object? VisitCompoundAssignment(ICompoundAssignmentOperation operation, Optional<object?> argument)
@@ -268,9 +353,19 @@ internal class InterpreterVisitor : OperationVisitor<Optional<object?>, object>
     return operand;
   }
 
+  public override object? VisitDefaultValue(IDefaultValueOperation operation, Optional<object?> argument)
+  {
+    return operation.ConstantValue.Value;
+  }
+
   public override object? VisitDelegateCreation(IDelegateCreationOperation operation, Optional<object?> argument)
   {
     return operation.Target.Accept(this, default);
+  }
+
+  public override object? VisitDiscardOperation(IDiscardOperation operation, Optional<object?> argument)
+  {
+    return null;
   }
 
   public override object? VisitExpressionStatement(IExpressionStatementOperation operation, Optional<object?> argument)
@@ -371,7 +466,7 @@ internal class InterpreterVisitor : OperationVisitor<Optional<object?>, object>
   {
     return operation.ReferenceKind switch
     {
-      InstanceReferenceKind.ContainingTypeInstance => _target,
+      InstanceReferenceKind.ContainingTypeInstance => Environment.ContainingTypeInstance,
       InstanceReferenceKind.ImplicitReceiver       => ImplicitReceiver,
       _                                            => throw new NotImplementedException()
     };
@@ -434,6 +529,17 @@ internal class InterpreterVisitor : OperationVisitor<Optional<object?>, object>
     return method.Invoke(instance, arguments);
   }
 
+  public override object? VisitIsType(IIsTypeOperation operation, Optional<object?> argument)
+  {
+    object? valueOperand = operation.ValueOperand.Accept(this, default);
+    if (valueOperand is null)
+      return false;
+
+    Type typeOperand = _runtime.CreateTypeDelegator(operation.TypeOperand);
+
+    return typeOperand.IsInstanceOfType(valueOperand);
+  }
+
   public override object? VisitLiteral(ILiteralOperation operation, Optional<object?> argument)
   {
     Optional<object?> constantValue = operation.ConstantValue;
@@ -466,7 +572,7 @@ internal class InterpreterVisitor : OperationVisitor<Optional<object?>, object>
   public override object? VisitMethodReference(IMethodReferenceOperation operation, Optional<object?> argument)
   {
     object? instance = operation.Method.IsStatic ? null : operation.Instance!.Accept(this, default);
-    MethodInfo method = _runtime.CreateMethodInfoDelegator(operation.Method);
+    MethodInfo method = _runtime.CreateMethodInfoDelegator(operation.Method).UnderlyingSystemMethod;
 
     return Delegate.CreateDelegate(DelegateHelper.GetDelegateType(_runtime, operation.Method), instance, method);
   }
@@ -486,6 +592,12 @@ internal class InterpreterVisitor : OperationVisitor<Optional<object?>, object>
     }
 
     return result;
+  }
+
+  public override object? VisitNameOf(INameOfOperation operation, Optional<object?> argument)
+  {
+    // TODO: I fear we will need another visitor for this
+    return "";
   }
 
   public override object? VisitObjectOrCollectionInitializer(IObjectOrCollectionInitializerOperation operation, Optional<object?> argument)
@@ -511,6 +623,11 @@ internal class InterpreterVisitor : OperationVisitor<Optional<object?>, object>
     }
   }
 
+  public override object? VisitParenthesized(IParenthesizedOperation operation, Optional<object?> argument)
+  {
+    return operation.Operand.Accept(this, default);
+  }
+
   public override object? VisitPropertyReference(IPropertyReferenceOperation operation, Optional<object?> argument)
   {
     object? instance = operation.Property.IsStatic ? null : operation.Instance!.Accept(this, default);
@@ -530,6 +647,18 @@ internal class InterpreterVisitor : OperationVisitor<Optional<object?>, object>
     }
   }
 
+  public override object? VisitRangeOperation(IRangeOperation operation, Optional<object?> argument)
+  {
+    Index leftOperand = operation.LeftOperand is not null
+      ? (Index)operation.LeftOperand.Accept(this, default)!
+      : 0;
+    Index rightOperand = operation.RightOperand is not null
+      ? (Index)operation.RightOperand.Accept(this, default)!
+      : ^0;
+
+    return leftOperand..rightOperand;
+  }
+
   public override object? VisitReturn(IReturnOperation operation, Optional<object?> argument)
   {
     object? returnValue = operation.ReturnedValue is null
@@ -544,6 +673,11 @@ internal class InterpreterVisitor : OperationVisitor<Optional<object?>, object>
     object? value = operation.Value.Accept(this, default);
     operation.Target.Accept(this, value);
     return value;
+  }
+
+  public override object? VisitTypeOf(ITypeOfOperation operation, Optional<object?> argument)
+  {
+    return _runtime.CreateTypeDelegator(operation.TypeOperand); // Here it's where the executed code realizes it's running in a simulation :)
   }
 
   public override object? VisitUnaryOperator(IUnaryOperation operation, Optional<object?> argument)
@@ -668,6 +802,16 @@ internal class InterpreterVisitor : OperationVisitor<Optional<object?>, object>
     _implicitReceivers.Pop();
   }
 
+  private void BeginConditionalAccessInstance(object instance)
+  {
+    _conditionalAccessInstances.Push(instance);
+  }
+
+  private void EndConditionalAccessInstance()
+  {
+    _conditionalAccessInstances.Pop();
+  }
+
   private bool CheckBranch()
   {
     if (_hitContinue)
@@ -682,4 +826,6 @@ internal class InterpreterVisitor : OperationVisitor<Optional<object?>, object>
 
     return false;
   }
+
+  private record ArrayInitializerContext(Array Array, int[] Indices, int Dimension);
 }

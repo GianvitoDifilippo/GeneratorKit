@@ -63,6 +63,9 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
     if (type.IsGenericParameter)
       return GetRuntimeTypeParameter(type);
 
+    if (IsProvidedByUs(type, out Type? providedType))
+      return providedType!;
+
     if (type.Symbol.ContainingAssembly is not ISourceAssemblySymbol)
       return GetLoadedType(type);
 
@@ -134,5 +137,21 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
   private static Type GetLoadedType(Type type)
   {
     return Type.GetType(type.AssemblyQualifiedName, true, false);
+  }
+
+  private static bool IsProvidedByUs(SymbolType type, out Type? providedType)
+  {
+    switch (type.FullName)
+    {
+      case "System.Index":
+        providedType = typeof(Index);
+        return true;
+      case "System.Range":
+        providedType = typeof(Range);
+        return true;
+      default:
+        providedType = null;
+        return false;
+    }
   }
 }
