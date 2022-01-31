@@ -1,5 +1,5 @@
 ﻿using GeneratorKit.Comparers;
-using GeneratorKit.Utils;
+using GeneratorKit.Reflection.Binders;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -25,7 +25,8 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
 
   public IMethodSymbol Symbol { get; }
 
-  internal ConstructorInfo UnderlyingSystemConstructor => _underlyingSystemConstructor ??= MemberResolver.ResolveConstructor(ReflectedTypeCore.UnderlyingSystemType, this);
+  // TODO: Assert not in source
+  internal ConstructorInfo UnderlyingSystemConstructor => _underlyingSystemConstructor ??= DelegatorBinder.ResolveConstructor(DeclaringType.UnderlyingSystemType, this);
 
 
   // System.Reflection.ConstructorInfo overrides
@@ -67,7 +68,7 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
     ? CallingConventions.Standard
     : CallingConventions.Standard | CallingConventions.HasThis;
 
-  public override RuntimeMethodHandle MethodHandle => throw new NotImplementedException();
+  public override RuntimeMethodHandle MethodHandle => UnderlyingSystemConstructor.MethodHandle;
 
   public override bool IsSecurityCritical => true;
 
@@ -103,12 +104,16 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
 
   public override object Invoke(BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
   {
-    return UnderlyingSystemConstructor.Invoke(invokeAttr, binder, parameters, culture);
+    return Symbol.ContainingAssembly is ISourceAssemblySymbol
+      ? throw new NotSupportedException() // TODO: Message
+      : UnderlyingSystemConstructor.Invoke(invokeAttr, binder, parameters, culture);
   }
 
   public override object Invoke(object obj, BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
   {
-    return UnderlyingSystemConstructor.Invoke(obj, invokeAttr, binder, parameters, culture);
+    return Symbol.ContainingAssembly is ISourceAssemblySymbol
+      ? throw new NotSupportedException() // TODO: Message
+      : UnderlyingSystemConstructor.Invoke(obj, invokeAttr, binder, parameters, culture);
   }
 
   public override bool IsDefined(Type attributeType, bool inherit)

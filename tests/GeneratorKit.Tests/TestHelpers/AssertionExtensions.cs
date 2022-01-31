@@ -10,16 +10,21 @@ namespace GeneratorKit.TestHelpers;
 
 public static class AssertionsExtensions
 {
-  public static AndConstraint<TAssertions> Equal<TSubject, TAssertions>(this ReferenceTypeAssertions<TSubject, TAssertions> assertions, TSubject? other, IEqualityComparer<TSubject> comparer, string because = "", params object[] becauseArgs)
+  public static AndConstraint<TAssertions> Equal<TSubject, TAssertions>(this ReferenceTypeAssertions<TSubject, TAssertions> assertions, TSubject? other, IEqualityComparer<TSubject>? comparer = null, string because = "", params object[] becauseArgs)
     where TAssertions : ReferenceTypeAssertions<TSubject, TAssertions>
+    where TSubject : notnull
   {
-    return assertions.Match(x => comparer.Equals(x, other), because, becauseArgs);
+    return comparer is null
+      ? assertions.Match(x => x.Equals(other), because, becauseArgs)
+      : assertions.Match(x => comparer.Equals(x, other), because, becauseArgs);
   }
 
-  public static AndConstraint<ObjectAssertions> Equal<TSubject>(this ObjectAssertions assertions, TSubject? other, IEqualityComparer<TSubject?> comparer, string because = "", params object[] becauseArgs)
+  public static AndConstraint<ObjectAssertions> Equal<TSubject>(this ObjectAssertions assertions, TSubject? other, IEqualityComparer<TSubject?>? comparer = null, string because = "", params object[] becauseArgs)
     where TSubject : class
   {
-    return assertions.Match(x => comparer.Equals(x as TSubject, other), because, becauseArgs);
+    return comparer is null
+      ? assertions.Match(x => x.Equals(other), because, becauseArgs)
+      : assertions.Match(x => comparer.Equals(x as TSubject, other), because, becauseArgs);
   }
 
   public static AndConstraint<TAssertions> BeEquivalentTo<TCollection, T, TAssertions>(this GenericCollectionAssertions<TCollection, T, TAssertions> assertions, IEnumerable<T> expectation, IEqualityComparer<T> comparer, string because = "", params object[] becauseArgs)

@@ -1594,7 +1594,7 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
     SymbolType sut = _fixture.GetDelegator(category);
     Type reference = _fixture.GetReference(category);
 
-    object instance = Activator.CreateInstance(reference)!;
+    object instance = System.Activator.CreateInstance(reference)!;
     bool expected = reference.IsInstanceOfType(instance);
 
     // Act

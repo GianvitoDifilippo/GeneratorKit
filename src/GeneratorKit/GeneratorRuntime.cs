@@ -16,23 +16,24 @@ internal abstract class GeneratorRuntime : IGeneratorRuntime
   public Compilation Compilation { get; }
 
   public abstract CancellationToken CancellationToken { get; }
-  
+
   public abstract SymbolAssembly CompilationAssembly { get; }
+
+  public abstract T CreateInstance<T>(Type type, params object?[] arguments);
 
   public abstract Type GetRuntimeType(SymbolType type);
 
+  public abstract Type GetRuntimeType(HybridGenericType type);
+
+  public abstract object? InvokeMethod(IRuntimeMethod method, object? instance, object?[] arguments);
+
   public SymbolAssembly CreateAssemblyDelegator(IAssemblySymbol symbol)
   {
-    if (symbol is null)
-      throw new ArgumentNullException(nameof(symbol));
-
     return new SymbolAssembly(this, symbol, null);
   }
 
   public SymbolConstructorInfo CreateConstructorInfoDelegator(IMethodSymbol symbol)
   {
-    if (symbol is null)
-      throw new ArgumentNullException(nameof(symbol));
     if (symbol.MethodKind is not MethodKind.Constructor and not MethodKind.StaticConstructor)
       throw new ArgumentException($"Method kind must be {MethodKind.Constructor} or {MethodKind.StaticConstructor}.");
 
@@ -41,24 +42,16 @@ internal abstract class GeneratorRuntime : IGeneratorRuntime
 
   public SymbolEventInfo CreateEventInfoDelegator(IEventSymbol symbol)
   {
-    if (symbol is null)
-      throw new ArgumentNullException(nameof(symbol));
-
     return new SymbolEventInfo(this, symbol);
   }
 
   public SymbolFieldInfo CreateFieldInfoDelegator(IFieldSymbol symbol)
   {
-    if (symbol is null)
-      throw new ArgumentNullException(nameof(symbol));
-
     return new SymbolFieldInfo(this, symbol);
   }
 
   public SymbolMethodInfo CreateMethodInfoDelegator(IMethodSymbol symbol)
   {
-    if (symbol is null)
-      throw new ArgumentNullException(nameof(symbol));
     if (symbol.MethodKind is MethodKind.Constructor or MethodKind.StaticConstructor)
       throw new ArgumentException($"Method kind should not be {MethodKind.Constructor} or {MethodKind.StaticConstructor}.", nameof(symbol));
 
@@ -67,75 +60,40 @@ internal abstract class GeneratorRuntime : IGeneratorRuntime
 
   public SymbolModule CreateModuleDelegator(IModuleSymbol symbol)
   {
-    if (symbol is null)
-      throw new ArgumentNullException(nameof(symbol));
-
     return new SymbolModule(this, symbol);
   }
 
   public SymbolPropertyInfo CreatePropertyInfoDelegator(IPropertySymbol symbol)
   {
-    if (symbol is null)
-      throw new ArgumentNullException(nameof(symbol));
-
     return new SymbolPropertyInfo(this, symbol);
   }
 
   public SymbolType CreateTypeDelegator(ITypeSymbol symbol)
   {
-    if (symbol is null)
-      throw new ArgumentNullException(nameof(symbol));
-
     return symbol.Kind switch
     {
-      SymbolKind.NamedType     => new SymbolNamedType(this, (INamedTypeSymbol)symbol),
-      SymbolKind.ArrayType     => new SymbolArrayType(this, (IArrayTypeSymbol)symbol),
+      SymbolKind.NamedType => new SymbolNamedType(this, (INamedTypeSymbol)symbol),
+      SymbolKind.ArrayType => new SymbolArrayType(this, (IArrayTypeSymbol)symbol),
       SymbolKind.TypeParameter => new SymbolTypeParameter(this, (ITypeParameterSymbol)symbol),
-      _                        => throw new NotSupportedException($"Symbol of kind {symbol.Kind} is not supported.")
+      _ => throw new NotSupportedException($"Symbol of kind {symbol.Kind} is not supported.")
     };
   }
 
-  // For now we don't expose the real types
-
   Assembly IGeneratorRuntime.CompilationAssembly => CompilationAssembly;
 
-  Assembly IGeneratorRuntime.CreateAssemblyDelegator(IAssemblySymbol symbol)
-  {
-    return CreateAssemblyDelegator(symbol);
-  }
+  Assembly IGeneratorRuntime.CreateAssemblyDelegator(IAssemblySymbol symbol) => CreateAssemblyDelegator(symbol);
 
-  ConstructorInfo IGeneratorRuntime.CreateConstructorInfoDelegator(IMethodSymbol symbol)
-  {
-    return CreateConstructorInfoDelegator(symbol);
-  }
+  ConstructorInfo IGeneratorRuntime.CreateConstructorInfoDelegator(IMethodSymbol symbol) => CreateConstructorInfoDelegator(symbol);
 
-  EventInfo IGeneratorRuntime.CreateEventInfoDelegator(IEventSymbol symbol)
-  {
-    return CreateEventInfoDelegator(symbol);
-  }
+  EventInfo IGeneratorRuntime.CreateEventInfoDelegator(IEventSymbol symbol) => CreateEventInfoDelegator(symbol);
 
-  FieldInfo IGeneratorRuntime.CreateFieldInfoDelegator(IFieldSymbol symbol)
-  {
-    return CreateFieldInfoDelegator(symbol);
-  }
+  FieldInfo IGeneratorRuntime.CreateFieldInfoDelegator(IFieldSymbol symbol) => CreateFieldInfoDelegator(symbol);
 
-  MethodInfo IGeneratorRuntime.CreateMethodInfoDelegator(IMethodSymbol symbol)
-  {
-    return CreateMethodInfoDelegator(symbol);
-  }
+  MethodInfo IGeneratorRuntime.CreateMethodInfoDelegator(IMethodSymbol symbol) => CreateMethodInfoDelegator(symbol);
 
-  Module IGeneratorRuntime.CreateModuleDelegator(IModuleSymbol symbol)
-  {
-    return CreateModuleDelegator(symbol);
-  }
+  Module IGeneratorRuntime.CreateModuleDelegator(IModuleSymbol symbol) => CreateModuleDelegator(symbol);
 
-  PropertyInfo IGeneratorRuntime.CreatePropertyInfoDelegator(IPropertySymbol symbol)
-  {
-    return CreatePropertyInfoDelegator(symbol);
-  }
+  PropertyInfo IGeneratorRuntime.CreatePropertyInfoDelegator(IPropertySymbol symbol) => CreatePropertyInfoDelegator(symbol);
 
-  Type IGeneratorRuntime.CreateTypeDelegator(ITypeSymbol symbol)
-  {
-    return CreateTypeDelegator(symbol);
-  }
+  Type IGeneratorRuntime.CreateTypeDelegator(ITypeSymbol symbol) => CreateTypeDelegator(symbol);
 }

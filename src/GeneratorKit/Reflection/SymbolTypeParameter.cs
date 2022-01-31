@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using GeneratorKit.Utils;
+using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,7 +36,7 @@ internal sealed class SymbolTypeParameter : SymbolType
         VarianceKind.None => GenericParameterAttributes.None,
         VarianceKind.Out  => GenericParameterAttributes.Covariant,
         VarianceKind.In   => GenericParameterAttributes.Contravariant,
-        _                 => throw new InvalidOperationException() // Unreacheable
+        _                 => throw Errors.Unreacheable
       };
 
       if (_symbol.HasReferenceTypeConstraint)
@@ -113,18 +114,14 @@ internal sealed class SymbolTypeParameter : SymbolType
     return _symbol.IsValueType || IsEnum;
   }
 
-  public override Type MakeGenericType(params Type[] typeArguments)
-  {
-    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
-  }
 
+  // GeneratorRuntimeType overrides
 
-  // SymbolType overrides
+  protected override SymbolNamedType RuntimeDefinition => throw new InvalidOperationException();
 
-  public override SymbolType MakeGenericType(params SymbolType[] typeArguments)
-  {
-    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
-  }
+  protected override Type[] RuntimeTypeArguments => throw new InvalidOperationException();
+
+  protected override IRuntimeType? RuntimeBaseType => throw new InvalidOperationException();
 
 
   // SymbolTypeBase overrides
@@ -138,6 +135,11 @@ internal sealed class SymbolTypeParameter : SymbolType
   protected override SymbolType? GetElementTypeCore()
   {
     return null;
+  }
+
+  protected override SymbolType GetEnumUnderlyingTypeCore()
+  {
+    throw new InvalidOperationException();
   }
 
   protected override SymbolType[] GetGenericArgumentsCore()
@@ -197,6 +199,16 @@ internal sealed class SymbolTypeParameter : SymbolType
   protected override SymbolType MakeByRefTypeCore()
   {
     return new SymbolByRefType(_runtime, this);
+  }
+
+  protected override HybridGenericType MakeGenericTypeCore(Type[] typeArguments)
+  {
+    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
+  }
+
+  protected override SymbolType MakeGenericTypeCore(SymbolType[] typeArguments)
+  {
+    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
   }
 
   private ITypeSymbol BaseTypeSymbol => _symbol.HasValueTypeConstraint

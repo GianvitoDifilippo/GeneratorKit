@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Xunit;
 using Xunit.Sdk;
 
 namespace GeneratorKit.Reflection;
@@ -50,10 +51,7 @@ namespace " + Namespace + @"
   public SymbolParameterInfoFixture()
   {
     CompilationOutput output = CompilationOutput.Create(s_source, AssemblyName);
-    if (!output.IsValid)
-    {
-      throw new Exception($"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
-    }
+    Assert.True(output.IsValid, $"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
 
     _runtime = new FakeGeneratorRuntime(output.Compilation);
 
@@ -90,16 +88,18 @@ namespace " + Namespace + @"
     {
       Type type = name == "WithThis" ? _staticType : _type;
 
-      MethodInfo method = type.GetMethod(name) ?? throw new Exception($"Could not find method {name} in type {type.Name}.");
+      MethodInfo? method = type.GetMethod(name);
+      Assert.NotNull(method);
       return position == -1
-        ? method.ReturnParameter
-        : method.GetParameters()[position];
+        ? method!.ReturnParameter
+        : method!.GetParameters()[position];
     }
 
     ParameterInfo GetParameterFromIndexer(int position = 0)
     {
-      PropertyInfo property = _type.GetProperty("Item") ?? throw new Exception($"Could not find property Item in type {_type.Name}.");
-      return property.GetIndexParameters()[position];
+      PropertyInfo? property = _type.GetProperty("Item");
+      Assert.NotNull(property);
+      return property!.GetIndexParameters()[position];
     }
   }
 

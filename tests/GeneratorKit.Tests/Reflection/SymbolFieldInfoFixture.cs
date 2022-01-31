@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Xunit;
 using Xunit.Sdk;
 
 namespace GeneratorKit.Reflection;
@@ -65,10 +66,7 @@ namespace " + Namespace + @"
   public SymbolFieldInfoFixture()
   {
     CompilationOutput output = CompilationOutput.Create(s_source, AssemblyName);
-    if (!output.IsValid)
-    {
-      throw new Exception($"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
-    }
+    Assert.True(output.IsValid, $"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
 
     _runtime = new FakeGeneratorRuntime(output.Compilation);
 
@@ -152,7 +150,9 @@ namespace " + Namespace + @"
 
     static FieldInfo GetFieldFromType(Type type, string name)
     {
-      return type.GetField(name, s_allFields) ?? throw new Exception($"Could not find method {name} on type {type.Name}.");
+      FieldInfo? result = type.GetField(name, s_allFields);
+      Assert.NotNull(result);
+      return result!;
     }
   }
 

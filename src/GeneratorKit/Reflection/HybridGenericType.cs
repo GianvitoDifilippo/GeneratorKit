@@ -1,18 +1,21 @@
-﻿using GeneratorKit.Utils;
+﻿using GeneratorKit.Comparers;
+using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
 
 namespace GeneratorKit.Reflection;
 
-internal class HybridGenericType : Type
+internal class HybridGenericType : HybridGenericTypeBase
 {
   private readonly GeneratorRuntime _runtime;
   private readonly SymbolNamedType _definition;
   private readonly Type[] _typeArguments;
+  private Type? _runtimeType;
 
   public HybridGenericType(GeneratorRuntime runtime, SymbolNamedType definition, Type[] typeArguments)
   {
@@ -21,36 +24,18 @@ internal class HybridGenericType : Type
     _typeArguments = typeArguments;
   }
 
-  public override Assembly Assembly => _definition.Assembly;
+
+  // Systm.Type overrides
 
   public override string? AssemblyQualifiedName => TypeNameBuilder.ToString(this, TypeNameBuilder.Format.AssemblyQualifiedName);
 
-  public override Type BaseType
-  {
-    get
-    {
-      SymbolType definitionBaseType = _definition.BaseType!;
-
-      if (!definitionBaseType.IsGenericType)
-        return definitionBaseType;
-
-      ImmutableArray<ITypeSymbol> baseTypeArgumentSymbols = ((INamedTypeSymbol)definitionBaseType.Symbol).TypeArguments;
-      Type[] baseTypeArguments = baseTypeArgumentSymbols.Select(x => x.TypeKind is TypeKind.TypeParameter
-        ? _typeArguments[((ITypeParameterSymbol)x).Ordinal]
-        : _runtime.CreateTypeDelegator(x))
-        .ToArray();
-
-      return definitionBaseType.MakeGenericType(baseTypeArguments);
-    }
-  }
-
-  public override bool ContainsGenericParameters => _typeArguments.Any(x => x.IsGenericParameter);
+  public override bool ContainsGenericParameters => _typeArguments.Any(x => x.IsGenericParameter); // TODO: Check deep
 
   public override string? FullName => TypeNameBuilder.ToString(this, TypeNameBuilder.Format.FullName);
 
-  public override Type[] GenericTypeArguments => _typeArguments;
+  public override Guid GUID => throw new NotImplementedException();
 
-  public override Guid GUID => throw new NotSupportedException();
+  public override bool IsConstructedGenericType => true;
 
   public override bool IsGenericType => true;
 
@@ -58,65 +43,50 @@ internal class HybridGenericType : Type
 
   public override bool IsGenericTypeDefinition => false;
 
-  public override Module Module => _definition.Module;
+  public override string Name => _definition.Name;
 
   public override string Namespace => _definition.Namespace;
 
-  public override Type UnderlyingSystemType
-  {
-    get
-    {
-      Type? runtimeDefinitionType = _runtime.GetRuntimeType(_definition);
-      if (runtimeDefinitionType is null)
-        return this;
-
-      Type[] typeArguments = _typeArguments
-        .Select(x => x is SymbolType symbolType ? _runtime.GetRuntimeType(symbolType) ?? symbolType : x)
-        .ToArray();
-      return runtimeDefinitionType.MakeGenericType(typeArguments);
-    }
-  }
-
-  public override string Name => _definition.Name;
+  public override Type UnderlyingSystemType => RuntimeType.UnderlyingSystemType;
 
   public override ConstructorInfo[] GetConstructors(BindingFlags bindingAttr)
   {
-    throw new NotSupportedException();
+    throw new NotImplementedException();
   }
 
   public override object[] GetCustomAttributes(bool inherit)
   {
-    throw new NotSupportedException();
+    return _definition.GetCustomAttributes(inherit);
   }
 
   public override object[] GetCustomAttributes(Type attributeType, bool inherit)
   {
-    throw new NotSupportedException();
+    return _definition.GetCustomAttributes(attributeType, inherit);
   }
 
-  public override Type GetElementType()
+  public override Type? GetElementType()
   {
-    throw new NotSupportedException();
+    return null;
   }
 
   public override EventInfo GetEvent(string name, BindingFlags bindingAttr)
   {
-    throw new NotSupportedException();
+    throw new NotImplementedException();
   }
 
   public override EventInfo[] GetEvents(BindingFlags bindingAttr)
   {
-    throw new NotSupportedException();
+    throw new NotImplementedException();
   }
 
   public override FieldInfo GetField(string name, BindingFlags bindingAttr)
   {
-    throw new NotSupportedException();
+    throw new NotImplementedException();
   }
 
   public override FieldInfo[] GetFields(BindingFlags bindingAttr)
   {
-    throw new NotSupportedException();
+    throw new NotImplementedException();
   }
 
   public override Type[] GetGenericArguments()
@@ -126,67 +96,67 @@ internal class HybridGenericType : Type
 
   public override Type GetInterface(string name, bool ignoreCase)
   {
-    throw new NotSupportedException();
+    throw new NotImplementedException();
   }
 
   public override Type[] GetInterfaces()
   {
-    throw new NotSupportedException();
+    throw new NotImplementedException();
   }
 
   public override MemberInfo[] GetMembers(BindingFlags bindingAttr)
   {
-    throw new NotSupportedException();
+    throw new NotImplementedException();
   }
 
   public override MethodInfo[] GetMethods(BindingFlags bindingAttr)
   {
-    throw new NotSupportedException();
+    throw new NotImplementedException();
   }
 
   public override Type GetNestedType(string name, BindingFlags bindingAttr)
   {
-    throw new NotSupportedException();
+    throw new NotImplementedException();
   }
 
   public override Type[] GetNestedTypes(BindingFlags bindingAttr)
   {
-    throw new NotSupportedException();
+    throw new NotImplementedException();
   }
 
   public override PropertyInfo[] GetProperties(BindingFlags bindingAttr)
   {
-    throw new NotSupportedException();
+    throw new NotImplementedException();
   }
 
   public override object InvokeMember(string name, BindingFlags invokeAttr, Binder binder, object target, object[] args, ParameterModifier[] modifiers, CultureInfo culture, string[] namedParameters)
   {
-    throw new NotSupportedException();
+    throw new NotImplementedException();
   }
 
   public override bool IsDefined(Type attributeType, bool inherit)
   {
-    throw new NotSupportedException();
+    return _definition.IsDefined(attributeType, inherit);
   }
 
   protected override TypeAttributes GetAttributeFlagsImpl()
   {
-    throw new NotSupportedException();
+    return _definition.Attributes;
   }
 
   protected override ConstructorInfo GetConstructorImpl(BindingFlags bindingAttr, Binder binder, CallingConventions callConvention, Type[] types, ParameterModifier[] modifiers)
   {
-    throw new NotSupportedException();
+    throw new NotImplementedException();
   }
 
   protected override MethodInfo GetMethodImpl(string name, BindingFlags bindingAttr, Binder binder, CallingConventions callConvention, Type[] types, ParameterModifier[] modifiers)
   {
-    throw new NotSupportedException();
+    throw new NotImplementedException();
   }
 
   protected override PropertyInfo GetPropertyImpl(string name, BindingFlags bindingAttr, Binder binder, Type returnType, Type[] types, ParameterModifier[] modifiers)
   {
-    throw new NotSupportedException();
+    throw new NotImplementedException();
   }
 
   protected override bool HasElementTypeImpl()
@@ -219,8 +189,120 @@ internal class HybridGenericType : Type
     return false;
   }
 
-  public override string? ToString()
+
+  // HybridGenericTypeBase overrides
+
+  protected override SymbolAssembly AssemblyCore => _definition.Assembly;
+
+  protected override SymbolType? DeclaringTypeCore => _definition.DeclaringType;
+
+  protected override SymbolModule ModuleCore => _definition.Module;
+
+  protected override SymbolType? ReflectedTypeCore => throw new NotImplementedException();
+
+  protected override GeneratorRuntimeType BaseTypeCore
+  {
+    get
+    {
+      SymbolType definitionBaseType = _definition.BaseType!;
+
+      if (!definitionBaseType.IsGenericType)
+        return definitionBaseType;
+
+      ImmutableArray<ITypeSymbol> baseTypeArgumentSymbols = ((INamedTypeSymbol)definitionBaseType.Symbol).TypeArguments;
+      Type[] baseTypeArguments = baseTypeArgumentSymbols.Select(x => x.TypeKind is TypeKind.TypeParameter
+        ? _typeArguments[((ITypeParameterSymbol)x).Ordinal]
+        : _runtime.CreateTypeDelegator(x))
+        .ToArray();
+
+      return definitionBaseType.GetGenericTypeDefinition().MakeGenericType(baseTypeArguments);
+    }
+  }
+
+  protected override SymbolType GetGenericTypeDefinitionCore()
+  {
+    return _definition;
+  }
+
+
+  // GeneratorRuntimeType overrides
+
+  protected override SymbolNamedType RuntimeDefinition => _definition;
+
+  protected override Type[] RuntimeTypeArguments => _typeArguments;
+
+  protected override IRuntimeType? RuntimeBaseType => BaseTypeCore;
+
+  protected override bool IsSource => ((IRuntimeType)_definition).IsSource;
+
+
+  // System.Object overrides
+
+  public sealed override int GetHashCode()
+  {
+    return TypeEqualityComparer.Default.GetHashCode(this);
+  }
+
+  public sealed override string? ToString()
   {
     return TypeNameBuilder.ToString(this, TypeNameBuilder.Format.ToString);
   }
+
+
+  // IRuntimeType members
+
+
+  // New members
+
+  public new SymbolAssembly Assembly => AssemblyCore;
+
+  public new SymbolType? DeclaringType => DeclaringTypeCore;
+
+  public new SymbolModule Module => ModuleCore;
+
+  public new SymbolType? ReflectedType => ReflectedTypeCore;
+
+  public new SymbolType GetGenericTypeDefinition() => GetGenericTypeDefinitionCore();
+
+
+  // Other members
+
+  public Type RuntimeType => _runtimeType ??= _runtime.GetRuntimeType(this);
+}
+
+internal abstract class HybridGenericTypeBase : GeneratorRuntimeType
+{
+  // System.Type overrides
+
+  public sealed override Assembly Assembly => AssemblyCore;
+
+  public sealed override Type BaseType => BaseTypeCore;
+
+  public sealed override Type? DeclaringType => DeclaringTypeCore;
+
+  public sealed override Module Module => ModuleCore;
+
+  public sealed override Type? ReflectedType => ReflectedTypeCore;
+
+  public sealed override Type GetGenericTypeDefinition() => GetGenericTypeDefinitionCore();
+
+
+  // Abstract members
+
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+  protected abstract SymbolAssembly AssemblyCore { get; }
+
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+  protected abstract GeneratorRuntimeType BaseTypeCore { get; }
+
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+  protected abstract SymbolType? DeclaringTypeCore { get; }
+
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+  protected abstract SymbolModule ModuleCore { get; }
+
+  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+  protected abstract SymbolType? ReflectedTypeCore { get; }
+
+  protected abstract SymbolType GetGenericTypeDefinitionCore();
 }

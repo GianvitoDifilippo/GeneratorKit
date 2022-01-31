@@ -66,18 +66,14 @@ internal class SymbolByRefType : SymbolType
     return false;
   }
 
-  public override Type MakeGenericType(params Type[] typeArguments)
-  {
-    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
-  }
 
+  // GeneratorRuntimeType overrides
 
-  // SymbolType overrides
+  protected override SymbolNamedType RuntimeDefinition => throw new InvalidOperationException();
 
-  public override SymbolType MakeGenericType(params SymbolType[] typeArguments)
-  {
-    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
-  }
+  protected override Type[] RuntimeTypeArguments => throw new InvalidOperationException();
+
+  protected override IRuntimeType? RuntimeBaseType => throw new InvalidOperationException();
 
 
   // SymbolTypeBase overrides
@@ -91,6 +87,11 @@ internal class SymbolByRefType : SymbolType
   protected override SymbolType? GetElementTypeCore()
   {
     return _elementType;
+  }
+
+  protected override SymbolType GetEnumUnderlyingTypeCore()
+  {
+    throw new InvalidOperationException();
   }
 
   protected override SymbolType[] GetGenericArgumentsCore()
@@ -126,5 +127,15 @@ internal class SymbolByRefType : SymbolType
   protected override SymbolType MakeByRefTypeCore()
   {
     throw new TypeLoadException();
+  }
+
+  protected override HybridGenericType MakeGenericTypeCore(Type[] typeArguments)
+  {
+    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
+  }
+
+  protected override SymbolType MakeGenericTypeCore(SymbolType[] typeArguments)
+  {
+    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
   }
 }

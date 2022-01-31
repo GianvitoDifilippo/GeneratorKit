@@ -1,5 +1,5 @@
 ﻿using GeneratorKit.Comparers;
-using GeneratorKit.Utils;
+using GeneratorKit.Reflection.Binders;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -16,11 +16,13 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
 {
   private readonly GeneratorRuntime _runtime;
   private readonly SymbolType? _reflectedType;
+  private readonly bool _isInSourceAssembly;
   private PropertyInfo? _underlyingSystemProperty;
 
   public SymbolPropertyInfo(GeneratorRuntime runtime, IPropertySymbol symbol)
   {
     _runtime = runtime;
+    _isInSourceAssembly = symbol.ContainingAssembly is ISourceAssemblySymbol;
     Symbol = symbol;
   }
 
@@ -32,7 +34,8 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
 
   public IPropertySymbol Symbol { get; }
 
-  public PropertyInfo UnderlyingSystemProperty => _underlyingSystemProperty ??= MemberResolver.ResolveProperty(ReflectedTypeCore.UnderlyingSystemType, this);
+  // TODO: Assert not in source
+  public PropertyInfo UnderlyingSystemProperty => _underlyingSystemProperty ??= DelegatorBinder.ResolveProperty(ReflectedType.UnderlyingSystemType, this);
 
 
   // System.Reflection.PropertyInfo overrides
@@ -88,9 +91,17 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
     throw new NotSupportedException();
   }
 
-  public override object GetValue(object obj, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
+  public override object? GetValue(object obj, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
   {
-    return UnderlyingSystemProperty.GetValue(obj, invokeAttr, binder, index, culture);
+    if (Symbol.ContainingAssembly is ISourceAssemblySymbol)
+    {
+      SymbolMethodInfo getMethod = GetMethod ?? throw new InvalidOperationException(); // TODO: Message
+      return _runtime.InvokeMethod(getMethod, obj, index);
+    }
+    else
+    {
+      return UnderlyingSystemProperty.GetValue(obj, invokeAttr, binder, index, culture);
+    }
   }
 
   public override bool IsDefined(Type attributeType, bool inherit)
@@ -100,7 +111,15 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
 
   public override void SetValue(object obj, object value, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
   {
-    SetValue(obj, value, invokeAttr, binder, index, culture);
+    if (Symbol.ContainingAssembly is ISourceAssemblySymbol)
+    {
+      SymbolMethodInfo setMethod = SetMethod ?? throw new InvalidOperationException(); // TODO: Message
+      _runtime.InvokeMethod(setMethod, obj, index);
+    }
+    else
+    {
+      UnderlyingSystemProperty.SetValue(obj, value, invokeAttr, binder, index, culture);
+    }
   }
 
 

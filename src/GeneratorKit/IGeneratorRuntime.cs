@@ -8,6 +8,8 @@ public interface IGeneratorRuntime
 {
   Assembly CompilationAssembly { get; }
 
+  T CreateInstance<T>(Type type, object?[] arguments);
+
   Assembly CreateAssemblyDelegator(IAssemblySymbol symbol);
   ConstructorInfo CreateConstructorInfoDelegator(IMethodSymbol symbol);
   EventInfo CreateEventInfoDelegator(IEventSymbol symbol);

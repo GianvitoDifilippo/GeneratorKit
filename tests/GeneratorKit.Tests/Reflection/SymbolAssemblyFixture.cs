@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis;
 using System;
 using System.Reflection;
 using System.Threading;
+using Xunit;
 
 namespace GeneratorKit.Reflection;
 
@@ -47,10 +48,7 @@ namespace " + Namespace + @"
   public SymbolAssemblyFixture()
   {
     CompilationOutput output = CompilationOutput.Create(s_source, AssemblyName, OutputKind.ConsoleApplication);
-    if (!output.IsValid)
-    {
-      throw new Exception($"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
-    }
+    Assert.True(output.IsValid, $"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
 
     FakeGeneratorRuntime runtime = new FakeGeneratorRuntime(output.Compilation);
     Symbol = output.Compilation.Assembly;

@@ -216,9 +216,6 @@ internal sealed class SymbolAssembly : SymbolAssemblyBase
   public new SymbolMethodInfo? EntryPoint => EntryPointCore;
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  public new IEnumerable<SymbolType> ExportedTypes => (IEnumerable<SymbolType>)base.ExportedTypes;
-
-  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   public new SymbolModule ManifestModule => ManifestModuleCore;
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
@@ -226,7 +223,7 @@ internal sealed class SymbolAssembly : SymbolAssemblyBase
 
   public new SymbolModule[] GetModules() => (SymbolModule[])base.GetModules();
 
-  public new SymbolType[] GetTypes() => (SymbolType[])base.GetTypes();
+  public new SymbolType[] GetTypes() => (SymbolType[])base.GetTypes(); // TODO: Restore visitor
 }
 
 internal abstract class SymbolAssemblyBase : Assembly

@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Xml.Linq;
+using Xunit;
 using Xunit.Sdk;
 
 namespace GeneratorKit.Reflection;
@@ -123,10 +125,7 @@ namespace " + Namespace + @"
   public SymbolPropertyInfoFixture()
   {
     CompilationOutput output = CompilationOutput.Create(s_source, AssemblyName);
-    if (!output.IsValid)
-    {
-      throw new Exception($"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
-    }
+    Assert.True(output.IsValid, $"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
 
     _runtime = new FakeGeneratorRuntime(output.Compilation);
 
@@ -196,10 +195,10 @@ namespace " + Namespace + @"
         => GetPropertyFromType(_baseType, "AbstractProperty"),
 
       PropertyCategory.Indexer1
-        => _derivedType.GetProperty("Item", null, new Type[] { typeof(int) }) ?? throw new Exception($"Could not find property {category} on type {_derivedType.Name}"),
+        => GetPublicIndexerFromType(_derivedType, new Type[] { typeof(int) }),
 
       PropertyCategory.Indexer2
-        => _derivedType.GetProperty("Item", null, new Type[] { typeof(int), typeof(string) }) ?? throw new Exception($"Could not find property {category} on type {_derivedType.Name}"),
+        => GetPublicIndexerFromType(_derivedType, new Type[] { typeof(int), typeof(string) }),
 
       PropertyCategory.AbstractPropertyReflectedFromDerived
         => GetPropertyFromType(_derivedType, "AbstractProperty"),
@@ -348,7 +347,16 @@ namespace " + Namespace + @"
 
     static PropertyInfo GetPropertyFromType(Type type, string name)
     {
-      return type.GetProperty(name, s_allProperties) ?? throw new Exception($"Could not find method {name} on type {type.Name}.");
+      PropertyInfo? result = type.GetProperty(name, s_allProperties);
+      Assert.NotNull(result);
+      return result!;
+    }
+
+    static PropertyInfo GetPublicIndexerFromType(Type type, Type[] types)
+    {
+      PropertyInfo? result = type.GetProperty("Item", null, types);
+      Assert.NotNull(result);
+      return result!;
     }
   }
 

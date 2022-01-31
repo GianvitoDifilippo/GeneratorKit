@@ -3,7 +3,6 @@ using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -14,7 +13,7 @@ internal sealed class SymbolNamedType : SymbolType
 {
   private readonly INamedTypeSymbol _symbol;
 
-  public SymbolNamedType(GeneratorRuntime runtime,  INamedTypeSymbol symbol)
+  public SymbolNamedType(GeneratorRuntime runtime, INamedTypeSymbol symbol)
     : base(runtime)
   {
     _symbol = symbol;
@@ -25,9 +24,7 @@ internal sealed class SymbolNamedType : SymbolType
 
   // System.Type overrides
 
-  public override bool ContainsGenericParameters =>
-    _symbol.IsGenericType &&
-    _symbol.TypeArguments.Any(x => x.TypeKind is TypeKind.TypeParameter);
+  public override bool ContainsGenericParameters => _symbol.IsGenericType && _symbol.TypeArguments.Any(x => x.TypeKind is TypeKind.TypeParameter);
 
   public override MethodBase? DeclaringMethod => throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
 
@@ -35,7 +32,7 @@ internal sealed class SymbolNamedType : SymbolType
 
   public override int GenericParameterPosition => throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
 
-  public override bool IsConstructedGenericType => _symbol.TypeArguments.Any(x => x.TypeKind is not TypeKind.TypeParameter);
+  public override bool IsConstructedGenericType => _symbol.TypeArguments.Any(x => x.TypeKind is not TypeKind.TypeParameter || !x.ContainingType.Equals(_symbol, SymbolEqualityComparer.Default));
 
   public override bool IsEnum => _symbol.EnumUnderlyingType is not null;
 
@@ -43,7 +40,7 @@ internal sealed class SymbolNamedType : SymbolType
 
   public override bool IsGenericType => _symbol.IsGenericType;
 
-  public override bool IsGenericTypeDefinition => _symbol.IsGenericType && _symbol.IsDefinition;
+  public override bool IsGenericTypeDefinition => _symbol.IsGenericType && !IsConstructedGenericType;
 
   public override bool IsSerializable
   {
@@ -175,14 +172,6 @@ internal sealed class SymbolNamedType : SymbolType
       .ToArray();
   }
 
-  public override Type GetEnumUnderlyingType()
-  {
-    if (!IsEnum)
-      throw new InvalidOperationException();
-
-    return _runtime.CreateTypeDelegator(_symbol.EnumUnderlyingType!).UnderlyingSystemType;
-  }
-
   public override Array GetEnumValues()
   {
     if (!IsEnum)
@@ -264,7 +253,7 @@ internal sealed class SymbolNamedType : SymbolType
     if (IsIntegerType(valueType))
     {
       Type underlyingType = GetEnumUnderlyingType();
-      if (underlyingType != valueType)
+      if (!TypeEqualityComparer.Default.Equals(underlyingType, valueType))
         throw new ArgumentException("Object must be the same type as the enum.", nameof(value));
 
       ulong ulValue = ToUInt64(value);
@@ -333,24 +322,15 @@ internal sealed class SymbolNamedType : SymbolType
     return Symbol.TypeKind is TypeKind.Enum or TypeKind.Struct;
   }
 
-  public override Type MakeGenericType(params Type[] typeArguments)
-  {
-    if (!IsGenericTypeDefinition)
-      throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
-    
-    if (typeArguments is SymbolType[] symbolTypeArguments)
-      return MakeGenericType(symbolTypeArguments);
 
-    return new HybridGenericType(_runtime, this, typeArguments);
-  }
+  // GeneratorRuntimeType overrides
 
+  protected override SymbolNamedType RuntimeDefinition => IsConstructedGenericType ? (SymbolNamedType)GetGenericTypeDefinition() : this;
 
-  // SymbolType overrides
+  protected override Type[] RuntimeTypeArguments => IsGenericType ? GetGenericArguments() : EmptyTypes;
 
-  public override SymbolType MakeGenericType(params SymbolType[] typeArguments)
-  {
-    return _runtime.CreateTypeDelegator(_symbol.Construct(typeArguments.Select(x => x.Symbol).ToArray()));
-  }
+  protected override IRuntimeType? RuntimeBaseType => BaseTypeCore;
+
 
   // SymbolTypeBase overrides
 
@@ -365,6 +345,14 @@ internal sealed class SymbolNamedType : SymbolType
   protected override SymbolType? GetElementTypeCore()
   {
     return null;
+  }
+
+  protected override SymbolType GetEnumUnderlyingTypeCore()
+  {
+    if (!IsEnum)
+      throw new InvalidOperationException();
+
+    return _runtime.CreateTypeDelegator(_symbol.EnumUnderlyingType!);
   }
 
   protected override SymbolType[] GetGenericArgumentsCore()
@@ -400,6 +388,22 @@ internal sealed class SymbolNamedType : SymbolType
   protected override SymbolType MakeByRefTypeCore()
   {
     return new SymbolByRefType(_runtime, this);
+  }
+
+  protected override HybridGenericType MakeGenericTypeCore(Type[] typeArguments)
+  {
+    if (!IsGenericTypeDefinition)
+      throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
+
+    return new HybridGenericType(_runtime, this, typeArguments);
+  }
+
+  protected override SymbolType MakeGenericTypeCore(SymbolType[] typeArguments)
+  {
+    if (!IsGenericTypeDefinition)
+      throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
+
+    return _runtime.CreateTypeDelegator(_symbol.Construct(typeArguments.Select(x => x.Symbol).ToArray()));
   }
 
   private static bool IsIntegerType(Type t)

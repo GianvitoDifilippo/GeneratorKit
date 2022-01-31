@@ -1,9 +1,11 @@
 ﻿using GeneratorKit.TestHelpers;
+using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Xunit;
 using Xunit.Sdk;
 
 namespace GeneratorKit.Reflection;
@@ -298,10 +300,7 @@ namespace " + Namespace + @"
   public SymbolTypeFixture()
   {
     CompilationOutput output = CompilationOutput.Create(s_source, AssemblyName);
-    if (!output.IsValid)
-    {
-      throw new Exception($"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
-    }
+    Assert.True(output.IsValid, $"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
 
     _runtime = new FakeGeneratorRuntime(output.Compilation);
     _compilation = output.Compilation;
@@ -375,85 +374,85 @@ namespace " + Namespace + @"
         break;
 
       case TypeCategory.OpenGeneric:
-        symbol = GetSymbolTypeFromCompilation("GenericClass`2");
+        symbol = GetTypeSymbolFromCompilation("GenericClass`2");
         break;
       case TypeCategory.ClosedGeneric:
-        namedSymbol = GetSymbolTypeFromCompilation("GenericClass`2");
-        typeArg1Symbol = GetSymbolTypeFromCompilation("TypeArgument1");
-        typeArg2Symbol = GetSymbolTypeFromCompilation("TypeArgument2");
+        namedSymbol = GetTypeSymbolFromCompilation("GenericClass`2");
+        typeArg1Symbol = GetTypeSymbolFromCompilation("TypeArgument1");
+        typeArg2Symbol = GetTypeSymbolFromCompilation("TypeArgument2");
         symbol = namedSymbol.Construct(typeArg1Symbol, typeArg2Symbol);
         break;
       case TypeCategory.ClosedGenericWithGenericTypeArguments:
-        namedSymbol = GetSymbolTypeFromCompilation("GenericClass`2");
-        typeArg1Symbol = GetSymbolTypeFromCompilation("TypeArgument1");
-        typeArg2Symbol = GetSymbolTypeFromCompilation("TypeArgument2");
+        namedSymbol = GetTypeSymbolFromCompilation("GenericClass`2");
+        typeArg1Symbol = GetTypeSymbolFromCompilation("TypeArgument1");
+        typeArg2Symbol = GetTypeSymbolFromCompilation("TypeArgument2");
         symbol = namedSymbol.Construct(namedSymbol.Construct(typeArg1Symbol, typeArg2Symbol), typeArg2Symbol);
         break;
       case TypeCategory.GenericOpenConstructed:
-        symbol = GetSymbolTypeFromCompilation("GenericOpenConstructedDerivedClass`1").BaseType!;
+        symbol = GetTypeSymbolFromCompilation("GenericOpenConstructedDerivedClass`1").BaseType!;
         break;
       case TypeCategory.WithAttributes:
-        symbol = GetSymbolTypeFromCompilation("ClassWithAttributes");
+        symbol = GetTypeSymbolFromCompilation("ClassWithAttributes");
         break;
       case TypeCategory.WithStaticConstructor:
-        symbol = GetSymbolTypeFromCompilation("ClassWithStaticConstructor");
+        symbol = GetTypeSymbolFromCompilation("ClassWithStaticConstructor");
         break;
       case TypeCategory.Internal:
-        symbol = GetSymbolTypeFromCompilation("InternalClass");
+        symbol = GetTypeSymbolFromCompilation("InternalClass");
         break;
       case TypeCategory.NestedPublic:
-        symbol = GetSymbolTypeFromCompilation("ClassWithAllMembers");
+        symbol = GetTypeSymbolFromCompilation("ClassWithAllMembers");
         symbol = symbol.GetTypeMembers("NestedPublicClass")[0];
         break;
       case TypeCategory.NestedProtectedInternal:
-        symbol = GetSymbolTypeFromCompilation("ClassWithAllMembers");
+        symbol = GetTypeSymbolFromCompilation("ClassWithAllMembers");
         symbol = symbol.GetTypeMembers("NestedProtectedInternalClass")[0];
         break;
       case TypeCategory.NestedProtected:
-        symbol = GetSymbolTypeFromCompilation("ClassWithAllMembers");
+        symbol = GetTypeSymbolFromCompilation("ClassWithAllMembers");
         symbol = symbol.GetTypeMembers("NestedProtectedClass")[0];
         break;
       case TypeCategory.NestedInternal:
-        symbol = GetSymbolTypeFromCompilation("ClassWithAllMembers");
+        symbol = GetTypeSymbolFromCompilation("ClassWithAllMembers");
         symbol = symbol.GetTypeMembers("NestedInternalClass")[0];
         break;
       case TypeCategory.NestedPrivateProtected:
-        symbol = GetSymbolTypeFromCompilation("ClassWithAllMembers");
+        symbol = GetTypeSymbolFromCompilation("ClassWithAllMembers");
         symbol = symbol.GetTypeMembers("NestedPrivateProtectedClass")[0];
         break;
       case TypeCategory.NestedPrivate:
-        symbol = GetSymbolTypeFromCompilation("ClassWithAllMembers");
+        symbol = GetTypeSymbolFromCompilation("ClassWithAllMembers");
         symbol = symbol.GetTypeMembers("NestedPrivateClass")[0];
         break;
       case TypeCategory.WithAllMembers:
-        symbol = GetSymbolTypeFromCompilation("ClassWithAllMembers");
+        symbol = GetTypeSymbolFromCompilation("ClassWithAllMembers");
         break;
       case TypeCategory.WithAllMembersBase:
-        symbol = GetSymbolTypeFromCompilation("ClassWithAllMembersBase");
+        symbol = GetTypeSymbolFromCompilation("ClassWithAllMembersBase");
         break;
       case TypeCategory.WithAllMembersRoot:
-        symbol = GetSymbolTypeFromCompilation("ClassWithAllMembersRoot");
+        symbol = GetTypeSymbolFromCompilation("ClassWithAllMembersRoot");
         break;
       case TypeCategory.WithDefaultMember:
-        symbol = GetSymbolTypeFromCompilation("ClassWithDefaultMember");
+        symbol = GetTypeSymbolFromCompilation("ClassWithDefaultMember");
         break;
       case TypeCategory.BaseInterface:
-        symbol = GetSymbolTypeFromCompilation("IBaseInterface");
+        symbol = GetTypeSymbolFromCompilation("IBaseInterface");
         break;
       case TypeCategory.DerivedInterface:
-        symbol = GetSymbolTypeFromCompilation("IDerivedInterface");
+        symbol = GetTypeSymbolFromCompilation("IDerivedInterface");
         break;
       case TypeCategory.Struct:
-        symbol = GetSymbolTypeFromCompilation("Struct");
+        symbol = GetTypeSymbolFromCompilation("Struct");
         break;
       case TypeCategory.Enum:
-        symbol = GetSymbolTypeFromCompilation("Enumeration");
+        symbol = GetTypeSymbolFromCompilation("Enumeration");
         break;
       case TypeCategory.Abstract:
-        symbol = GetSymbolTypeFromCompilation("AbstractClass");
+        symbol = GetTypeSymbolFromCompilation("AbstractClass");
         break;
       case TypeCategory.Sealed:
-        symbol = GetSymbolTypeFromCompilation("SealedClass");
+        symbol = GetTypeSymbolFromCompilation("SealedClass");
         break;
 
       case TypeCategory.ObjectSZArray:
@@ -469,76 +468,76 @@ namespace " + Namespace + @"
         symbol = _compilation.CreateArrayTypeSymbol(_compilation.GetSpecialType(SpecialType.System_Int32), 2);
         break;
       case TypeCategory.OpenGenericSZArray:
-        symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("GenericClass`2"));
+        symbol = _compilation.CreateArrayTypeSymbol(GetTypeSymbolFromCompilation("GenericClass`2"));
         break;
       case TypeCategory.OpenGenericMDArray2:
-        symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("GenericClass`2"), 2);
+        symbol = _compilation.CreateArrayTypeSymbol(GetTypeSymbolFromCompilation("GenericClass`2"), 2);
         break;
       case TypeCategory.ClosedGenericSZArray:
-        namedSymbol = GetSymbolTypeFromCompilation("GenericClass`2");
-        typeArg1Symbol = GetSymbolTypeFromCompilation("TypeArgument1");
-        typeArg2Symbol = GetSymbolTypeFromCompilation("TypeArgument2");
+        namedSymbol = GetTypeSymbolFromCompilation("GenericClass`2");
+        typeArg1Symbol = GetTypeSymbolFromCompilation("TypeArgument1");
+        typeArg2Symbol = GetTypeSymbolFromCompilation("TypeArgument2");
         symbol = _compilation.CreateArrayTypeSymbol(namedSymbol.Construct(typeArg1Symbol, typeArg2Symbol));
         break;
       case TypeCategory.ClosedGenericMDArray2:
-        namedSymbol = GetSymbolTypeFromCompilation("GenericClass`2");
-        typeArg1Symbol = GetSymbolTypeFromCompilation("TypeArgument1");
-        typeArg2Symbol = GetSymbolTypeFromCompilation("TypeArgument2");
+        namedSymbol = GetTypeSymbolFromCompilation("GenericClass`2");
+        typeArg1Symbol = GetTypeSymbolFromCompilation("TypeArgument1");
+        typeArg2Symbol = GetTypeSymbolFromCompilation("TypeArgument2");
         symbol = _compilation.CreateArrayTypeSymbol(namedSymbol.Construct(typeArg1Symbol, typeArg2Symbol), 2);
         break;
       case TypeCategory.ClassSZArray:
-        symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("InternalClass"));
+        symbol = _compilation.CreateArrayTypeSymbol(GetTypeSymbolFromCompilation("InternalClass"));
         break;
       case TypeCategory.ClassMDArray2:
-        symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("InternalClass"), 2);
+        symbol = _compilation.CreateArrayTypeSymbol(GetTypeSymbolFromCompilation("InternalClass"), 2);
         break;
       case TypeCategory.InterfaceSZArray:
-        symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("IDerivedInterface"));
+        symbol = _compilation.CreateArrayTypeSymbol(GetTypeSymbolFromCompilation("IDerivedInterface"));
         break;
       case TypeCategory.InterfaceMDArray2:
-        symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("IDerivedInterface"), 2);
+        symbol = _compilation.CreateArrayTypeSymbol(GetTypeSymbolFromCompilation("IDerivedInterface"), 2);
         break;
       case TypeCategory.StructSZArray:
-        symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("Struct"));
+        symbol = _compilation.CreateArrayTypeSymbol(GetTypeSymbolFromCompilation("Struct"));
         break;
       case TypeCategory.StructMDArray2:
-        symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("Struct"), 2);
+        symbol = _compilation.CreateArrayTypeSymbol(GetTypeSymbolFromCompilation("Struct"), 2);
         break;
       case TypeCategory.EnumSZArray:
-        symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("Enumeration"));
+        symbol = _compilation.CreateArrayTypeSymbol(GetTypeSymbolFromCompilation("Enumeration"));
         break;
       case TypeCategory.EnumMDArray2:
-        symbol = _compilation.CreateArrayTypeSymbol(GetSymbolTypeFromCompilation("Enumeration"), 2);
+        symbol = _compilation.CreateArrayTypeSymbol(GetTypeSymbolFromCompilation("Enumeration"), 2);
         break;
 
       case TypeCategory.CovariantTypeParameter:
-        symbol = GetSymbolTypeFromCompilation("IWithCovariantParameter`1").TypeArguments[0];
+        symbol = GetTypeSymbolFromCompilation("IWithCovariantParameter`1").TypeArguments[0];
         break;
       case TypeCategory.ContravariantTypeParameter:
-        symbol = GetSymbolTypeFromCompilation("IWithContravariantParameter`1").TypeArguments[0];
+        symbol = GetTypeSymbolFromCompilation("IWithContravariantParameter`1").TypeArguments[0];
         break;
       case TypeCategory.ConstrainedTypeParameter:
-        symbol = GetSymbolTypeFromCompilation("IWithConstrainedParameter`1").TypeArguments[0];
+        symbol = GetTypeSymbolFromCompilation("IWithConstrainedParameter`1").TypeArguments[0];
         break;
       case TypeCategory.FirstMethodParameter:
-        method = (IMethodSymbol)GetSymbolTypeFromCompilation("IWithContravariantParameter`1").GetMembers("MethodWithTwoGenericParameters").Single();
+        method = (IMethodSymbol)GetTypeSymbolFromCompilation("IWithContravariantParameter`1").GetMembers("MethodWithTwoGenericParameters").Single();
         symbol = method.TypeArguments[0];
         break;
       case TypeCategory.FirstConstrainedMethodParameter:
-        method = (IMethodSymbol)GetSymbolTypeFromCompilation("IWithConstrainedParameter`1").GetMembers("MethodWithTwoGenericParameters").Single();
+        method = (IMethodSymbol)GetTypeSymbolFromCompilation("IWithConstrainedParameter`1").GetMembers("MethodWithTwoGenericParameters").Single();
         symbol = method.TypeArguments[0];
         break;
       case TypeCategory.SecondMethodParameter:
-        method = (IMethodSymbol)GetSymbolTypeFromCompilation("IWithContravariantParameter`1").GetMembers("MethodWithTwoGenericParameters").Single();
+        method = (IMethodSymbol)GetTypeSymbolFromCompilation("IWithContravariantParameter`1").GetMembers("MethodWithTwoGenericParameters").Single();
         symbol = method.TypeArguments[1];
         break;
       case TypeCategory.SecondConstrainedMethodParameter:
-        method = (IMethodSymbol)GetSymbolTypeFromCompilation("IWithConstrainedParameter`1").GetMembers("MethodWithTwoGenericParameters").Single();
+        method = (IMethodSymbol)GetTypeSymbolFromCompilation("IWithConstrainedParameter`1").GetMembers("MethodWithTwoGenericParameters").Single();
         symbol = method.TypeArguments[1];
         break;
 
       default:
-        throw new Exception($"Invalid {nameof(TypeCategory)}: {category}.");
+        throw Errors.Unreacheable;
     }
 
     return symbol switch
@@ -549,9 +548,11 @@ namespace " + Namespace + @"
       _                    => throw new InvalidOperationException()
     };
 
-    INamedTypeSymbol GetSymbolTypeFromCompilation(string name)
+    INamedTypeSymbol GetTypeSymbolFromCompilation(string name)
     {
-      return _compilation.GetTypeByMetadataName($"{Namespace}.{name}") ?? throw new Exception($"Could not find type {name} on compilation.");
+      INamedTypeSymbol? result = _compilation.GetTypeByMetadataName($"{Namespace}.{name}");
+      Assert.NotNull(result);
+      return result!;
     }
   }
 
@@ -758,14 +759,16 @@ namespace " + Namespace + @"
         break;
 
       default:
-        throw new Exception($"Invalid {nameof(TypeCategory)}: {category}.");
+        throw Errors.Unreacheable;
     }
 
     return type;
 
     Type GetTypeFromAssembly(string name)
     {
-      return _assembly.GetType($"{Namespace}.{name}") ?? throw new Exception($"Could not find type {name} on compiled assembly.");
+      Type? result = _assembly.GetType($"{Namespace}.{name}");
+      Assert.NotNull(result);
+      return result!;
     }
   }
 

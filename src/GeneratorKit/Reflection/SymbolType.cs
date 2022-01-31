@@ -17,6 +17,7 @@ internal abstract class SymbolType : SymbolTypeBase
   protected static readonly SymbolDisplayFormat s_namespaceFormat = new SymbolDisplayFormat(typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces);
 
   protected readonly GeneratorRuntime _runtime;
+  private Type? _runtimeType;
 
   protected SymbolType(GeneratorRuntime runtime)
   {
@@ -32,7 +33,7 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public sealed override string? FullName => TypeNameBuilder.ToString(this, TypeNameBuilder.Format.FullName);
 
-  public sealed override Guid GUID => throw new NotImplementedException();
+  public sealed override Guid GUID => throw new NotSupportedException();
 
   public sealed override bool IsSecurityCritical => true;
 
@@ -44,7 +45,7 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public sealed override RuntimeTypeHandle TypeHandle => UnderlyingSystemType.TypeHandle;
 
-  public sealed override Type UnderlyingSystemType => _runtime.GetRuntimeType(this);
+  public sealed override Type UnderlyingSystemType => RuntimeType.UnderlyingSystemType;
 
   public override bool Equals(Type? o)
   {
@@ -210,9 +211,7 @@ internal abstract class SymbolType : SymbolTypeBase
         int currentHierarchyDepth = GetHierarchyDepth(match[i].DeclaringType);
 
         if (currentHierarchyDepth == deepestHierarchy)
-        {
           throw new AmbiguousMatchException();
-        }
 
         if (currentHierarchyDepth > deepestHierarchy)
         {
@@ -366,6 +365,11 @@ internal abstract class SymbolType : SymbolTypeBase
   }
 
 
+  // GeneratorRuntimeType overrides
+
+  protected override bool IsSource => Symbol.ContainingAssembly is ISourceAssemblySymbol;
+
+
   // System.Object overrides
 
   public sealed override int GetHashCode()
@@ -400,6 +404,8 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public new SymbolType[] FindInterfaces(TypeFilter filter, object filterCriteria) => FindInterfacesCore(filter, filterCriteria);
 
+  public new SymbolConstructorInfo[] GetConstructors() => (SymbolConstructorInfo[])base.GetConstructors();
+
   public new SymbolConstructorInfo[] GetConstructors(BindingFlags bindingAttr) => GetConstructorsCore(bindingAttr);
 
   public new SymbolType? GetElementType() => GetElementTypeCore();
@@ -430,7 +436,9 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public new SymbolType[] GetInterfaces() => GetInterfacesCore();
 
-  public new SymbolMethodInfo GetMethod(string name, BindingFlags bindingAttr, Binder? binder, CallingConventions callConvention, Type[] types, ParameterModifier[]? modifiers) => (SymbolMethodInfo)base.GetMethod(name, bindingAttr, binder, callConvention, types, modifiers);
+  public new SymbolMethodInfo? GetMethod(string name) => (SymbolMethodInfo?)base.GetMethod(name);
+
+  public new SymbolMethodInfo? GetMethod(string name, BindingFlags bindingAttr, Binder? binder, CallingConventions callConvention, Type[] types, ParameterModifier[]? modifiers) => (SymbolMethodInfo?)base.GetMethod(name, bindingAttr, binder, callConvention, types, modifiers);
 
   public new SymbolMethodInfo[] GetMethods() => (SymbolMethodInfo[])base.GetMethods();
 
@@ -448,12 +456,16 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public new SymbolType MakeByRefType() => MakeByRefTypeCore();
 
+  public new HybridGenericType MakeGenericType(params Type[] typeArguments) => MakeGenericTypeCore(typeArguments);
+
   public new SymbolType MakePointerType() => MakePointerTypeCore();
 
 
   // Other members
 
-  public abstract SymbolType MakeGenericType(params SymbolType[] typeArguments);
+  public Type RuntimeType => _runtimeType ??= _runtime.GetRuntimeType(this);
+
+  public SymbolType MakeGenericType(params SymbolType[] typeArguments) => MakeGenericTypeCore(typeArguments);
 
   private IEnumerable<SymbolConstructorInfo> GetConstructorsEnumerable(BindingFlags bindingAttr)
   {
@@ -578,11 +590,8 @@ internal abstract class SymbolType : SymbolTypeBase
   }
 }
 
-internal abstract class SymbolTypeBase : Type
+internal abstract class SymbolTypeBase : GeneratorRuntimeType
 {
-  private protected SymbolTypeBase() { }
-
-
   // System.Type overrides
 
   public sealed override Assembly Assembly => AssemblyCore;
@@ -602,6 +611,8 @@ internal abstract class SymbolTypeBase : Type
   public sealed override ConstructorInfo[] GetConstructors(BindingFlags bindingAttr) => GetConstructorsCore(bindingAttr);
 
   public sealed override Type? GetElementType() => GetElementTypeCore();
+
+  public sealed override Type GetEnumUnderlyingType() => GetEnumUnderlyingTypeCore();
 
   public sealed override EventInfo? GetEvent(string name, BindingFlags bindingAttr) => GetEventCore(name, bindingAttr);
 
@@ -637,6 +648,13 @@ internal abstract class SymbolTypeBase : Type
 
   public sealed override Type MakeByRefType() => MakeByRefTypeCore();
 
+  public sealed override Type MakeGenericType(params Type[] typeArguments)
+  {
+    return typeArguments is SymbolType[] symbolTypeArguments
+      ? MakeGenericTypeCore(symbolTypeArguments)
+      : MakeGenericTypeCore(typeArguments);
+  }
+
   public sealed override Type MakePointerType() => MakePointerTypeCore();
 
 
@@ -665,6 +683,8 @@ internal abstract class SymbolTypeBase : Type
   protected abstract SymbolConstructorInfo[] GetConstructorsCore(BindingFlags bindingAttr);
 
   protected abstract SymbolType? GetElementTypeCore();
+
+  protected abstract SymbolType GetEnumUnderlyingTypeCore();
 
   protected abstract SymbolEventInfo? GetEventCore(string name, BindingFlags bindingAttr);
 
@@ -699,6 +719,10 @@ internal abstract class SymbolTypeBase : Type
   protected abstract SymbolType MakeArrayTypeCore(int rank);
 
   protected abstract SymbolType MakeByRefTypeCore();
+
+  protected abstract HybridGenericType MakeGenericTypeCore(Type[] typeArguments);
+
+  protected abstract SymbolType MakeGenericTypeCore(SymbolType[] typeArguments);
 
   protected abstract SymbolType MakePointerTypeCore();
 }

@@ -1,95 +1,381 @@
 ﻿using FluentAssertions;
-using GeneratorKit.Comparers;
+using GeneratorKit.Proxy;
 using GeneratorKit.Reflection;
 using GeneratorKit.TestHelpers;
 using Microsoft.CodeAnalysis;
 using Moq;
 using System;
-using System.Reflection;
 using Xunit;
+using static GeneratorKit.ConcreteGeneratorRuntimeFixture;
+using static GeneratorKit.TestHelpers.ProxyTypes;
 
 namespace GeneratorKit;
 
 public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRuntimeFixture>
 {
   private readonly ConcreteGeneratorRuntimeFixture _fixture;
-  private readonly Mock<IProxyTypeFactory> _factoryMock;
+  private readonly Mock<IProxyManager> _proxyManagerMock;
 
   public ConcreteGeneratorRuntimeTests(ConcreteGeneratorRuntimeFixture fixture)
   {
     _fixture = fixture;
-    _factoryMock = new Mock<IProxyTypeFactory>(MockBehavior.Strict);
+    _proxyManagerMock = new Mock<IProxyManager>(MockBehavior.Strict);
   }
 
   [Fact]
-  public void CompilationAssembly_ShouldBeCorrect()
+  public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsNotGeneric()
   {
     // Arrange
-    ConcreteGeneratorRuntime sut = _fixture.GetGeneratorRuntime(_factoryMock.Object);
+    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
 
-    Assembly expected = _fixture.Assembly;
+    SymbolType sourceType = _fixture.GetSourceType(SourceType.NonGenericClass, sut);
+    SymbolType type = sourceType;
+    
+    Type proxyType = typeof(NonGenericClassProxy);
+    Type expected = typeof(NonGenericClassProxy);
+    
+    _proxyManagerMock
+      .Setup(x => x.GetProxyType(sourceType))
+      .Returns(proxyType);
 
     // Act
-    SymbolAssembly actual = sut.CompilationAssembly;
+    Type actual = sut.GetRuntimeType(type);
 
     // Assert
-    actual.Should().Equal(expected, AssemblyEqualityComparer.Default);
+    actual.Should().Equal(expected);
   }
 
   [Fact]
-  public void GetRuntimeType_ShouldReturnType_WhenTypeIsInCompilation()
+  public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsGeneric_AndIsGenericDefinition()
   {
     // Arrange
-    ConcreteGeneratorRuntime sut = _fixture.GetGeneratorRuntime(_factoryMock.Object);
-
-    const string typeName = "Class";
-    Type expected = _fixture.GetType(typeName);
-    SymbolType type = new SymbolNamedType(sut, (INamedTypeSymbol)_fixture.GetTypeSymbol(typeName));
-    _factoryMock
-      .Setup(x => x.CreateProxyType(sut, type))
-      .Returns(expected);
+    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+    
+    SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClass, sut);
+    SymbolType type = sourceType;
+    
+    Type proxyType = typeof(GenericClassProxy<>);
+    Type expected = typeof(GenericClassProxy<>);
+    
+    _proxyManagerMock
+      .Setup(x => x.GetProxyType(sourceType))
+      .Returns(proxyType);
 
     // Act
-    Type? actual = sut.GetRuntimeType(type);
+    Type actual = sut.GetRuntimeType(type);
 
     // Assert
-    actual.Should().Be(expected);
+    actual.Should().Equal(expected);
   }
 
   [Fact]
-  public void GetRuntimeType_ShouldReturnTypeWithoutFactory_WhenTypeIsReferenced()
+  public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsGeneric_AndIsConstructedGeneric()
   {
     // Arrange
-    ConcreteGeneratorRuntime sut = _fixture.GetGeneratorRuntime(_factoryMock.Object);
+    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
 
-    Type expected = typeof(object);
-    SymbolType type = new SymbolNamedType(sut, _fixture.Compilation.GetSpecialType(SpecialType.System_Object));
+    SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClass, sut);
+    SymbolType type = sourceType.MakeGenericType(_fixture.GetSpecialType(sut, SpecialType.System_Int32));
+
+    Type proxyType = typeof(GenericClassProxy<>);
+    Type expected = typeof(GenericClassProxy<int>);
+
+    _proxyManagerMock
+      .Setup(x => x.GetProxyType(sourceType))
+      .Returns(proxyType);
 
     // Act
-    Type? actual = sut.GetRuntimeType(type);
+    Type actual = sut.GetRuntimeType(type);
 
     // Assert
-    actual.Should().Be(expected);
+    actual.Should().Equal(expected);
   }
 
   [Fact]
-  public void GetRuntimeType_ShouldReturnType_WhenTypeIsArray()
+  public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsGeneric_AndIsHybridGeneric()
   {
     // Arrange
-    ConcreteGeneratorRuntime sut = _fixture.GetGeneratorRuntime(_factoryMock.Object);
+    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
 
-    const string typeName = "Class";
-    Type elementType = _fixture.GetType(typeName);
-    Type expected = elementType.MakeArrayType();
-    SymbolType type = new SymbolNamedType(sut, (INamedTypeSymbol)_fixture.GetTypeSymbol(typeName));
-    _factoryMock
-      .Setup(x => x.CreateProxyType(sut, type))
-      .Returns(elementType);
+    SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClass, sut);
+    HybridGenericType type = sourceType.MakeGenericType(typeof(int));
+
+    Type proxyType = typeof(GenericClassProxy<>);
+    Type expected = typeof(GenericClassProxy<int>);
+
+    _proxyManagerMock
+      .Setup(x => x.GetProxyType(sourceType))
+      .Returns(proxyType);
 
     // Act
-    Type? actual = sut.GetRuntimeType(type.MakeArrayType());
+    Type actual = sut.GetRuntimeType(type);
 
     // Assert
-    actual.Should().Be(expected);
+    actual.Should().Equal(expected);
+  }
+
+  [Fact]
+  public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsNonGenericClassWithGenericBase()
+  {
+    // Arrange
+    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+
+    SymbolType sourceType = _fixture.GetSourceType(SourceType.NonGenericClassGenericBase, sut);
+    SymbolType type = sourceType;
+
+    Type proxyType = typeof(GenericClassProxy<>);
+    Type expected = typeof(GenericClassProxy<int>);
+
+    _proxyManagerMock
+      .Setup(x => x.GetProxyType(sourceType))
+      .Returns(ProxyTypeBuilderInstantiation.Create(proxyType, sourceType, sourceType.BaseType!));
+
+    // Act
+    Type actual = sut.GetRuntimeType(type);
+
+    // Assert
+    actual.Should().Equal(expected);
+  }
+
+  [Fact]
+  public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsGenericClassWithLessTypeParametersThanBase_AndIsGenericDefinition()
+  {
+    // Arrange
+    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+
+    SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClassLessParameters, sut);
+    SymbolType type = sourceType;
+
+    Type proxyType = typeof(GenericClassProxy<,>);
+    Type expected = typeof(GenericClassProxy<,>).MakeGenericType(typeof(string), Type.MakeGenericMethodParameter(0));
+
+    _proxyManagerMock
+      .Setup(x => x.GetProxyType(sourceType))
+      .Returns(ProxyTypeBuilderInstantiation.Create(proxyType, sourceType, sourceType.BaseType!));
+
+    // Act
+    Type actual = sut.GetRuntimeType(type);
+
+    // Assert
+    actual.Should().Equal(expected);
+  }
+
+  [Fact]
+  public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsGenericClassWithLessTypeParametersThanBase_AndIsConstructedGeneric()
+  {
+    // Arrange
+    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+
+    SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClassLessParameters, sut);
+    SymbolType type = sourceType.MakeGenericType(_fixture.GetSpecialType(sut, SpecialType.System_Int32));
+
+    Type proxyType = typeof(GenericClassProxy<,>);
+    Type expected = typeof(GenericClassProxy<,>).MakeGenericType(typeof(string), typeof(int));
+
+    _proxyManagerMock
+      .Setup(x => x.GetProxyType(sourceType))
+      .Returns(ProxyTypeBuilderInstantiation.Create(proxyType, sourceType, sourceType.BaseType!));
+
+    // Act
+    Type actual = sut.GetRuntimeType(type);
+
+    // Assert
+    actual.Should().Equal(expected);
+  }
+
+  [Fact]
+  public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsGenericClassWithLessTypeParametersThanBase_AndIsHybridGeneric()
+  {
+    // Arrange
+    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+
+    SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClassLessParameters, sut);
+    HybridGenericType type = sourceType.MakeGenericType(typeof(int));
+
+    Type proxyType = typeof(GenericClassProxy<,>);
+    Type expected = typeof(GenericClassProxy<,>).MakeGenericType(typeof(string), typeof(int));
+
+    _proxyManagerMock
+      .Setup(x => x.GetProxyType(sourceType))
+      .Returns(ProxyTypeBuilderInstantiation.Create(proxyType, sourceType, sourceType.BaseType!));
+
+    // Act
+    Type actual = sut.GetRuntimeType(type);
+
+    // Assert
+    actual.Should().Equal(expected);
+  }
+
+  [Fact]
+  public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsGenericClassWithMoreTypeParametersThanBase1_AndIsGenericDefinition()
+  {
+    // Arrange
+    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+
+    SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClassMoreParameters1, sut);
+    SymbolType type = sourceType;
+
+    Type proxyType = typeof(GenericClassProxy<,>);
+    Type expected = typeof(GenericClassProxy<,>).MakeGenericType(Type.MakeGenericMethodParameter(2), Type.MakeGenericMethodParameter(0));
+
+    _proxyManagerMock
+      .Setup(x => x.GetProxyType(sourceType))
+      .Returns(ProxyTypeBuilderInstantiation.Create(proxyType, sourceType, sourceType.BaseType!));
+
+    // Act
+    Type actual = sut.GetRuntimeType(type);
+
+    // Assert
+    actual.Should().Equal(expected);
+  }
+
+  [Fact]
+  public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsGenericClassWithMoreTypeParametersThanBase1_AndIsConstructedGeneric()
+  {
+    // Arrange
+    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+
+    SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClassMoreParameters1, sut);
+    SymbolType type = sourceType.MakeGenericType(
+      _fixture.GetSpecialType(sut, SpecialType.System_Byte),
+      _fixture.GetSpecialType(sut, SpecialType.System_Int32),
+      _fixture.GetSpecialType(sut, SpecialType.System_Char));
+
+    Type proxyType = typeof(GenericClassProxy<,>);
+    Type expected = typeof(GenericClassProxy<,>).MakeGenericType(typeof(char), typeof(byte));
+
+    _proxyManagerMock
+      .Setup(x => x.GetProxyType(sourceType))
+      .Returns(ProxyTypeBuilderInstantiation.Create(proxyType, sourceType, sourceType.BaseType!));
+
+    // Act
+    Type actual = sut.GetRuntimeType(type);
+
+    // Assert
+    actual.Should().Equal(expected);
+  }
+
+  [Fact]
+  public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsGenericClassWithMoreTypeParametersThanBase1_AndIsHybridGeneric()
+  {
+    // Arrange
+    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+
+    SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClassMoreParameters1, sut);
+    HybridGenericType type = sourceType.MakeGenericType(
+      typeof(byte),
+      typeof(int),
+      typeof(char));
+
+    Type proxyType = typeof(GenericClassProxy<,>);
+    Type expected = typeof(GenericClassProxy<,>).MakeGenericType(typeof(char), typeof(byte));
+
+    _proxyManagerMock
+      .Setup(x => x.GetProxyType(sourceType))
+      .Returns(ProxyTypeBuilderInstantiation.Create(proxyType, sourceType, sourceType.BaseType!));
+
+    // Act
+    Type actual = sut.GetRuntimeType(type);
+
+    // Assert
+    actual.Should().Equal(expected);
+  }
+
+  [Fact]
+  public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsGenericClassWithMoreTypeParametersThanBase2_AndIsGenericDefinition()
+  {
+    // Arrange
+    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+
+    SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClassMoreParameters2, sut);
+    SymbolType type = sourceType;
+
+    Type proxyType = typeof(GenericClassProxy<,>);
+    Type expected = typeof(GenericClassProxy<,>).MakeGenericType(typeof(string), Type.MakeGenericMethodParameter(2));
+
+    _proxyManagerMock
+      .Setup(x => x.GetProxyType(sourceType))
+      .Returns(ProxyTypeBuilderInstantiation.Create(proxyType, sourceType, sourceType.BaseType!));
+
+    // Act
+    Type actual = sut.GetRuntimeType(type);
+
+    // Assert
+    actual.Should().Equal(expected);
+  }
+
+  [Fact]
+  public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsGenericClassWithMoreTypeParametersThanBase2_AndIsConstructedGeneric()
+  {
+    // Arrange
+    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+
+    SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClassMoreParameters2, sut);
+    SymbolType type = sourceType.MakeGenericType(
+      _fixture.GetSpecialType(sut, SpecialType.System_Byte),
+      _fixture.GetSpecialType(sut, SpecialType.System_Int32),
+      _fixture.GetSpecialType(sut, SpecialType.System_Char));
+
+    Type proxyType = typeof(GenericClassProxy<,>);
+    Type expected = typeof(GenericClassProxy<,>).MakeGenericType(typeof(string), typeof(char));
+
+    _proxyManagerMock
+      .Setup(x => x.GetProxyType(sourceType))
+      .Returns(ProxyTypeBuilderInstantiation.Create(proxyType, sourceType, sourceType.BaseType!));
+
+    // Act
+    Type actual = sut.GetRuntimeType(type);
+
+    // Assert
+    actual.Should().Equal(expected);
+  }
+
+  [Fact]
+  public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsGenericClassWithMoreTypeParametersThanBase2_AndIsHybridGeneric()
+  {
+    // Arrange
+    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+
+    SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClassMoreParameters2, sut);
+    HybridGenericType type = sourceType.MakeGenericType(
+      typeof(byte),
+      typeof(int),
+      typeof(char));
+
+    Type proxyType = typeof(GenericClassProxy<,>);
+    Type expected = typeof(GenericClassProxy<,>).MakeGenericType(typeof(string), typeof(char));
+
+    _proxyManagerMock
+      .Setup(x => x.GetProxyType(sourceType))
+      .Returns(ProxyTypeBuilderInstantiation.Create(proxyType, sourceType, sourceType.BaseType!));
+
+    // Act
+    Type actual = sut.GetRuntimeType(type);
+
+    // Assert
+    actual.Should().Equal(expected);
+  }
+
+  [Fact]
+  public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeImplementsInterface()
+  {
+    // Arrange
+    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+
+    SymbolType sourceType = _fixture.GetSourceType(SourceType.Interface, sut);
+    SymbolType type = sourceType;
+
+    Type proxyType = typeof(InterfaceProxy);
+    Type expected = typeof(InterfaceProxy);
+
+    _proxyManagerMock
+      .Setup(x => x.GetProxyType(sourceType))
+      .Returns(proxyType);
+
+    // Act
+    Type actual = sut.GetRuntimeType(type);
+
+    // Assert
+    actual.Should().Equal(expected);
   }
 }

@@ -19,6 +19,7 @@ public record CompilationOutput(bool IsValid, Compilation Compilation, Immutable
       .Distinct()
       .Where(x => !x.IsDynamic && !string.IsNullOrWhiteSpace(x.Location))
       .Append(typeof(object).Assembly)
+      .Append(Assembly.Load("System.Runtime, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"))
       .Select(x => (MetadataReference)MetadataReference.CreateFromFile(x.Location))
       .ToList();
 

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Xunit;
 using Xunit.Sdk;
 
 namespace GeneratorKit.Reflection;
@@ -65,6 +66,15 @@ namespace " + Namespace + @"
 
     public void InterfaceMethod() => throw null;
     int IInterface.ExplicitMethod() => throw null;
+
+    public void ConstructedGenericOverload<T>(T arg1, int arg2) => throw null;
+    public void ConstructedGenericOverload<T>(int arg1, int arg2) => throw null;
+  }
+
+  public class GenericClass<T>
+  {
+    public void GenericMethodInGenericClass<T1>(T arg) => throw null;
+    public void NonGenericMethodInGenericClass(T arg) => throw null;
   }
 }
 
@@ -73,32 +83,35 @@ namespace " + Namespace + @"
   private readonly FakeGeneratorRuntime _runtime;
   private readonly Type _baseType;
   private readonly Type _derivedType;
+  private readonly Type _genericType;
   private readonly INamedTypeSymbol _baseSymbol;
   private readonly INamedTypeSymbol _derivedSymbol;
+  private readonly INamedTypeSymbol _genericSymbol;
   private readonly INamedTypeSymbol _intSymbol;
   private readonly INamedTypeSymbol _stringSymbol;
 
   public SymbolMethodInfoFixture()
   {
     CompilationOutput output = CompilationOutput.Create(s_source, AssemblyName);
-    if (!output.IsValid)
-    {
-      throw new Exception($"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
-    }
+    Assert.True(output.IsValid, $"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
 
     _runtime = new FakeGeneratorRuntime(output.Compilation);
 
     _baseType = output.Assembly!.GetType(Namespace + ".BaseClass")!;
     _derivedType = output.Assembly!.GetType(Namespace + ".DerivedClass")!;
+    _genericType = output.Assembly!.GetType(Namespace + ".GenericClass`1")!;
 
     _baseSymbol = output.Compilation.GetTypeByMetadataName(Namespace + ".BaseClass")!;
     _derivedSymbol = output.Compilation.GetTypeByMetadataName(Namespace + ".DerivedClass")!;
+    _genericSymbol = output.Compilation.GetTypeByMetadataName(Namespace + ".GenericClass`1")!;
 
     _intSymbol = output.Compilation.GetSpecialType(SpecialType.System_Int32);
     _stringSymbol = output.Compilation.GetSpecialType(SpecialType.System_String);
 
     _runtime.AddType(_baseSymbol, _baseType);
     _runtime.AddType(_derivedSymbol, _derivedType);
+    _runtime.AddType(_genericSymbol, _genericType);
+    _runtime.AddType(_genericSymbol.Construct(_stringSymbol), _genericType.MakeGenericType(typeof(string)));
     _runtime.AddType(_intSymbol, typeof(int));
     _runtime.AddType(_stringSymbol, typeof(string));
 
@@ -218,12 +231,38 @@ namespace " + Namespace + @"
       MethodCategory.InterfaceMethod
         => GetMethodFromType(_derivedType, "InterfaceMethod"),
 
+      MethodCategory.ConstructedGenericOverload1
+        => _derivedType.GetMethod("ConstructedGenericOverload", new Type[] { Type.MakeGenericMethodParameter(0), typeof(int) })!.MakeGenericMethod(typeof(int)),
+
+      MethodCategory.ConstructedGenericOverload2
+        => _derivedType.GetMethod("ConstructedGenericOverload", new Type[] { typeof(int), typeof(int) })!.MakeGenericMethod(typeof(int)),
+
+      MethodCategory.GenericMethodDefinitionInGenericClass
+        => GetMethodFromType(_genericType.MakeGenericType(typeof(string)), "GenericMethodInGenericClass"),
+
+      MethodCategory.ConstructedGenericMethodInGenericClass
+        => GetMethodFromType(_genericType.MakeGenericType(typeof(string)), "GenericMethodInGenericClass").MakeGenericMethod(typeof(int)),
+
+      MethodCategory.NonGenericMethodInGenericClass
+        => GetMethodFromType(_genericType.MakeGenericType(typeof(string)), "NonGenericMethodInGenericClass"),
+
+      MethodCategory.GenericMethodDefinitionInGenericClassDefinition
+        => GetMethodFromType(_genericType, "GenericMethodInGenericClass"),
+      
+      MethodCategory.ConstructedGenericMethodInGenericClassDefinition
+        => GetMethodFromType(_genericType, "GenericMethodInGenericClass").MakeGenericMethod(typeof(int)),
+
+      MethodCategory.NonGenericMethodInGenericClassDefinition
+        => GetMethodFromType(_genericType, "NonGenericMethodInGenericClass"),
+
       _ => throw new InvalidOperationException()
     };
 
     static MethodInfo GetMethodFromType(Type type, string name)
     {
-      return type.GetMethod(name, s_allMethods) ?? throw new Exception($"Could not find method {name} on type {type.Name}.");
+      MethodInfo? result = type.GetMethod(name, s_allMethods);
+      Assert.NotNull(result);
+      return result!;
     }
   }
 
@@ -322,6 +361,26 @@ namespace " + Namespace + @"
       MethodCategory.InterfaceMethod
         => GetMethodFromType(_derivedSymbol, "InterfaceMethod"),
 
+      MethodCategory.ConstructedGenericOverload1
+        => (IMethodSymbol)_derivedSymbol.GetMembers().Where(x => x.Kind is SymbolKind.Method && x.Name == "ConstructedGenericOverload").ElementAt(0),
+
+      MethodCategory.ConstructedGenericOverload2
+        => (IMethodSymbol)_derivedSymbol.GetMembers().Where(x => x.Kind is SymbolKind.Method && x.Name == "ConstructedGenericOverload").ElementAt(1),
+
+      MethodCategory.GenericMethodDefinitionInGenericClass or
+      MethodCategory.ConstructedGenericMethodInGenericClass
+        => GetMethodFromType(_genericSymbol.Construct(StringSymbolType.Symbol), "GenericMethodInGenericClass"),
+
+      MethodCategory.NonGenericMethodInGenericClass
+        => GetMethodFromType(_genericSymbol.Construct(StringSymbolType.Symbol), "NonGenericMethodInGenericClass"),
+
+      MethodCategory.GenericMethodDefinitionInGenericClassDefinition or
+      MethodCategory.ConstructedGenericMethodInGenericClassDefinition
+        => GetMethodFromType(_genericSymbol, "GenericMethodInGenericClass"),
+
+      MethodCategory.NonGenericMethodInGenericClassDefinition
+        => GetMethodFromType(_genericSymbol, "NonGenericMethodInGenericClass"),
+
       _ => throw new InvalidOperationException()
     };
 
@@ -329,9 +388,11 @@ namespace " + Namespace + @"
       ? new SymbolMethodInfo(_runtime, symbol, _runtime.CreateTypeDelegator(_derivedSymbol))
       : new SymbolMethodInfo(_runtime, symbol);
 
-    return NeedsConstruction(category)
+    return NeedsTwoGenericArguments(category)
       ? result.MakeGenericMethod(IntSymbolType, StringSymbolType)
-      : result;
+      : NeedsOneGenericArgument(category)
+        ? result.MakeGenericMethod(IntSymbolType)
+        : result;
 
     static IMethodSymbol GetMethodFromType(INamedTypeSymbol symbol, string name)
     {
@@ -347,7 +408,16 @@ namespace " + Namespace + @"
         MethodCategory.ConstructedGenericMethodNotOverriddenReflectedFromDerived;
     }
 
-    static bool NeedsConstruction(MethodCategory category)
+    static bool NeedsOneGenericArgument(MethodCategory category)
+    {
+      return category is
+        MethodCategory.ConstructedGenericOverload1 or
+        MethodCategory.ConstructedGenericOverload2 or
+        MethodCategory.ConstructedGenericMethodInGenericClass or
+        MethodCategory.ConstructedGenericMethodInGenericClassDefinition;
+    }
+
+    static bool NeedsTwoGenericArguments(MethodCategory category)
     {
       return category is
         MethodCategory.ConstructedGenericMethod or
@@ -413,5 +483,13 @@ public enum MethodCategory
   ConstructedGenericMethodOverridden,
   ConstructedGenericMethodOverriddenReflectedFromDerived,
   ExplicitMethod,
-  InterfaceMethod
+  InterfaceMethod,
+  ConstructedGenericOverload1,
+  ConstructedGenericOverload2,
+  GenericMethodDefinitionInGenericClass,
+  ConstructedGenericMethodInGenericClass,
+  NonGenericMethodInGenericClass,
+  GenericMethodDefinitionInGenericClassDefinition,
+  ConstructedGenericMethodInGenericClassDefinition,
+  NonGenericMethodInGenericClassDefinition
 }

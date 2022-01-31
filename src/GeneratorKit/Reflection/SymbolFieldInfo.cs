@@ -1,5 +1,5 @@
 ﻿using GeneratorKit.Comparers;
-using GeneratorKit.Utils;
+using GeneratorKit.Reflection.Binders;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -31,7 +31,8 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
 
   public IFieldSymbol Symbol { get; }
 
-  public FieldInfo UnderlyingSystemField => _underlyingSystemField ??= MemberResolver.ResolveField(ReflectedTypeCore.UnderlyingSystemType, this);
+  // TODO: Assert not in source
+  public FieldInfo UnderlyingSystemField => _underlyingSystemField ??= DelegatorBinder.ResolveField(ReflectedType.UnderlyingSystemType, this);
 
 
   // System.Reflection.FieldInfo overrides
@@ -132,7 +133,7 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
     throw new NotSupportedException();
   }
 
-  public override object GetValue(object obj)
+  public override object GetValue(object? obj)
   {
     return UnderlyingSystemField.GetValue(obj);
   }

@@ -1,39 +1,58 @@
-﻿#pragma warning disable RS1024 // Compare symbols correctly
-
+﻿using GeneratorKit.Comparers;
 using GeneratorKit.Reflection;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Reflection;
 using System.Threading;
 
 namespace GeneratorKit.TestHelpers;
 
 internal class FakeGeneratorRuntime : GeneratorRuntime
 {
-  private readonly Dictionary<ITypeSymbol, Type> _typeMap;
-  private readonly Dictionary<Type, ITypeSymbol> _symbolMap;
+  private readonly Dictionary<Type, Type> _typeMap;
 
   public FakeGeneratorRuntime(Compilation compilation)
     : base(compilation)
   {
-    _typeMap = new Dictionary<ITypeSymbol, Type>(SymbolEqualityComparer.Default);
-    _symbolMap = new Dictionary<Type, ITypeSymbol>();
+    _typeMap = new Dictionary<Type, Type>(TypeEqualityComparer.Default);
   }
 
   public override SymbolAssembly CompilationAssembly => throw new NotImplementedException();
 
   public override CancellationToken CancellationToken => CancellationToken.None;
 
-  public override Type GetRuntimeType(SymbolType type)
+  public override T CreateInstance<T>(Type type, params object?[] arguments)
   {
-    return _typeMap[type.Symbol];
+    throw new NotImplementedException();
   }
 
-  public void AddType(ITypeSymbol symbol, Type type)
+  public override object? InvokeMethod(IRuntimeMethod method, object? instance, object?[] arguments)
   {
-    _typeMap[symbol] = type;
-    _symbolMap[type] = symbol;
+    throw new NotImplementedException();
+  }
+
+  public override Type GetRuntimeType(SymbolType type)
+  {
+    if (type.AssemblyQualifiedName is string name && Type.GetType(name) is Type result)
+      return result;
+
+    return _typeMap[type];
+  }
+
+  public override Type GetRuntimeType(HybridGenericType type)
+  {
+    Type definition = GetRuntimeType(type.GetGenericTypeDefinition());
+    return definition.MakeGenericType(type.GetGenericArguments());
+  }
+
+  public void AddType(ITypeSymbol symbol, Type value)
+  {
+    SymbolType symbolType = CreateTypeDelegator(symbol);
+    _typeMap[symbolType] = value;
+  }
+
+  public void AddType(Type key, Type value)
+  {
+    _typeMap[key] = value;
   }
 }
