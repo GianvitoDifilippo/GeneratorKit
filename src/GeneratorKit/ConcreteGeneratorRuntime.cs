@@ -16,14 +16,13 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
   private readonly IProxyManager _proxyManager;
   private readonly IActivator _activator;
   private readonly IInterpreter _interpreter;
-  private readonly IFrameProvider _frameProvider;
 
   public ConcreteGeneratorRuntime(Compilation compilation, IProxyManager proxyManager, IDependencyFactory dependencyFactory, CancellationToken cancellationToken)
     : base(compilation)
   {
     _proxyManager = proxyManager;
     CancellationToken = cancellationToken;
-    dependencyFactory.GetDependencies(this, out _activator, out _interpreter, out _frameProvider);
+    dependencyFactory.GetDependencies(this, out _activator, out _interpreter);
 
     _compilationAssembly = new SymbolAssembly(this, compilation.Assembly, compilation.GetEntryPoint(cancellationToken));
     // _cache = new ReflectionCache();
@@ -63,7 +62,7 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
     {
       Debug.Assert(instance is null);
 
-      frame = _frameProvider.GetClassFrame(method.DeclaringType);
+      frame = _interpreter.GetClassFrame(method.DeclaringType);
     }
     else
     {
@@ -87,7 +86,7 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
     {
       Debug.Assert(instance is null);
 
-      frame = _frameProvider.GetClassFrame(property.DeclaringType);
+      frame = _interpreter.GetClassFrame(property.DeclaringType);
     }
     else
     {
@@ -120,7 +119,7 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
     {
       Debug.Assert(instance is null);
 
-      frame = _frameProvider.GetClassFrame(property.DeclaringType);
+      frame = _interpreter.GetClassFrame(property.DeclaringType);
     }
     else
     {

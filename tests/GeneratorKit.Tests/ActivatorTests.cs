@@ -14,18 +14,14 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
 {
   private readonly ActivatorFixture _fixture;
   private readonly Mock<IInterpreter> _interpreterMock;
-  private readonly Mock<IFrameProvider> _frameProviderMock;
 
   public ActivatorTests(ActivatorFixture fixture)
   {
     _fixture = fixture;
     _interpreterMock = new Mock<IInterpreter>(MockBehavior.Strict);
-    _frameProviderMock = new Mock<IFrameProvider>(MockBehavior.Strict);
 
     _interpreterMock
       .Setup(x => x.Interpret(It.IsAny<IRuntimeConstructor>(), It.IsAny<InterpreterFrame>(), It.IsAny<object?[]>()));
-    _interpreterMock
-      .Setup(x => x.InitInstance(It.IsAny<IRuntimeType>(), It.IsAny<InterpreterFrame>()));
   }
 
   [Fact]
@@ -43,17 +39,14 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetClassFrame(type))
       .Returns(classFrame);
-    _frameProviderMock
-      .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(GetConstructorFrame(classFrame));
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
       .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
-    Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
+    Activator sut = new Activator(_interpreterMock.Object);
 
     // Act
     object instance = sut.CreateInstance(type, arguments);
@@ -79,17 +72,14 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetClassFrame(type))
       .Returns(classFrame);
-    _frameProviderMock
-      .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(GetConstructorFrame(classFrame));
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
       .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
-    Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
+    Activator sut = new Activator(_interpreterMock.Object);
 
     // Act
     object instance = sut.CreateInstance(type, arguments);
@@ -117,17 +107,14 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetClassFrame(type))
       .Returns(classFrame);
-    _frameProviderMock
-      .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(GetConstructorFrame(classFrame));
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
       .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
-    Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
+    Activator sut = new Activator(_interpreterMock.Object);
 
     // Act
     object instance = sut.CreateInstance(type, arguments);
@@ -155,17 +142,14 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetClassFrame(type))
       .Returns(classFrame);
-    _frameProviderMock
-      .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(GetConstructorFrame(classFrame));
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
       .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
-    Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
+    Activator sut = new Activator(_interpreterMock.Object);
 
     // Act
     object instance = sut.CreateInstance(type, arguments);
@@ -193,17 +177,14 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetClassFrame(type))
       .Returns(classFrame);
-    _frameProviderMock
-      .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(GetConstructorFrame(classFrame));
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
       .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
-    Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
+    Activator sut = new Activator(_interpreterMock.Object);
 
     // Act
     object instance = sut.CreateInstance(type, arguments);
@@ -230,17 +211,14 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetClassFrame(type))
       .Returns(classFrame);
-    _frameProviderMock
-      .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(GetConstructorFrame(classFrame));
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
       .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
-    Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
+    Activator sut = new Activator(_interpreterMock.Object);
 
     // Act
     object instance = sut.CreateInstance(type, arguments);
@@ -269,17 +247,14 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetClassFrame(type))
       .Returns(classFrame);
-    _frameProviderMock
-      .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(GetConstructorFrame(classFrame));
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
       .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
-    Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
+    Activator sut = new Activator(_interpreterMock.Object);
 
     // Act
     object instance = sut.CreateInstance(type, arguments);
@@ -308,17 +283,14 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetClassFrame(type))
       .Returns(classFrame);
-    _frameProviderMock
-      .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(GetConstructorFrame(classFrame));
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
       .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
-    Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
+    Activator sut = new Activator(_interpreterMock.Object);
 
     // Act
     object instance = sut.CreateInstance(type, arguments);
@@ -346,17 +318,14 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetClassFrame(type))
       .Returns(classFrame);
-    _frameProviderMock
-      .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(GetConstructorFrame(classFrame));
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
       .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
-    Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
+    Activator sut = new Activator(_interpreterMock.Object);
 
     // Act
     object instance = sut.CreateInstance(type, arguments);
@@ -384,17 +353,14 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetClassFrame(type))
       .Returns(classFrame);
-    _frameProviderMock
-      .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(GetConstructorFrame(classFrame));
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
       .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
-    Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
+    Activator sut = new Activator(_interpreterMock.Object);
 
     // Act
     object instance = sut.CreateInstance(type, arguments);
@@ -422,17 +388,14 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetClassFrame(type))
       .Returns(classFrame);
-    _frameProviderMock
-      .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(GetConstructorFrame(classFrame));
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
       .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
-    Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
+    Activator sut = new Activator(_interpreterMock.Object);
 
     // Act
     object instance = sut.CreateInstance(type, arguments);
@@ -460,17 +423,14 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetClassFrame(type))
       .Returns(classFrame);
-    _frameProviderMock
-      .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(GetConstructorFrame(classFrame));
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
       .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
-    Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
+    Activator sut = new Activator(_interpreterMock.Object);
 
     // Act
     object instance = sut.CreateInstance(type, arguments);
@@ -496,17 +456,14 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetClassFrame(type))
       .Returns(classFrame);
-    _frameProviderMock
-      .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(GetConstructorFrame(classFrame));
-    _frameProviderMock
+    _interpreterMock
       .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
       .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
-    Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
+    Activator sut = new Activator(_interpreterMock.Object);
 
     // Act
     object instance = sut.CreateInstance(type, arguments);

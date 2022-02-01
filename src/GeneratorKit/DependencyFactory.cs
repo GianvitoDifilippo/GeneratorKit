@@ -4,12 +4,11 @@ namespace GeneratorKit;
 
 internal class DependencyFactory : IDependencyFactory
 {
-  public void GetDependencies(GeneratorRuntime runtime, out IActivator activator, out IInterpreter interpreter, out IFrameProvider frameProvider)
+  public void GetDependencies(GeneratorRuntime runtime, out IActivator activator, out IInterpreter interpreter)
   {
     OperationManager operationManager = new OperationManager(runtime);
-    FrameDictionaryProvider dictionaryProvider = new FrameDictionaryProvider();
-    frameProvider = new FrameProvider(dictionaryProvider);
+    FrameProvider frameProvider = new FrameProvider();
     interpreter = new Interpreter(runtime, operationManager, frameProvider);
-    activator = new Activator(interpreter, frameProvider);
+    activator = new Activator(interpreter);
   }
 }

@@ -24,8 +24,17 @@ namespace " + Namespace + @"
 {
   public class NonGenericClassSource : NonGenericClass
   {
-    private readonly int _value = 12;
-    private string Property { get; set; } = ""prop"";
+    static NonGenericClassSource()
+    {
+      _staticFieldFromCctor = 'a';
+    }
+
+    private readonly int _instanceField = 12;
+    private string InstanceProperty { get; set; } = ""prop1"";
+
+    private static readonly char _staticFieldFromCctor;
+    private static readonly int _staticField = 13;
+    private static string StaticProperty { get; set; } = ""prop2"";
   }
 
   public class NonGenericClassWithMembersSource : NonGenericClassWithMembers
@@ -226,7 +235,7 @@ namespace " + Namespace + @"
     }
   }
 
-  internal Interpreter CreateSut(FrameProvider frameProvider, out GeneratorRuntime runtime)
+  internal Interpreter CreateSut(FakeFrameProvider frameProvider, out GeneratorRuntime runtime)
   {
     ProxyManager proxyManager = new ProxyManager();
     proxyManager.RegisterProxyType(typeof(NonGenericClassProxy));
@@ -262,19 +271,14 @@ namespace " + Namespace + @"
     return runtime.CreateMethodInfoDelegator(method!.Symbol);
   }
 
-  internal static InterpreterFrame GetClassFrame(IFrameProvider frameProvider, SymbolType sourceType, params Type[] genericArguments)
-  {
-    return genericArguments.Length > 0
-      ? frameProvider.GetClassFrame(sourceType.MakeGenericType(genericArguments))
-      : frameProvider.GetClassFrame(sourceType);
-  }
-
-  internal InterpreterFrame GetInstanceFrame(GeneratorRuntime runtime, IFrameProvider frameProvider, Interpreter sut, InterpretedOperationType operationType, params Type[] genericArguments)
+  internal InterpreterFrame GetInstanceFrame(GeneratorRuntime runtime, Interpreter sut, InterpretedOperationType operationType, params Type[] genericArguments)
   {
     SymbolType type = GetType(runtime, operationType);
-    InterpreterFrame classFrame = GetClassFrame(frameProvider, type, genericArguments);
+    InterpreterFrame classFrame = genericArguments.Length > 0
+      ? sut.GetClassFrame(type.MakeGenericType(genericArguments))
+      : sut.GetClassFrame(type);
     ObjectProxy instance = new ObjectProxy();
-    InterpreterFrame instanceFrame = frameProvider.GetInstanceFrame(classFrame, type, instance);
+    InterpreterFrame instanceFrame = sut.GetInstanceFrame(classFrame, type, instance);
     instance.Delegate = new OperationDelegate(sut, instanceFrame, new Dictionary<int, SymbolMethodInfo>());
     return instanceFrame;
   }

@@ -42,7 +42,6 @@ namespace " + Namespace + @"
   private readonly Mock<IDependencyFactory> _dependencyFactoryMock;
   private readonly Mock<IActivator> _activatorMock;
   private readonly Mock<IInterpreter> _interpreterMock;
-  private readonly Mock<IFrameProvider> _frameProviderMock;
 
   public ConcreteGeneratorRuntimeFixture()
   {
@@ -53,14 +52,12 @@ namespace " + Namespace + @"
 
     _activatorMock = new Mock<IActivator>(MockBehavior.Strict);
     _interpreterMock = new Mock<IInterpreter>(MockBehavior.Strict);
-    _frameProviderMock = new Mock<IFrameProvider>(MockBehavior.Strict);
     _dependencyFactoryMock = new Mock<IDependencyFactory>(MockBehavior.Strict);
 
     IActivator activator = _activatorMock.Object;
     IInterpreter interpreter = _interpreterMock.Object;
-    IFrameProvider frameProvider = _frameProviderMock.Object;
     _dependencyFactoryMock
-      .Setup(x => x.GetDependencies(It.IsAny<GeneratorRuntime>(), out activator, out interpreter, out frameProvider));
+      .Setup(x => x.GetDependencies(It.IsAny<GeneratorRuntime>(), out activator, out interpreter));
   }
 
   internal SymbolType GetSpecialType(ConcreteGeneratorRuntime sut, SpecialType specialType) => new SymbolNamedType(sut, _compilation.GetSpecialType(specialType));

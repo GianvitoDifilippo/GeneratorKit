@@ -8,11 +8,11 @@ using System.Collections.Generic;
 
 namespace GeneratorKit.TestHelpers;
 
-internal class FakeFrameDictionaryProvider : IFrameDictionaryProvider
+internal class FakeFrameProvider : IFrameProvider
 {
   private readonly List<Dictionary<string, object?>> _values;
 
-  public FakeFrameDictionaryProvider()
+  public FakeFrameProvider()
   {
     _values = new List<Dictionary<string, object?>>();
   }

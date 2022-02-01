@@ -8,7 +8,6 @@ using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Reflection.Metadata;
 
 namespace GeneratorKit;
 
@@ -17,13 +16,11 @@ internal class Activator : IActivator
   private const BindingFlags s_allDeclared = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
   
   private readonly IInterpreter _interpreter;
-  private readonly IFrameProvider _frameProvider;
   private readonly Dictionary<ITypeSymbol, IReadOnlyDictionary<int, SymbolMethodInfo>> _methods;
 
-  public Activator(IInterpreter interpreter, IFrameProvider frameProvider)
+  public Activator(IInterpreter interpreter)
   {
     _interpreter = interpreter;
-    _frameProvider = frameProvider;
     _methods = new Dictionary<ITypeSymbol, IReadOnlyDictionary<int, SymbolMethodInfo>>(SymbolEqualityComparer.Default);
   }
 
@@ -31,7 +28,7 @@ internal class Activator : IActivator
   {
     CheckType(type);
 
-    InterpreterFrame classFrame = _frameProvider.GetClassFrame(type);
+    InterpreterFrame classFrame = _interpreter.GetClassFrame(type);
     SymbolConstructorInfo constructor = FindConstructor(type.Definition, arguments, classFrame);
 
     return CreateInstance(constructor, type, classFrame, arguments);
@@ -42,7 +39,7 @@ internal class Activator : IActivator
     IRuntimeType type = constructor.DeclaringType;
     CheckType(type);
 
-    InterpreterFrame classFrame = _frameProvider.GetClassFrame(type);
+    InterpreterFrame classFrame = _interpreter.GetClassFrame(type);
 
     return CreateInstance(constructor, type, classFrame, arguments);
   }
@@ -56,10 +53,9 @@ internal class Activator : IActivator
     ConstructorInfo proxyConstructor = FindConstructor(proxyType, proxyArguments);
 
     IProxied instance = (IProxied)proxyConstructor.Invoke(proxyArguments);
-    InterpreterFrame instanceFrame = _frameProvider.GetInstanceFrame(classFrame, type, instance);
+    InterpreterFrame instanceFrame = _interpreter.GetInstanceFrame(classFrame, type, instance);
     IReadOnlyDictionary<int, SymbolMethodInfo> methods = GetMethods(type.Definition);
     instance.Delegate = new OperationDelegate(_interpreter, instanceFrame, methods);
-    _interpreter.InitInstance(type, instanceFrame);
     _interpreter.Interpret(constructor, instanceFrame, arguments);
 
     return instance;

@@ -1,4 +1,6 @@
-﻿using Microsoft.CodeAnalysis;
+﻿#pragma warning disable RS1024 // Compare symbols correctly
+
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Operations;
 using System;
 using System.Collections.Generic;
@@ -8,7 +10,6 @@ namespace GeneratorKit.Interpret;
 internal partial class InterpreterVisitor
 {
   private readonly GeneratorRuntime _runtime;
-  private readonly IFrameProvider _frameProvider;
   private readonly Stack<InterpreterFrame> _frames;
   private readonly Stack<object> _implicitReceivers;
   private readonly Stack<object> _conditionalAccessInstances;
@@ -16,10 +17,9 @@ internal partial class InterpreterVisitor
   private Optional<object?> _returnValue;
   private BranchKind _branchState;
 
-  public InterpreterVisitor(GeneratorRuntime runtime, IFrameProvider frameProvider, InterpreterFrame frame)
+  public InterpreterVisitor(GeneratorRuntime runtime, InterpreterFrame frame)
   {
     _runtime = runtime;
-    _frameProvider = frameProvider;
     _frames = new Stack<InterpreterFrame>(1);
     _frames.Push(frame);
     _implicitReceivers = new Stack<object>();
@@ -38,7 +38,7 @@ internal partial class InterpreterVisitor
 
   private void BeginScope()
   {
-    _frames.Push(_frameProvider.NewScopeFrame(Frame));
+    _frames.Push(InterpreterFrame.NewScopeFrame(Frame, new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default)));
   }
 
   private void EndScope()

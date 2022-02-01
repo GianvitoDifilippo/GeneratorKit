@@ -24,7 +24,9 @@ internal abstract class SymbolType : SymbolTypeBase
     _runtime = runtime;
   }
 
-  public abstract ITypeSymbol Symbol { get; }
+  public ITypeSymbol Symbol => SymbolCore;
+
+  protected abstract ITypeSymbol SymbolCore { get; }
 
 
   // Systm.Type overrides

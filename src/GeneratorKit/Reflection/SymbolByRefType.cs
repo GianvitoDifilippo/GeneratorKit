@@ -14,7 +14,7 @@ internal class SymbolByRefType : SymbolType
     _elementType = elementType;
   }
 
-  public override ITypeSymbol Symbol => _elementType.Symbol;
+  protected override ITypeSymbol SymbolCore => _elementType.Symbol;
 
 
   // System.Type overrides

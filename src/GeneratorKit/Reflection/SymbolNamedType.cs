@@ -11,20 +11,20 @@ namespace GeneratorKit.Reflection;
 
 internal sealed class SymbolNamedType : SymbolType
 {
-  private readonly INamedTypeSymbol _symbol;
-
   public SymbolNamedType(GeneratorRuntime runtime, INamedTypeSymbol symbol)
     : base(runtime)
   {
-    _symbol = symbol;
+    Symbol = symbol;
   }
 
-  public override ITypeSymbol Symbol => _symbol;
+  public new INamedTypeSymbol Symbol { get; }
+
+  protected override ITypeSymbol SymbolCore => Symbol;
 
 
   // System.Type overrides
 
-  public override bool ContainsGenericParameters => _symbol.IsGenericType && _symbol.TypeArguments.Any(x => x.TypeKind is TypeKind.TypeParameter);
+  public override bool ContainsGenericParameters => Symbol.IsGenericType && Symbol.TypeArguments.Any(x => x.TypeKind is TypeKind.TypeParameter);
 
   public override MethodBase? DeclaringMethod => throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
 
@@ -32,21 +32,21 @@ internal sealed class SymbolNamedType : SymbolType
 
   public override int GenericParameterPosition => throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
 
-  public override bool IsConstructedGenericType => _symbol.TypeArguments.Any(x => x.TypeKind is not TypeKind.TypeParameter || !x.ContainingType.Equals(_symbol, SymbolEqualityComparer.Default));
+  public override bool IsConstructedGenericType => Symbol.TypeArguments.Any(x => x.TypeKind is not TypeKind.TypeParameter || !x.ContainingType.Equals(Symbol, SymbolEqualityComparer.Default));
 
-  public override bool IsEnum => _symbol.EnumUnderlyingType is not null;
+  public override bool IsEnum => Symbol.EnumUnderlyingType is not null;
 
   public override bool IsGenericParameter => false;
 
-  public override bool IsGenericType => _symbol.IsGenericType;
+  public override bool IsGenericType => Symbol.IsGenericType;
 
-  public override bool IsGenericTypeDefinition => _symbol.IsGenericType && !IsConstructedGenericType;
+  public override bool IsGenericTypeDefinition => Symbol.IsGenericType && !IsConstructedGenericType;
 
   public override bool IsSerializable
   {
     get
     {
-      if (_symbol.TypeKind is TypeKind.Enum) return true;
+      if (Symbol.TypeKind is TypeKind.Enum) return true;
 
       if (IsPrimitive) return true;
 
@@ -61,7 +61,7 @@ internal sealed class SymbolNamedType : SymbolType
         "System.Uri" or
         "System.Xml.XmlQualifiedName") return true;
 
-      return _symbol.GetAttributes().Any(x => x.AttributeClass is not null && x.AttributeClass.ToDisplayString() == "System.SerializableAttribute");
+      return Symbol.GetAttributes().Any(x => x.AttributeClass is not null && x.AttributeClass.ToDisplayString() == "System.SerializableAttribute");
     }
   }
 
@@ -71,7 +71,7 @@ internal sealed class SymbolNamedType : SymbolType
 
   public override string Name => Symbol.MetadataName;
 
-  public override string Namespace => _symbol.ContainingNamespace.ToDisplayString(s_namespaceFormat);
+  public override string Namespace => Symbol.ContainingNamespace.ToDisplayString(s_namespaceFormat);
 
   public override int GetArrayRank()
   {
@@ -81,9 +81,9 @@ internal sealed class SymbolNamedType : SymbolType
   protected override TypeAttributes GetAttributeFlagsImpl()
   {
     TypeAttributes result = default;
-    if (_symbol.ContainingType is not null)
+    if (Symbol.ContainingType is not null)
     {
-      result |= _symbol.DeclaredAccessibility switch
+      result |= Symbol.DeclaredAccessibility switch
       {
         Accessibility.Public               => TypeAttributes.NestedPublic,
         Accessibility.ProtectedOrInternal  => TypeAttributes.NestedFamORAssem,
@@ -94,20 +94,20 @@ internal sealed class SymbolNamedType : SymbolType
         _                                  => default
       };
     }
-    else if (_symbol.DeclaredAccessibility is Accessibility.Public)
+    else if (Symbol.DeclaredAccessibility is Accessibility.Public)
       result |= TypeAttributes.Public;
 
-    if (_symbol.TypeKind == TypeKind.Interface)
+    if (Symbol.TypeKind == TypeKind.Interface)
       result |= TypeAttributes.Interface;
-    if (_symbol.IsAbstract)
+    if (Symbol.IsAbstract)
       result |= TypeAttributes.Abstract;
-    if (_symbol.IsSealed)
+    if (Symbol.IsSealed)
       result |= TypeAttributes.Sealed;
-    if (_symbol.IsSerializable)
+    if (Symbol.IsSerializable)
       result |= TypeAttributes.Serializable;
-    if (_symbol.TypeKind != TypeKind.Interface && !_symbol.StaticConstructors.Any() && _symbol.TypeKind is not TypeKind.Enum)
+    if (Symbol.TypeKind != TypeKind.Interface && !Symbol.StaticConstructors.Any() && Symbol.TypeKind is not TypeKind.Enum)
       result |= TypeAttributes.BeforeFieldInit;
-    if (_symbol.IsValueType && _symbol.TypeKind is not TypeKind.Enum)
+    if (Symbol.IsValueType && Symbol.TypeKind is not TypeKind.Enum)
       result |= TypeAttributes.SequentialLayout;
 
     return result;
@@ -115,12 +115,12 @@ internal sealed class SymbolNamedType : SymbolType
 
   public override IList<CustomAttributeData> GetCustomAttributesData()
   {
-    List<CustomAttributeData> result = _symbol
+    List<CustomAttributeData> result = Symbol
       .GetAttributes()
       .Select(x => (CustomAttributeData)CompilationCustomAttributeData.FromAttributeData(_runtime, x))
       .ToList();
 
-    if (_symbol.MemberNames.Any(x => x is "this[]"))
+    if (Symbol.MemberNames.Any(x => x is "this[]"))
     {
       INamedTypeSymbol defaultMemberAttributeSymbol = _runtime.Compilation.GetTypeByMetadataName("System.Reflection.DefaultMemberAttribute")!;
       IMethodSymbol constructor = defaultMemberAttributeSymbol.InstanceConstructors[0];
@@ -146,7 +146,7 @@ internal sealed class SymbolNamedType : SymbolType
 
     ulong ulValue = ToUInt64(value);
 
-    foreach (ISymbol member in _symbol.GetMembers().Where(x => x.Kind == SymbolKind.Field))
+    foreach (ISymbol member in Symbol.GetMembers().Where(x => x.Kind == SymbolKind.Field))
     {
       IFieldSymbol field = (IFieldSymbol)member;
       ulong memberValue = Convert.ToUInt64(field.ConstantValue);
@@ -163,7 +163,7 @@ internal sealed class SymbolNamedType : SymbolType
     if (!IsEnum)
       throw new InvalidOperationException();
 
-    return _symbol
+    return Symbol
       .GetMembers()
       .Where(x => x.Kind == SymbolKind.Field)
       .Cast<IFieldSymbol>()
@@ -185,7 +185,7 @@ internal sealed class SymbolNamedType : SymbolType
     if (!IsGenericType)
       throw new InvalidOperationException("This operation is only valid on generic types.");
 
-    return _runtime.CreateTypeDelegator(_symbol.OriginalDefinition);
+    return _runtime.CreateTypeDelegator(Symbol.OriginalDefinition);
   }
 
   protected override bool HasElementTypeImpl()
@@ -239,7 +239,7 @@ internal sealed class SymbolNamedType : SymbolType
 
     if (valueType == typeof(string))
     {
-      foreach (string name in _symbol.MemberNames)
+      foreach (string name in Symbol.MemberNames)
       {
         string stringValue = (string)value;
         if (name == stringValue)
@@ -258,7 +258,7 @@ internal sealed class SymbolNamedType : SymbolType
 
       ulong ulValue = ToUInt64(value);
       
-      foreach (ISymbol member in _symbol.GetMembers().Where(x => x.Kind == SymbolKind.Field))
+      foreach (ISymbol member in Symbol.GetMembers().Where(x => x.Kind == SymbolKind.Field))
       {
         IFieldSymbol field = (IFieldSymbol)member;
         ulong memberValue = Convert.ToUInt64(field.ConstantValue);
@@ -334,13 +334,13 @@ internal sealed class SymbolNamedType : SymbolType
 
   // SymbolTypeBase overrides
 
-  protected override SymbolAssembly AssemblyCore => _runtime.CreateAssemblyDelegator(_symbol.ContainingAssembly);
+  protected override SymbolAssembly AssemblyCore => _runtime.CreateAssemblyDelegator(Symbol.ContainingAssembly);
 
-  protected override SymbolType? BaseTypeCore => _symbol.BaseType is { } baseType
+  protected override SymbolType? BaseTypeCore => Symbol.BaseType is { } baseType
     ? _runtime.CreateTypeDelegator(baseType)
     : null;
 
-  protected override SymbolModule ModuleCore => _runtime.CreateModuleDelegator(_symbol.ContainingModule);
+  protected override SymbolModule ModuleCore => _runtime.CreateModuleDelegator(Symbol.ContainingModule);
 
   protected override SymbolType? GetElementTypeCore()
   {
@@ -352,12 +352,12 @@ internal sealed class SymbolNamedType : SymbolType
     if (!IsEnum)
       throw new InvalidOperationException();
 
-    return _runtime.CreateTypeDelegator(_symbol.EnumUnderlyingType!);
+    return _runtime.CreateTypeDelegator(Symbol.EnumUnderlyingType!);
   }
 
   protected override SymbolType[] GetGenericArgumentsCore()
   {
-    return _symbol.TypeArguments
+    return Symbol.TypeArguments
       .Select(x => _runtime.CreateTypeDelegator(x))
       .ToArray();
   }
@@ -369,7 +369,7 @@ internal sealed class SymbolNamedType : SymbolType
 
   protected override SymbolType[] GetInterfacesCore()
   {
-    return _symbol.AllInterfaces.Select(x => _runtime.CreateTypeDelegator(x)).ToArray();
+    return Symbol.AllInterfaces.Select(x => _runtime.CreateTypeDelegator(x)).ToArray();
   }
 
   protected override SymbolType MakeArrayTypeCore()
@@ -403,7 +403,7 @@ internal sealed class SymbolNamedType : SymbolType
     if (!IsGenericTypeDefinition)
       throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
 
-    return _runtime.CreateTypeDelegator(_symbol.Construct(typeArguments.Select(x => x.Symbol).ToArray()));
+    return _runtime.CreateTypeDelegator(Symbol.Construct(typeArguments.Select(x => x.Symbol).ToArray()));
   }
 
   private static bool IsIntegerType(Type t)

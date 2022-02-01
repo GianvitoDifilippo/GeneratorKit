@@ -1,8 +1,11 @@
-﻿using FluentAssertions;
-using GeneratorKit.Proxy;
+﻿#pragma warning disable RS1024 // Compare symbols correctly
+
+using FluentAssertions;
 using GeneratorKit.Reflection;
 using GeneratorKit.TestHelpers;
+using Microsoft.CodeAnalysis;
 using System;
+using System.Collections.Generic;
 using Xunit;
 using static GeneratorKit.Interpret.InterpreterFixture;
 
@@ -11,16 +14,14 @@ namespace GeneratorKit.Interpret;
 public class InterpreterTests : IClassFixture<InterpreterFixture>
 {
   private readonly InterpreterFixture _fixture;
-  private readonly FakeFrameDictionaryProvider _dictionaryProvider;
-  private readonly FrameProvider _frameProvider;
+  private readonly FakeFrameProvider _frameProvider;
   private readonly Interpreter _sut;
   private readonly GeneratorRuntime _runtime;
 
   public InterpreterTests(InterpreterFixture fixture)
   {
     _fixture = fixture;
-    _dictionaryProvider = new FakeFrameDictionaryProvider();
-    _frameProvider = new FrameProvider(_dictionaryProvider);
+    _frameProvider = new FakeFrameProvider();
     _sut = _fixture.CreateSut(_frameProvider, out _runtime);
   }
 
@@ -30,14 +31,14 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     // Arrange
     object?[] arguments = Array.Empty<object?>();
     SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.SimpleAssignment);
-    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _frameProvider, _sut, InterpretedOperationType.SimpleAssignment);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.SimpleAssignment);
 
     // Act
     _sut.Interpret(method, instanceFrame, arguments);
 
     // Assert
-    _dictionaryProvider[2].Should().HaveCount(1);
-    _dictionaryProvider[2].Should().Contain("v1", 1);
+    _frameProvider[2].Should().HaveCount(1);
+    _frameProvider[2].Should().Contain("v1", 1);
   }
 
   [Fact]
@@ -46,15 +47,15 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     // Arrange
     object?[] arguments = Array.Empty<object?>();
     SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.TupleAssignment);
-    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _frameProvider, _sut, InterpretedOperationType.TupleAssignment);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.TupleAssignment);
 
     // Act
     _sut.Interpret(method, instanceFrame, arguments);
 
     // Assert
-    _dictionaryProvider[2].Should().HaveCount(2);
-    _dictionaryProvider[2].Should().Contain("v1", 2);
-    _dictionaryProvider[2].Should().Contain("v2", "str");
+    _frameProvider[2].Should().HaveCount(2);
+    _frameProvider[2].Should().Contain("v1", 2);
+    _frameProvider[2].Should().Contain("v2", "str");
   }
 
   [Fact]
@@ -64,7 +65,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     object?[] arguments = Array.Empty<object?>();
     const string expected = "NonGenericClass_Interpret";
     SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.NameOf);
-    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _frameProvider, _sut, InterpretedOperationType.NameOf);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.NameOf);
 
     // Act
     object? actual = _sut.Interpret(method, instanceFrame, arguments);
@@ -81,7 +82,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     // Arrange
     object?[] arguments = new object?[] { arg };
     SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.IfElse);
-    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _frameProvider, _sut, InterpretedOperationType.IfElse);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.IfElse);
 
     // Act
     object? actual = _sut.Interpret(method, instanceFrame, arguments);
@@ -96,7 +97,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     // Arrange
     object?[] arguments = Array.Empty<object?>();
     SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.For);
-    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _frameProvider, _sut, InterpretedOperationType.For);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.For);
 
     // Act
     object? actual = _sut.Interpret(method, instanceFrame, arguments);
@@ -111,7 +112,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     // Arrange
     object?[] arguments = new object?[] { new int[] { 1, 2, 3 } };
     SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.ForEach);
-    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _frameProvider, _sut, InterpretedOperationType.ForEach);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.ForEach);
 
     // Act
     object? actual = _sut.Interpret(method, instanceFrame, arguments);
@@ -128,7 +129,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     // Arrange
     object?[] arguments = Array.Empty<object?>();
     SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.Invocation_NonGenericMethod_GenericType);
-    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _frameProvider, _sut, InterpretedOperationType.Invocation_NonGenericMethod_GenericType, typeArgument);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.Invocation_NonGenericMethod_GenericType, typeArgument);
 
     // Act
     object? actual = _sut.Interpret(method, instanceFrame, arguments);
@@ -144,7 +145,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     const int expected = 6;
     object?[] arguments = Array.Empty<object?>();
     SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.Invocation_GenericMethod_GenericType1);
-    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _frameProvider, _sut, InterpretedOperationType.Invocation_GenericMethod_GenericType1, typeof(int));
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.Invocation_GenericMethod_GenericType1, typeof(int));
 
     // Act
     object? actual = _sut.Interpret(method, instanceFrame, arguments);
@@ -160,7 +161,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     const int expected = 5;
     object?[] arguments = Array.Empty<object?>();
     SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.Invocation_GenericMethod_GenericType2);
-    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _frameProvider, _sut, InterpretedOperationType.Invocation_GenericMethod_GenericType2, typeof(int));
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.Invocation_GenericMethod_GenericType2, typeof(int));
 
     // Act
     object? actual = _sut.Interpret(method, instanceFrame, arguments);
@@ -176,7 +177,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     const int expected = 5;
     object?[] arguments = Array.Empty<object?>();
     SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.Invocation_StaticMethod);
-    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _frameProvider, _sut, InterpretedOperationType.Invocation_StaticMethod, typeof(int));
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.Invocation_StaticMethod, typeof(int));
 
     // Act
     object? actual = _sut.Interpret(method, instanceFrame, arguments);
@@ -192,7 +193,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     const int expected = 5;
     object?[] arguments = Array.Empty<object?>();
     SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.Property_InstanceProperty);
-    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _frameProvider, _sut, InterpretedOperationType.Property_InstanceProperty, typeof(int));
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.Property_InstanceProperty, typeof(int));
 
     // Act
     object? actual = _sut.Interpret(method, instanceFrame, arguments);
@@ -208,7 +209,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     const int expected = 5;
     object?[] arguments = Array.Empty<object?>();
     SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.Property_StaticProperty);
-    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _frameProvider, _sut, InterpretedOperationType.Property_StaticProperty, typeof(int));
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.Property_StaticProperty, typeof(int));
 
     // Act
     object? actual = _sut.Interpret(method, instanceFrame, arguments);
@@ -224,14 +225,14 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     const string arg1 = "argument1";
     object?[] arguments = new object?[] { arg1 };
     SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.GenericObjectCreation);
-    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _frameProvider, _sut, InterpretedOperationType.GenericObjectCreation, typeof(string));
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.GenericObjectCreation, typeof(string));
 
     // Act
     _sut.Interpret(method, instanceFrame, arguments);
 
     // Assert
-    _dictionaryProvider[2].Should().Contain("value1", arg1);
-    _dictionaryProvider[2].Should().Contain("value2", 4);
+    _frameProvider[2].Should().Contain("value1", arg1);
+    _frameProvider[2].Should().Contain("value2", 4);
   }
 
   [Fact]
@@ -241,7 +242,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     const int value1 = 10;
     SymbolType sourceType = _fixture.GetSourceType(_runtime, SourceType.NonGenericClassWithCtors);
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[0];
-    InterpreterFrame classFrame = GetClassFrame(_frameProvider, sourceType);
+    InterpreterFrame classFrame = _sut.GetClassFrame(sourceType);
     object?[] arguments = new object?[] { value1 };
 
     object?[] expected = new object?[] { value1 };
@@ -260,7 +261,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     const int value1 = 42;
     SymbolType sourceType = _fixture.GetSourceType(_runtime, SourceType.NonGenericClassWithCtors);
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[1];
-    InterpreterFrame classFrame = GetClassFrame(_frameProvider, sourceType);
+    InterpreterFrame classFrame = _sut.GetClassFrame(sourceType);
     object?[] arguments = Array.Empty<object?>();
 
     object?[] expected = new object?[] { value1 };
@@ -280,7 +281,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     const string value2 = "v2";
     SymbolType sourceType = _fixture.GetSourceType(_runtime, SourceType.NonGenericClassWithCtors);
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[2];
-    InterpreterFrame classFrame = GetClassFrame(_frameProvider, sourceType);
+    InterpreterFrame classFrame = _sut.GetClassFrame(sourceType);
     object?[] arguments = new object?[] { value1, value2 };
 
     object?[] expected = new object?[] { value2 };
@@ -300,7 +301,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     const string value2 = "v2";
     SymbolType sourceType = _fixture.GetSourceType(_runtime, SourceType.GenericClassWithCtors);
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[0];
-    InterpreterFrame classFrame = GetClassFrame(_frameProvider, sourceType, typeof(string));
+    InterpreterFrame classFrame = _sut.GetClassFrame(sourceType.MakeGenericType(typeof(string)));
     object?[] arguments = new object?[] { value1, value2 };
 
     object?[] expected = new object?[] { value2 };
@@ -319,7 +320,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     const int value1 = 10;
     SymbolType sourceType = _fixture.GetSourceType(_runtime, SourceType.Interface);
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[0];
-    InterpreterFrame classFrame = GetClassFrame(_frameProvider, sourceType);
+    InterpreterFrame classFrame = _sut.GetClassFrame(sourceType);
     object?[] arguments = new object?[] { value1 };
 
     object?[] expected = Array.Empty<object?>();
@@ -332,18 +333,32 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
   }
 
   [Fact]
-  public void InitInstance_ShouldInitializeFieldsAndProperties()
+  public void GetClassFrame_ShouldInitializeInstanceFieldsAndProperties()
   {
     // Arrange
     SymbolType sourceType = _fixture.GetSourceType(_runtime, SourceType.NonGenericClass);
-    InterpreterFrame classFrame = _frameProvider.GetClassFrame(sourceType);
-    InterpreterFrame instanceFrame = _frameProvider.GetInstanceFrame(classFrame, sourceType, new object());
 
     // Act
-    _sut.InitInstance(sourceType, instanceFrame);
+    _sut.GetClassFrame(sourceType);
 
     // Assert
-    _dictionaryProvider[1].Should().Contain("_value", 12);
-    _dictionaryProvider[1].Should().Contain("Property", "prop");
+    _frameProvider[0].Should().Contain("_staticField", 13);
+    _frameProvider[0].Should().Contain("_staticFieldFromCctor", 'a');
+    _frameProvider[0].Should().Contain("StaticProperty", "prop2");
+  }
+
+  [Fact]
+  public void GetInstanceFrame_ShouldInitializeInstanceFieldsAndProperties()
+  {
+    // Arrange
+    SymbolType sourceType = _fixture.GetSourceType(_runtime, SourceType.NonGenericClass);
+    InterpreterFrame classFrame = InterpreterFrame.NewClassFrame(null, new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default), Type.EmptyTypes);
+
+    // Act
+    _sut.GetInstanceFrame(classFrame, sourceType, new object());
+
+    // Assert
+    _frameProvider[0].Should().Contain("_instanceField", 12);
+    _frameProvider[0].Should().Contain("InstanceProperty", "prop1");
   }
 }

@@ -9,17 +9,18 @@ namespace GeneratorKit.Reflection;
 
 internal sealed class SymbolArrayType : SymbolType
 {
-  private readonly IArrayTypeSymbol _symbol;
   private readonly SymbolType _elementType;
 
   public SymbolArrayType(GeneratorRuntime runtime, IArrayTypeSymbol symbol)
     : base(runtime)
   {
-    _symbol = symbol;
-    _elementType = runtime.CreateTypeDelegator(_symbol.ElementType);
+    Symbol = symbol;
+    _elementType = runtime.CreateTypeDelegator(Symbol.ElementType);
   }
 
-  public override ITypeSymbol Symbol => _symbol;
+  public new IArrayTypeSymbol Symbol { get; }
+
+  protected override ITypeSymbol SymbolCore => Symbol;
 
 
   // System.Type overrides
@@ -48,7 +49,7 @@ internal sealed class SymbolArrayType : SymbolType
 
   public override int GetArrayRank()
   {
-    return _symbol.Rank;
+    return Symbol.Rank;
   }
 
   public override IList<CustomAttributeData> GetCustomAttributesData()
@@ -116,7 +117,7 @@ internal sealed class SymbolArrayType : SymbolType
 
   protected override SymbolAssembly AssemblyCore => _elementType.Assembly;
 
-  protected override SymbolType? BaseTypeCore => _runtime.CreateTypeDelegator(_symbol.BaseType!);
+  protected override SymbolType? BaseTypeCore => _runtime.CreateTypeDelegator(Symbol.BaseType!);
 
   protected override SymbolModule ModuleCore => _elementType.Module;
 
@@ -147,7 +148,7 @@ internal sealed class SymbolArrayType : SymbolType
 
   protected override SymbolType[] GetInterfacesCore()
   {
-    return _symbol.AllInterfaces.Select(x => _runtime.CreateTypeDelegator(x)).ToArray();
+    return Symbol.AllInterfaces.Select(x => _runtime.CreateTypeDelegator(x)).ToArray();
   }
 
   protected override SymbolType MakeArrayTypeCore()

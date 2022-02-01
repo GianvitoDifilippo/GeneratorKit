@@ -4,5 +4,5 @@ namespace GeneratorKit;
 
 internal interface IDependencyFactory
 {
-  void GetDependencies(GeneratorRuntime runtime, out IActivator activator, out IInterpreter interpreter, out IFrameProvider frameProvider);
+  void GetDependencies(GeneratorRuntime runtime, out IActivator activator, out IInterpreter interpreter);
 }
