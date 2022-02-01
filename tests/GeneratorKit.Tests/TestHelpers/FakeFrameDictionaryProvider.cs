@@ -5,31 +5,26 @@ using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 
 namespace GeneratorKit.TestHelpers;
 
 internal class FakeFrameDictionaryProvider : IFrameDictionaryProvider
 {
-  private readonly Dictionary<string, object?> _values;
-  private readonly FakeFrameDictionary _fakeDictionary;
-  private int _count;
+  private readonly List<Dictionary<string, object?>> _values;
 
   public FakeFrameDictionaryProvider()
   {
-    _values = new Dictionary<string, object?>();
-    _fakeDictionary = new FakeFrameDictionary(_values, new Dictionary<ISymbol, object?>(SymbolDefinitionEqualityComparer.Default));
+    _values = new List<Dictionary<string, object?>>();
   }
 
-  public IReadOnlyDictionary<string, object?> Values => _values;
+  public IReadOnlyDictionary<string, object?> this[int index] => _values[index];
 
   public IDictionary<ISymbol, object?> GetValues(int capacity = 0)
   {
-    _count++;
-    IDictionary<ISymbol, object?> result = _count == 3
-      ? _fakeDictionary
-      : new Dictionary<ISymbol, object?>(SymbolDefinitionEqualityComparer.Default);
-    return result;
+    var dictionary = new Dictionary<ISymbol, object?>(capacity, SymbolDefinitionEqualityComparer.Default);
+    var values = new Dictionary<string, object?>(capacity);
+    _values.Add(values);
+    return new FakeFrameDictionary(values, dictionary);
   }
 
   private class FakeFrameDictionary : IDictionary<ISymbol, object?>

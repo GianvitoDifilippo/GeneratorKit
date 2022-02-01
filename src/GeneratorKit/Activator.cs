@@ -59,6 +59,7 @@ internal class Activator : IActivator
     InterpreterFrame instanceFrame = _frameProvider.GetInstanceFrame(classFrame, type, instance);
     IReadOnlyDictionary<int, SymbolMethodInfo> methods = GetMethods(type.Definition);
     instance.Delegate = new OperationDelegate(_interpreter, instanceFrame, methods);
+    _interpreter.InitInstance(type, instanceFrame);
     _interpreter.Interpret(constructor, instanceFrame, arguments);
 
     return instance;

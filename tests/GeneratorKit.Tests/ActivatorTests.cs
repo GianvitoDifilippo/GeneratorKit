@@ -24,6 +24,8 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
 
     _interpreterMock
       .Setup(x => x.Interpret(It.IsAny<IRuntimeConstructor>(), It.IsAny<InterpreterFrame>(), It.IsAny<object?[]>()));
+    _interpreterMock
+      .Setup(x => x.InitInstance(It.IsAny<IRuntimeType>(), It.IsAny<InterpreterFrame>()));
   }
 
   [Fact]

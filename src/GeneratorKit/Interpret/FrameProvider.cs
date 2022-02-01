@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Linq;
 
 namespace GeneratorKit.Interpret;
 
@@ -45,13 +44,7 @@ internal class FrameProvider : IFrameProvider
   {
     Debug.Assert(type.IsSource);
 
-    InterpreterFrame instanceFrame = InterpreterFrame.NewInstanceFrame(classFrame, _dictionaryProvider.GetValues(), instance); ;
-    IEnumerable<ISymbol> fields = type.Definition.Symbol.GetMembers().Where(x => x.Kind is SymbolKind.Field);
-    foreach (IFieldSymbol field in fields)
-    {
-      instanceFrame.Declare(field.IsImplicitlyDeclared ? field.AssociatedSymbol! : field);
-    }
-    return instanceFrame;
+    return InterpreterFrame.NewInstanceFrame(classFrame, _dictionaryProvider.GetValues(), instance);
   }
 
   public InterpreterFrame GetMethodFrame(InterpreterFrame parent, IRuntimeMethod method, object?[] arguments)

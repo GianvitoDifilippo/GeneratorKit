@@ -3,6 +3,7 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
@@ -11,28 +12,53 @@ namespace GeneratorKit.Interpret;
 internal class OperationManager : IOperationManager
 {
   private readonly GeneratorRuntime _runtime;
-  private readonly Dictionary<IMethodSymbol, IOperation> _operations;
+  private readonly Dictionary<ISymbol, IOperation?> _operations;
 
   public OperationManager(GeneratorRuntime runtime)
   {
     _runtime = runtime;
-    _operations = new Dictionary<IMethodSymbol, IOperation>(SymbolEqualityComparer.Default);
+    _operations = new Dictionary<ISymbol, IOperation?>(SymbolEqualityComparer.Default);
   }
 
   public bool TryGetOperation(IMethodSymbol method, [NotNullWhen(true)] out IOperation? operation)
   {
+    if (method.IsImplicitlyDeclared)
+    {
+      operation = null;
+      return false;
+    }
+
     if (!_operations.TryGetValue(method, out operation))
     {
-      if (method.IsImplicitlyDeclared)
-        return false;
-
-      if (!TryGetMethodOperation(method, out operation))
-        return false;
-
+      TryGetMethodOperation(method, out operation);
       _operations.Add(method, operation);
     }
 
-    return true;
+    return operation is not null;
+  }
+
+  public bool TryGetOperation(IFieldSymbol field, [NotNullWhen(true)] out IOperation? operation)
+  {
+    Debug.Assert(!field.IsImplicitlyDeclared);
+
+    if (!_operations.TryGetValue(field, out operation))
+    {
+      TryGetFieldOperation(field, out operation);
+      _operations.Add(field, operation);
+    }
+
+    return operation is not null;
+  }
+
+  public bool TryGetOperation(IPropertySymbol property, [NotNullWhen(true)] out IOperation? operation)
+  {
+    if (!_operations.TryGetValue(property, out operation))
+    {
+      TryGetPropertyOperation(property, out operation);
+      _operations.Add(property, operation);
+    }
+
+    return operation is not null;
   }
 
   private SemanticModel[] GetSemanticModels(ISymbol symbol)
@@ -50,7 +76,21 @@ internal class OperationManager : IOperationManager
     return semanticModels;
   }
 
-  private bool TryGetFieldOperation(IFieldSymbol symbol, out IOperation? operation)
+  private bool TryGetMethodOperation(IMethodSymbol symbol, [NotNullWhen(true)] out IOperation? operation)
+  {
+    operation = null;
+    SemanticModel[] semanticModels = GetSemanticModels(symbol);
+    foreach (SyntaxReference reference in symbol.DeclaringSyntaxReferences)
+    {
+      SyntaxNode node = reference.GetSyntax(_runtime.CancellationToken);
+      if (TryGetOperation(semanticModels, node, _runtime.CancellationToken, out operation))
+        return true;
+    }
+
+    return false;
+  }
+
+  private bool TryGetFieldOperation(IFieldSymbol symbol, [NotNullWhen(true)] out IOperation? operation)
   {
     operation = null;
     SemanticModel[] semanticModels = GetSemanticModels(symbol);
@@ -61,7 +101,7 @@ internal class OperationManager : IOperationManager
       if (node.Initializer is not { } initializer)
         continue;
 
-      if (TryGetOperation(semanticModels, node, _runtime.CancellationToken, out operation))
+      if (TryGetOperation(semanticModels, initializer.Value, _runtime.CancellationToken, out operation))
       {
         return true;
       }
@@ -70,15 +110,21 @@ internal class OperationManager : IOperationManager
     return false;
   }
 
-  private bool TryGetMethodOperation(IMethodSymbol symbol, [NotNullWhen(true)] out IOperation? operation)
+  private bool TryGetPropertyOperation(IPropertySymbol symbol, [NotNullWhen(true)] out IOperation? operation)
   {
     operation = null;
     SemanticModel[] semanticModels = GetSemanticModels(symbol);
     foreach (SyntaxReference reference in symbol.DeclaringSyntaxReferences)
     {
-      SyntaxNode node = reference.GetSyntax(_runtime.CancellationToken);
-      if (TryGetOperation(semanticModels, node, _runtime.CancellationToken, out operation))
+      if (reference.GetSyntax(_runtime.CancellationToken) is not PropertyDeclarationSyntax node)
+        continue;
+      if (node.Initializer is not { } initializer)
+        continue;
+
+      if (TryGetOperation(semanticModels, initializer.Value, _runtime.CancellationToken, out operation))
+      {
         return true;
+      }
     }
 
     return false;

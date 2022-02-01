@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using GeneratorKit.Proxy;
 using GeneratorKit.Reflection;
 using GeneratorKit.TestHelpers;
 using System;
@@ -35,8 +36,8 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     _sut.Interpret(method, instanceFrame, arguments);
 
     // Assert
-    _dictionaryProvider.Values.Should().HaveCount(1);
-    _dictionaryProvider.Values.Should().Contain("v1", 1);
+    _dictionaryProvider[2].Should().HaveCount(1);
+    _dictionaryProvider[2].Should().Contain("v1", 1);
   }
 
   [Fact]
@@ -51,9 +52,9 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     _sut.Interpret(method, instanceFrame, arguments);
 
     // Assert
-    _dictionaryProvider.Values.Should().HaveCount(2);
-    _dictionaryProvider.Values.Should().Contain("v1", 2);
-    _dictionaryProvider.Values.Should().Contain("v2", "str");
+    _dictionaryProvider[2].Should().HaveCount(2);
+    _dictionaryProvider[2].Should().Contain("v1", 2);
+    _dictionaryProvider[2].Should().Contain("v2", "str");
   }
 
   [Fact]
@@ -229,8 +230,8 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     _sut.Interpret(method, instanceFrame, arguments);
 
     // Assert
-    _dictionaryProvider.Values.Should().Contain("value1", arg1);
-    _dictionaryProvider.Values.Should().Contain("value2", 4);
+    _dictionaryProvider[2].Should().Contain("value1", arg1);
+    _dictionaryProvider[2].Should().Contain("value2", 4);
   }
 
   [Fact]
@@ -328,5 +329,21 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
 
     // Assert
     actual.Should().Equal(expected);
+  }
+
+  [Fact]
+  public void InitInstance_ShouldInitializeFieldsAndProperties()
+  {
+    // Arrange
+    SymbolType sourceType = _fixture.GetSourceType(_runtime, SourceType.NonGenericClass);
+    InterpreterFrame classFrame = _frameProvider.GetClassFrame(sourceType);
+    InterpreterFrame instanceFrame = _frameProvider.GetInstanceFrame(classFrame, sourceType, new object());
+
+    // Act
+    _sut.InitInstance(sourceType, instanceFrame);
+
+    // Assert
+    _dictionaryProvider[1].Should().Contain("_value", 12);
+    _dictionaryProvider[1].Should().Contain("Property", "prop");
   }
 }

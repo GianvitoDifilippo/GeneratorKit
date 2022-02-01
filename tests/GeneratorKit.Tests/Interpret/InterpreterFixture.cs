@@ -22,7 +22,11 @@ using static GeneratorKit.TestHelpers.ProxyTypes;
 
 namespace " + Namespace + @"
 {
-  public class NonGenericClassSource : NonGenericClass { }
+  public class NonGenericClassSource : NonGenericClass
+  {
+    private readonly int _value = 12;
+    private string Property { get; set; } = ""prop"";
+  }
 
   public class NonGenericClassWithMembersSource : NonGenericClassWithMembers
   {
@@ -190,7 +194,6 @@ namespace " + Namespace + @"
 ";
 
   private readonly Compilation _compilation;
-  private readonly FakeOperationManager _operationManager;
 
   private readonly INamedTypeSymbol _nonGenericClassSourceSymbol;
   private readonly INamedTypeSymbol _nonGenericClassWithMembersSourceSymbol;
@@ -206,7 +209,6 @@ namespace " + Namespace + @"
     Assert.True(output.IsValid, $"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
 
     _compilation = output.Compilation;
-    _operationManager = new FakeOperationManager(_compilation);
 
     _nonGenericClassSourceSymbol = GetTypeSymbolFromCompilation("NonGenericClassSource");
     _nonGenericClassWithMembersSourceSymbol = GetTypeSymbolFromCompilation("NonGenericClassWithMembersSource");
@@ -233,7 +235,8 @@ namespace " + Namespace + @"
     FakeDependencyFactory dependencyFactory = new FakeDependencyFactory(frameProvider);
     ConcreteGeneratorRuntime concreteRuntime = new ConcreteGeneratorRuntime(_compilation, proxyManager, dependencyFactory, CancellationToken.None);
     runtime = concreteRuntime;
-    return new Interpreter(concreteRuntime, _operationManager, frameProvider);
+    OperationManager operationManager = new OperationManager(runtime);
+    return new Interpreter(concreteRuntime, operationManager, frameProvider);
   }
 
   internal SymbolType GetSourceType(GeneratorRuntime runtime, SourceType sourceType)
