@@ -8,6 +8,7 @@ using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Reflection.Metadata;
 
 namespace GeneratorKit;
 
@@ -26,7 +27,44 @@ internal class Activator : IActivator
     _methods = new Dictionary<ITypeSymbol, IReadOnlyDictionary<int, SymbolMethodInfo>>(SymbolEqualityComparer.Default);
   }
 
-  public T CreateInstance<T>(IRuntimeType type, params object?[] arguments)
+  public object CreateInstance(IRuntimeType type, object?[] arguments)
+  {
+    CheckType(type);
+
+    InterpreterFrame classFrame = _frameProvider.GetClassFrame(type);
+    SymbolConstructorInfo constructor = FindConstructor(type.Definition, arguments, classFrame);
+
+    return CreateInstance(constructor, type, classFrame, arguments);
+  }
+
+  public object CreateInstance(IRuntimeConstructor constructor, object?[] arguments)
+  {
+    IRuntimeType type = constructor.DeclaringType;
+    CheckType(type);
+
+    InterpreterFrame classFrame = _frameProvider.GetClassFrame(type);
+
+    return CreateInstance(constructor, type, classFrame, arguments);
+  }
+
+  private object CreateInstance(IRuntimeConstructor constructor, IRuntimeType type, InterpreterFrame classFrame, object?[] arguments)
+  {
+    Type proxyType = type.UnderlyingSystemType;
+    object?[] proxyArguments = constructor.Symbol.IsImplicitlyDeclared
+      ? arguments
+      : _interpreter.GetProxyArguments(constructor, classFrame, arguments);
+    ConstructorInfo proxyConstructor = FindConstructor(proxyType, proxyArguments);
+
+    IProxied instance = (IProxied)proxyConstructor.Invoke(proxyArguments);
+    InterpreterFrame instanceFrame = _frameProvider.GetInstanceFrame(classFrame, type, instance);
+    IReadOnlyDictionary<int, SymbolMethodInfo> methods = GetMethods(type.Definition);
+    instance.Delegate = new OperationDelegate(_interpreter, instanceFrame, methods);
+    _interpreter.Interpret(constructor, instanceFrame, arguments);
+
+    return instance;
+  }
+
+  private void CheckType(IRuntimeType type)
   {
     if (type.ContainsGenericParameters)
       throw new ArgumentException("Cannot create an instance of a type which contains generic parameters.", nameof(type));
@@ -34,27 +72,6 @@ internal class Activator : IActivator
       throw new ArgumentException("Cannot create an instance of an interface.", nameof(type));
     if (type.IsAbstract)
       throw new ArgumentException("Cannot create an instance of an abstract class.", nameof(type));
-
-    SymbolType typeDefinition = type.Definition;
-
-    Type proxyType = type.UnderlyingSystemType;
-    if (!typeof(T).IsAssignableFrom(proxyType))
-      throw new ArgumentException($"{type.FullName} is not assignable to {typeof(T).FullName}", nameof(type));
-
-    InterpreterFrame classFrame = _frameProvider.GetClassFrame(type);
-    
-    SymbolConstructorInfo constructor = FindConstructor(typeDefinition, arguments, classFrame);
-    object?[] proxyArguments = constructor.Symbol.IsImplicitlyDeclared
-      ? arguments
-      : _interpreter.GetProxyArguments(constructor, classFrame, arguments);
-    ConstructorInfo proxyConstructor = FindConstructor(proxyType, proxyArguments);
-
-    IProxied instance = (IProxied)proxyConstructor.Invoke(proxyArguments);
-    InterpreterFrame instanceFrame = _frameProvider.GetInstanceFrame(classFrame, instance);
-    IReadOnlyDictionary<int, SymbolMethodInfo> methods = GetMethods(typeDefinition);
-    instance.Delegate = new OperationDelegate(_interpreter, instanceFrame, methods);
-
-    return (T)instance;
   }
 
   private IReadOnlyDictionary<int, SymbolMethodInfo> GetMethods(SymbolType typeDefinition)
@@ -65,6 +82,9 @@ internal class Activator : IActivator
     Dictionary<int, SymbolMethodInfo> result = new Dictionary<int, SymbolMethodInfo>();
     foreach (SymbolMethodInfo method in typeDefinition.GetMethods(s_allDeclared))
     {
+      if (method.Symbol.IsSource())
+        continue;
+
       MethodInfo underlyingSystemMethod = method.UnderlyingSystemMethod;
       OperationAttribute? attribute = underlyingSystemMethod.GetCustomAttribute<OperationAttribute>();
       if (attribute is null)

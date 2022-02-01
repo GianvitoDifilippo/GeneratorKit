@@ -12,7 +12,7 @@ using System.Text;
 
 namespace GeneratorKit.Reflection;
 
-internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
+internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase, IRuntimeConstructor
 {
   private readonly GeneratorRuntime _runtime;
   private ConstructorInfo? _underlyingSystemConstructor;
@@ -25,8 +25,7 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
 
   public IMethodSymbol Symbol { get; }
 
-  // TODO: Assert not in source
-  internal ConstructorInfo UnderlyingSystemConstructor => _underlyingSystemConstructor ??= DelegatorBinder.ResolveConstructor(DeclaringType.UnderlyingSystemType, this);
+  public ConstructorInfo UnderlyingSystemConstructor => _underlyingSystemConstructor ??= DelegatorBinder.ResolveConstructor(DeclaringType.UnderlyingSystemType, this);
 
 
   // System.Reflection.ConstructorInfo overrides
@@ -104,14 +103,14 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
 
   public override object Invoke(BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
   {
-    return Symbol.ContainingAssembly is ISourceAssemblySymbol
+    return Symbol.IsSource()
       ? throw new NotSupportedException() // TODO: Message
       : UnderlyingSystemConstructor.Invoke(invokeAttr, binder, parameters, culture);
   }
 
   public override object Invoke(object obj, BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
   {
-    return Symbol.ContainingAssembly is ISourceAssemblySymbol
+    return Symbol.IsSource()
       ? throw new NotSupportedException() // TODO: Message
       : UnderlyingSystemConstructor.Invoke(obj, invokeAttr, binder, parameters, culture);
   }
@@ -177,6 +176,13 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
     builder.Append(')');
     return builder.ToString();
   }
+
+
+  // IRuntimeConstructor members
+
+  IRuntimeType IRuntimeConstructor.DeclaringType => DeclaringTypeCore;
+
+  bool IRuntimeConstructor.IsSource => Symbol.IsSource();
 
 
   // New members

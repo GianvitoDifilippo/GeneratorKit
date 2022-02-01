@@ -3,6 +3,7 @@ using GeneratorKit.Reflection;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace GeneratorKit.TestHelpers;
@@ -26,7 +27,22 @@ internal class FakeGeneratorRuntime : GeneratorRuntime
     throw new NotImplementedException();
   }
 
+  public override object InvokeConstructor(IRuntimeConstructor constructor, object?[] arguments)
+  {
+    throw new NotImplementedException();
+  }
+
   public override object? InvokeMethod(IRuntimeMethod method, object? instance, object?[] arguments)
+  {
+    throw new NotImplementedException();
+  }
+
+  public override object? InvokeGetter(IRuntimeProperty property, object? instance, object?[] arguments)
+  {
+    throw new NotImplementedException();
+  }
+
+  public override void InvokeSetter(IRuntimeProperty property, object? instance, object?[] arguments, object? value)
   {
     throw new NotImplementedException();
   }

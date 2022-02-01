@@ -25,7 +25,13 @@ internal abstract class GeneratorRuntime : IGeneratorRuntime
 
   public abstract Type GetRuntimeType(HybridGenericType type);
 
+  public abstract object InvokeConstructor(IRuntimeConstructor constructor, object?[] arguments);
+
   public abstract object? InvokeMethod(IRuntimeMethod method, object? instance, object?[] arguments);
+
+  public abstract object? InvokeGetter(IRuntimeProperty property, object? instance, object?[] arguments);
+
+  public abstract void InvokeSetter(IRuntimeProperty property, object? instance, object?[] arguments, object? value);
 
   public SymbolAssembly CreateAssemblyDelegator(IAssemblySymbol symbol)
   {

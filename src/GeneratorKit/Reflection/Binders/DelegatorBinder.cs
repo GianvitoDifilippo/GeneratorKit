@@ -44,30 +44,31 @@ internal abstract partial class DelegatorBinder : Binder
   {
     BindingFlags bindingAttr = GetBindingAttr(property.Symbol);
     ParameterInfo[] parameters = property.GetIndexParameters();
-    
+
+    PropertyInfo? result;
     if (parameters.Length != 0)
     {
       Type[] parameterTypes = parameters.Map(p => p.ParameterType);
       IndexerBinder binder = new IndexerBinder(parameters);
 
-      return type.GetProperty(property.Name, bindingAttr, binder, property.PropertyType, parameterTypes, null);
+      result = type.GetProperty(property.Name, bindingAttr, binder, property.PropertyType, parameterTypes, null);
+    }
+    else
+    {
+      result = type.GetProperty(property.Name, bindingAttr);
     }
 
-    return type.GetProperty(property.Name, bindingAttr);
+    return result ?? throw new InvalidOperationException($"Cannot resolve property {property} in type {type}.");
   }
 
-  public static MethodInfo ResolveMethod(Type type, SymbolMethodInfo method)
+  public static MethodInfo ResolveMethod(Type type, IRuntimeMethod method)
   {
-    return method.IsGenericMethod
+    MethodInfo? result = method.IsGenericMethod
       ? method.IsGenericMethodDefinition
-        ? ResolveGenericMethodDefinition(type, method)
-        : ResolveConstructedGenericMethod(type, method.GetGenericMethodDefinition(), method.GetGenericArguments())
-      : ResolveNonGenericMethod(type, method);
-  }
-
-  public static MethodInfo ResolveMethod(Type type, HybridGenericMethod method)
-  {
-    return ResolveConstructedGenericMethod(type, method.GetGenericMethodDefinition(), method.GetGenericArguments());
+        ? ResolveGenericMethodDefinition(type, method.Definition)
+        : ResolveConstructedGenericMethod(type, method.Definition, method.TypeArguments)
+      : ResolveNonGenericMethod(type, method.Definition);
+    return result ?? throw new InvalidOperationException($"Cannot resolve method {method} in type {type}.");
   }
 
   public static ConstructorInfo ResolveConstructor(Type type, SymbolConstructorInfo constructor)
@@ -77,17 +78,19 @@ internal abstract partial class DelegatorBinder : Binder
     Type[] parameterTypes = parameters.Map(p => p.ParameterType);
 
     ConstructorBinder binder = new ConstructorBinder(parameters);
-    return type.GetConstructor(bindingAttr, binder, constructor.CallingConvention, parameterTypes, null);
+    return type.GetConstructor(bindingAttr, binder, constructor.CallingConvention, parameterTypes, null)
+      ?? throw new InvalidOperationException($"Cannot resolve constructor {constructor} in type {type}.");
   }
 
   public static FieldInfo ResolveField(Type type, SymbolFieldInfo field)
   {
     BindingFlags bindingAttr = GetBindingAttr(field.Symbol);
 
-    return type.GetField(field.Name, bindingAttr);
+    return type.GetField(field.Name, bindingAttr)
+      ?? throw new InvalidOperationException($"Cannot resolve field {field} in type {type}.");
   }
 
-  private static MethodInfo ResolveNonGenericMethod(Type type, SymbolMethodInfo method)
+  private static MethodInfo? ResolveNonGenericMethod(Type type, SymbolMethodInfo method)
   {
     BindingFlags bindingAttr = GetBindingAttr(method.Symbol);
     ParameterInfo[] parameters = method.GetParameters();
@@ -97,7 +100,7 @@ internal abstract partial class DelegatorBinder : Binder
     return type.GetMethod(method.Name, bindingAttr, binder, method.CallingConvention, parameterTypes, null);
   }
 
-  private static MethodInfo ResolveGenericMethodDefinition(Type type, SymbolMethodInfo method)
+  private static MethodInfo? ResolveGenericMethodDefinition(Type type, SymbolMethodInfo method)
   {
     BindingFlags bindingAttr = GetBindingAttr(method.Symbol);
     ParameterInfo[] parameters = method.GetParameters();
@@ -107,7 +110,7 @@ internal abstract partial class DelegatorBinder : Binder
     return type.GetMethod(method.Name, bindingAttr, binder, method.CallingConvention, parameterTypes, null);
   }
 
-  private static MethodInfo ResolveConstructedGenericMethod(Type type, SymbolMethodInfo methodDefinition, Type[] genericArguments)
+  private static MethodInfo? ResolveConstructedGenericMethod(Type type, SymbolMethodInfo methodDefinition, Type[] genericArguments)
   {
     BindingFlags bindingAttr = GetBindingAttr(methodDefinition.Symbol);
     ParameterInfo[] parameters = methodDefinition.GetParameters();

@@ -68,7 +68,7 @@ namespace " + Namespace + @"
   public void MockActivator<T>()
   {
     _activatorMock
-      .Setup(x => x.CreateInstance<T>(It.IsAny<IRuntimeType>(), Array.Empty<object?>()))
+      .Setup(x => x.CreateInstance(It.IsAny<IRuntimeType>(), Array.Empty<object?>()))
       .Returns<IRuntimeType, object?[]>((t, args) => (T)System.Activator.CreateInstance(t.UnderlyingSystemType)!);
   }
 

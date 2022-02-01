@@ -1,13 +1,12 @@
 ﻿using FluentAssertions;
 using GeneratorKit.Interpret;
+using GeneratorKit.Proxy;
 using GeneratorKit.Reflection;
 using Moq;
-using Xunit;
 using System;
-using GeneratorKit.Proxy;
-using System.Collections.Generic;
-using static GeneratorKit.TestHelpers.ProxyTypes;
+using Xunit;
 using static GeneratorKit.ActivatorFixture;
+using static GeneratorKit.TestHelpers.ProxyTypes;
 
 namespace GeneratorKit;
 
@@ -22,6 +21,9 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     _fixture = fixture;
     _interpreterMock = new Mock<IInterpreter>(MockBehavior.Strict);
     _frameProviderMock = new Mock<IFrameProvider>(MockBehavior.Strict);
+
+    _interpreterMock
+      .Setup(x => x.Interpret(It.IsAny<IRuntimeConstructor>(), It.IsAny<InterpreterFrame>(), It.IsAny<object?[]>()));
   }
 
   [Fact]
@@ -34,7 +36,7 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     SymbolType sourceType = _fixture.GetSourceType(SourceType.NonGenericClass);
     SymbolType type = sourceType;
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[0];
-    InterpreterFrame classFrame = InterpreterFrame.NewClassFrame(null, new Dictionary<string, object?>(), Type.EmptyTypes);
+    InterpreterFrame classFrame = GetClassFrame();
 
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
@@ -44,18 +46,19 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
       .Returns(classFrame);
     _frameProviderMock
       .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(InterpreterFrame.NewMethodFrame(classFrame, new Dictionary<string, object?>(), Type.EmptyTypes));
+      .Returns(GetConstructorFrame(classFrame));
     _frameProviderMock
-      .Setup(x => x.GetInstanceFrame(classFrame, It.IsAny<object>()))
-      .Returns<InterpreterFrame, object>((parent, instance) => InterpreterFrame.NewInstanceFrame(parent, new Dictionary<string, object?>(), instance));
+      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
 
     // Act
-    NonGenericClass instance = sut.CreateInstance<NonGenericClass>(type, arguments);
+    object instance = sut.CreateInstance(type, arguments);
 
     // Assert
     instance.Should().BeAssignableTo<IProxied>();
+    instance.Should().BeAssignableTo<NonGenericClass>();
   }
 
   [Fact]
@@ -69,7 +72,7 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     SymbolType sourceType = _fixture.GetSourceType(SourceType.NonGenericClassWithCtors);
     SymbolType type = sourceType;
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[0];
-    InterpreterFrame classFrame = InterpreterFrame.NewClassFrame(null, new Dictionary<string, object?>(), Type.EmptyTypes);
+    InterpreterFrame classFrame = GetClassFrame();
 
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
@@ -79,19 +82,20 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
       .Returns(classFrame);
     _frameProviderMock
       .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(InterpreterFrame.NewMethodFrame(classFrame, new Dictionary<string, object?>(), Type.EmptyTypes));
+      .Returns(GetConstructorFrame(classFrame));
     _frameProviderMock
-      .Setup(x => x.GetInstanceFrame(classFrame, It.IsAny<object>()))
-      .Returns<InterpreterFrame, object>((parent, instance) => InterpreterFrame.NewInstanceFrame(parent, new Dictionary<string, object?>(), instance));
+      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
 
     // Act
-    NonGenericClassWithMembers instance = sut.CreateInstance<NonGenericClassWithMembers>(type, arguments);
+    object instance = sut.CreateInstance(type, arguments);
 
     // Assert
-    instance.Value1.Should().Be(value1);
-    instance.Value2.Should().BeNull();
+    NonGenericClassWithMembers typedInstance = instance.Should().BeAssignableTo<NonGenericClassWithMembers>().Subject;
+    typedInstance.Value1.Should().Be(value1);
+    typedInstance.Value2.Should().BeNull();
     instance.Should().BeAssignableTo<IProxied>();
   }
 
@@ -106,7 +110,7 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     SymbolType sourceType = _fixture.GetSourceType(SourceType.NonGenericClassWithCtors);
     SymbolType type = sourceType;
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[1];
-    InterpreterFrame classFrame = InterpreterFrame.NewClassFrame(null, new Dictionary<string, object?>(), Type.EmptyTypes);
+    InterpreterFrame classFrame = GetClassFrame();
 
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
@@ -116,19 +120,20 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
       .Returns(classFrame);
     _frameProviderMock
       .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(InterpreterFrame.NewMethodFrame(classFrame, new Dictionary<string, object?>(), Type.EmptyTypes));
+      .Returns(GetConstructorFrame(classFrame));
     _frameProviderMock
-      .Setup(x => x.GetInstanceFrame(classFrame, It.IsAny<object>()))
-      .Returns<InterpreterFrame, object>((parent, instance) => InterpreterFrame.NewInstanceFrame(parent, new Dictionary<string, object?>(), instance));
+      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
 
     // Act
-    NonGenericClassWithMembers instance = sut.CreateInstance<NonGenericClassWithMembers>(type, arguments);
+    object instance = sut.CreateInstance(type, arguments);
 
     // Assert
-    instance.Value1.Should().Be(42);
-    instance.Value2.Should().BeNull();
+    NonGenericClassWithMembers typedInstance = instance.Should().BeAssignableTo<NonGenericClassWithMembers>().Subject;
+    typedInstance.Value1.Should().Be(42);
+    typedInstance.Value2.Should().BeNull();
     instance.Should().BeAssignableTo<IProxied>();
   }
 
@@ -143,7 +148,7 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     SymbolType sourceType = _fixture.GetSourceType(SourceType.NonGenericClassWithCtors);
     SymbolType type = sourceType;
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[2];
-    InterpreterFrame classFrame = InterpreterFrame.NewClassFrame(null, new Dictionary<string, object?>(), Type.EmptyTypes);
+    InterpreterFrame classFrame = GetClassFrame();
 
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
@@ -153,19 +158,20 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
       .Returns(classFrame);
     _frameProviderMock
       .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(InterpreterFrame.NewMethodFrame(classFrame, new Dictionary<string, object?>(), Type.EmptyTypes));
+      .Returns(GetConstructorFrame(classFrame));
     _frameProviderMock
-      .Setup(x => x.GetInstanceFrame(classFrame, It.IsAny<object>()))
-      .Returns<InterpreterFrame, object>((parent, instance) => InterpreterFrame.NewInstanceFrame(parent, new Dictionary<string, object?>(), instance));
+      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
 
     // Act
-    NonGenericClassWithMembers instance = sut.CreateInstance<NonGenericClassWithMembers>(type, arguments);
+    object instance = sut.CreateInstance(type, arguments);
 
     // Assert
-    instance.Value1.Should().Be(0);
-    instance.Value2.Should().Be(value2);
+    NonGenericClassWithMembers typedInstance = instance.Should().BeAssignableTo<NonGenericClassWithMembers>().Subject;
+    typedInstance.Value1.Should().Be(0);
+    typedInstance.Value2.Should().Be(value2);
     instance.Should().BeAssignableTo<IProxied>();
   }
 
@@ -180,7 +186,7 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClass);
     HybridGenericType type = sourceType.MakeGenericType(typeArguments);
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[0];
-    InterpreterFrame classFrame = InterpreterFrame.NewClassFrame(null, new Dictionary<string, object?>(), typeArguments);
+    InterpreterFrame classFrame = GetClassFrame(typeArguments);
 
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
@@ -190,17 +196,18 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
       .Returns(classFrame);
     _frameProviderMock
       .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(InterpreterFrame.NewMethodFrame(classFrame, new Dictionary<string, object?>(), Type.EmptyTypes));
+      .Returns(GetConstructorFrame(classFrame));
     _frameProviderMock
-      .Setup(x => x.GetInstanceFrame(classFrame, It.IsAny<object>()))
-      .Returns<InterpreterFrame, object>((parent, instance) => InterpreterFrame.NewInstanceFrame(parent, new Dictionary<string, object?>(), instance));
+      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
 
     // Act
-    GenericClass<string> instance = sut.CreateInstance<GenericClass<string>>(type, arguments);
+    object instance = sut.CreateInstance(type, arguments);
 
     // Assert
+    instance.Should().BeAssignableTo<GenericClass<string>>();
     instance.Should().BeAssignableTo<IProxied>();
   }
 
@@ -216,7 +223,7 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClassWithCtors);
     HybridGenericType type = sourceType.MakeGenericType(typeArguments);
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[0];
-    InterpreterFrame classFrame = InterpreterFrame.NewClassFrame(null, new Dictionary<string, object?>(), typeArguments);
+    InterpreterFrame classFrame = GetClassFrame(typeArguments);
 
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
@@ -226,19 +233,20 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
       .Returns(classFrame);
     _frameProviderMock
       .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(InterpreterFrame.NewMethodFrame(classFrame, new Dictionary<string, object?>(), Type.EmptyTypes));
+      .Returns(GetConstructorFrame(classFrame));
     _frameProviderMock
-      .Setup(x => x.GetInstanceFrame(classFrame, It.IsAny<object>()))
-      .Returns<InterpreterFrame, object>((parent, instance) => InterpreterFrame.NewInstanceFrame(parent, new Dictionary<string, object?>(), instance));
+      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
 
     // Act
-    GenericClassWithMembers<string> instance = sut.CreateInstance<GenericClassWithMembers<string>>(type, arguments);
+    object instance = sut.CreateInstance(type, arguments);
 
     // Assert
-    instance.Value1.Should().Be(value1);
-    instance.Value2.Should().BeNull();
+    GenericClassWithMembers<string> typedInstance = instance.Should().BeAssignableTo<GenericClassWithMembers<string>>().Subject;
+    typedInstance.Value1.Should().Be(value1);
+    typedInstance.Value2.Should().BeNull();
     instance.Should().BeAssignableTo<IProxied>();
   }
 
@@ -254,7 +262,7 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClassWithCtors);
     HybridGenericType type = sourceType.MakeGenericType(typeArguments);
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[1];
-    InterpreterFrame classFrame = InterpreterFrame.NewClassFrame(null, new Dictionary<string, object?>(), typeArguments);
+    InterpreterFrame classFrame = GetClassFrame(typeArguments);
 
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
@@ -264,19 +272,20 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
       .Returns(classFrame);
     _frameProviderMock
       .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(InterpreterFrame.NewMethodFrame(classFrame, new Dictionary<string, object?>(), Type.EmptyTypes));
+      .Returns(GetConstructorFrame(classFrame));
     _frameProviderMock
-      .Setup(x => x.GetInstanceFrame(classFrame, It.IsAny<object>()))
-      .Returns<InterpreterFrame, object>((parent, instance) => InterpreterFrame.NewInstanceFrame(parent, new Dictionary<string, object?>(), instance));
+      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
 
     // Act
-    GenericClassWithMembers<string> instance = sut.CreateInstance<GenericClassWithMembers<string>>(type, arguments);
+    object instance = sut.CreateInstance(type, arguments);
 
     // Assert
-    instance.Value1.Should().Be(42);
-    instance.Value2.Should().BeNull();
+    GenericClassWithMembers<string> typedInstance = instance.Should().BeAssignableTo<GenericClassWithMembers<string>>().Subject;
+    typedInstance.Value1.Should().Be(42);
+    typedInstance.Value2.Should().BeNull();
     instance.Should().BeAssignableTo<IProxied>();
   }
 
@@ -292,7 +301,7 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClassWithCtors);
     HybridGenericType type = sourceType.MakeGenericType(typeArguments);
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[2];
-    InterpreterFrame classFrame = InterpreterFrame.NewClassFrame(null, new Dictionary<string, object?>(), typeArguments);
+    InterpreterFrame classFrame = GetClassFrame(typeArguments);
 
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
@@ -302,19 +311,20 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
       .Returns(classFrame);
     _frameProviderMock
       .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(InterpreterFrame.NewMethodFrame(classFrame, new Dictionary<string, object?>(), Type.EmptyTypes));
+      .Returns(GetConstructorFrame(classFrame));
     _frameProviderMock
-      .Setup(x => x.GetInstanceFrame(classFrame, It.IsAny<object>()))
-      .Returns<InterpreterFrame, object>((parent, instance) => InterpreterFrame.NewInstanceFrame(parent, new Dictionary<string, object?>(), instance));
+      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
 
     // Act
-    GenericClassWithMembers<string> instance = sut.CreateInstance<GenericClassWithMembers<string>>(type, arguments);
+    object instance = sut.CreateInstance(type, arguments);
 
     // Assert
-    instance.Value1.Should().Be(0);
-    instance.Value2.Should().Be(value2);
+    GenericClassWithMembers<string> typedInstance = instance.Should().BeAssignableTo<GenericClassWithMembers<string>>().Subject;
+    typedInstance.Value1.Should().Be(0);
+    typedInstance.Value2.Should().Be(value2);
     instance.Should().BeAssignableTo<IProxied>();
   }
 
@@ -329,7 +339,7 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     SymbolType sourceType = _fixture.GetSourceType(SourceType.NonGenericClassGenericBaseSource);
     SymbolType type = sourceType;
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[0];
-    InterpreterFrame classFrame = InterpreterFrame.NewClassFrame(null, new Dictionary<string, object?>(), Type.EmptyTypes);
+    InterpreterFrame classFrame = GetClassFrame();
 
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
@@ -339,19 +349,20 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
       .Returns(classFrame);
     _frameProviderMock
       .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(InterpreterFrame.NewMethodFrame(classFrame, new Dictionary<string, object?>(), Type.EmptyTypes));
+      .Returns(GetConstructorFrame(classFrame));
     _frameProviderMock
-      .Setup(x => x.GetInstanceFrame(classFrame, It.IsAny<object>()))
-      .Returns<InterpreterFrame, object>((parent, instance) => InterpreterFrame.NewInstanceFrame(parent, new Dictionary<string, object?>(), instance));
+      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
 
     // Act
-    GenericClassWithMembers<string> instance = sut.CreateInstance<GenericClassWithMembers<string>>(type, arguments);
+    object instance = sut.CreateInstance(type, arguments);
 
     // Assert
-    instance.Value1.Should().Be(value1);
-    instance.Value2.Should().BeNull();
+    GenericClassWithMembers<string> typedInstance = instance.Should().BeAssignableTo<GenericClassWithMembers<string>>().Subject;
+    typedInstance.Value1.Should().Be(value1);
+    typedInstance.Value2.Should().BeNull();
     instance.Should().BeAssignableTo<IProxied>();
   }
 
@@ -366,7 +377,7 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     SymbolType sourceType = _fixture.GetSourceType(SourceType.NonGenericClassGenericBaseSource);
     SymbolType type = sourceType;
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[1];
-    InterpreterFrame classFrame = InterpreterFrame.NewClassFrame(null, new Dictionary<string, object?>(), Type.EmptyTypes);
+    InterpreterFrame classFrame = GetClassFrame();
 
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
@@ -376,19 +387,20 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
       .Returns(classFrame);
     _frameProviderMock
       .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(InterpreterFrame.NewMethodFrame(classFrame, new Dictionary<string, object?>(), Type.EmptyTypes));
+      .Returns(GetConstructorFrame(classFrame));
     _frameProviderMock
-      .Setup(x => x.GetInstanceFrame(classFrame, It.IsAny<object>()))
-      .Returns<InterpreterFrame, object>((parent, instance) => InterpreterFrame.NewInstanceFrame(parent, new Dictionary<string, object?>(), instance));
+      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
 
     // Act
-    GenericClassWithMembers<string> instance = sut.CreateInstance<GenericClassWithMembers<string>>(type, arguments);
+    object instance = sut.CreateInstance(type, arguments);
 
     // Assert
-    instance.Value1.Should().Be(42);
-    instance.Value2.Should().BeNull();
+    GenericClassWithMembers<string> typedInstance = instance.Should().BeAssignableTo<GenericClassWithMembers<string>>().Subject;
+    typedInstance.Value1.Should().Be(42);
+    typedInstance.Value2.Should().BeNull();
     instance.Should().BeAssignableTo<IProxied>();
   }
 
@@ -403,7 +415,7 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     SymbolType sourceType = _fixture.GetSourceType(SourceType.NonGenericClassGenericBaseSource);
     SymbolType type = sourceType;
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[2];
-    InterpreterFrame classFrame = InterpreterFrame.NewClassFrame(null, new Dictionary<string, object?>(), Type.EmptyTypes);
+    InterpreterFrame classFrame = GetClassFrame();
 
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
@@ -413,19 +425,20 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
       .Returns(classFrame);
     _frameProviderMock
       .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(InterpreterFrame.NewMethodFrame(classFrame, new Dictionary<string, object?>(), Type.EmptyTypes));
+      .Returns(GetConstructorFrame(classFrame));
     _frameProviderMock
-      .Setup(x => x.GetInstanceFrame(classFrame, It.IsAny<object>()))
-      .Returns<InterpreterFrame, object>((parent, instance) => InterpreterFrame.NewInstanceFrame(parent, new Dictionary<string, object?>(), instance));
+      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
 
     // Act
-    GenericClassWithMembers<string> instance = sut.CreateInstance<GenericClassWithMembers<string>>(type, arguments);
+    object instance = sut.CreateInstance(type, arguments);
 
     // Assert
-    instance.Value1.Should().Be(0);
-    instance.Value2.Should().Be(value2);
+    GenericClassWithMembers<string> typedInstance = instance.Should().BeAssignableTo<GenericClassWithMembers<string>>().Subject;
+    typedInstance.Value1.Should().Be(0);
+    typedInstance.Value2.Should().Be(value2);
     instance.Should().BeAssignableTo<IProxied>();
   }
 
@@ -440,7 +453,7 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     SymbolType sourceType = _fixture.GetSourceType(SourceType.Interface);
     SymbolType type = sourceType;
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[0];
-    InterpreterFrame classFrame = InterpreterFrame.NewClassFrame(null, new Dictionary<string, object?>(), Type.EmptyTypes);
+    InterpreterFrame classFrame = GetClassFrame();
 
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
@@ -450,17 +463,18 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
       .Returns(classFrame);
     _frameProviderMock
       .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(InterpreterFrame.NewMethodFrame(classFrame, new Dictionary<string, object?>(), Type.EmptyTypes));
+      .Returns(GetConstructorFrame(classFrame));
     _frameProviderMock
-      .Setup(x => x.GetInstanceFrame(classFrame, It.IsAny<object>()))
-      .Returns<InterpreterFrame, object>((parent, instance) => InterpreterFrame.NewInstanceFrame(parent, new Dictionary<string, object?>(), instance));
+      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
 
     // Act
-    IInterface instance = sut.CreateInstance<IInterface>(type, arguments);
+    object instance = sut.CreateInstance(type, arguments);
 
     // Assert
+    instance.Should().BeAssignableTo<IInterface>();
     instance.Should().BeAssignableTo<IProxied>();
   }
 
@@ -475,7 +489,7 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     SymbolType sourceType = _fixture.GetSourceType(SourceType.Interface);
     SymbolType type = sourceType;
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[1];
-    InterpreterFrame classFrame = InterpreterFrame.NewClassFrame(null, new Dictionary<string, object?>(), Type.EmptyTypes);
+    InterpreterFrame classFrame = GetClassFrame();
 
     _interpreterMock
       .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
@@ -485,17 +499,18 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
       .Returns(classFrame);
     _frameProviderMock
       .Setup(x => x.GetConstructorFrame(classFrame, constructor, arguments))
-      .Returns(InterpreterFrame.NewMethodFrame(classFrame, new Dictionary<string, object?>(), Type.EmptyTypes));
+      .Returns(GetConstructorFrame(classFrame));
     _frameProviderMock
-      .Setup(x => x.GetInstanceFrame(classFrame, It.IsAny<object>()))
-      .Returns<InterpreterFrame, object>((parent, instance) => InterpreterFrame.NewInstanceFrame(parent, new Dictionary<string, object?>(), instance));
+      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object, _frameProviderMock.Object);
 
     // Act
-    IInterface instance = sut.CreateInstance<IInterface>(type, arguments);
+    object instance = sut.CreateInstance(type, arguments);
 
     // Assert
+    instance.Should().BeAssignableTo<IInterface>();
     instance.Should().BeAssignableTo<IProxied>();
   }
 }

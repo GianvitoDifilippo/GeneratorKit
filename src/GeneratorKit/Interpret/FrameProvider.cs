@@ -5,16 +5,19 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Linq;
 
 namespace GeneratorKit.Interpret;
 
 internal class FrameProvider : IFrameProvider
 {
+  private readonly IFrameDictionaryProvider _dictionaryProvider;
   private readonly Dictionary<IRuntimeType, InterpreterFrame> _classFrames;
 
-  public FrameProvider()
+  public FrameProvider(IFrameDictionaryProvider dictionaryProvider)
   {
-    _classFrames = new Dictionary<IRuntimeType, InterpreterFrame>(new RuntimeTypeEqualityComparer());
+    _dictionaryProvider = dictionaryProvider;
+    _classFrames = new Dictionary<IRuntimeType, InterpreterFrame>(RuntimeTypeEqualityComparer.Default);
   }
 
   public InterpreterFrame GetClassFrame(IRuntimeType type)
@@ -32,64 +35,75 @@ internal class FrameProvider : IFrameProvider
       parentFrame = GetClassFrame(baseType);
     }
 
-    classFrame = InterpreterFrame.NewClassFrame(parentFrame, CreateValues(), type.TypeArguments);
+    classFrame = InterpreterFrame.NewClassFrame(parentFrame, _dictionaryProvider.GetValues(), type.TypeArguments);
     _classFrames.Add(type, classFrame);
 
     return classFrame;
   }
 
-  public InterpreterFrame GetInstanceFrame(InterpreterFrame classFrame, object instance)
+  public InterpreterFrame GetInstanceFrame(InterpreterFrame classFrame, IRuntimeType type, object instance)
   {
-    return InterpreterFrame.NewInstanceFrame(classFrame, CreateValues(), instance);
+    Debug.Assert(type.IsSource);
+
+    InterpreterFrame instanceFrame = InterpreterFrame.NewInstanceFrame(classFrame, _dictionaryProvider.GetValues(), instance); ;
+    IEnumerable<ISymbol> fields = type.Definition.Symbol.GetMembers().Where(x => x.Kind is SymbolKind.Field);
+    foreach (IFieldSymbol field in fields)
+    {
+      instanceFrame.Declare(field.IsImplicitlyDeclared ? field.AssociatedSymbol! : field);
+    }
+    return instanceFrame;
   }
 
   public InterpreterFrame GetMethodFrame(InterpreterFrame parent, IRuntimeMethod method, object?[] arguments)
   {
     Debug.Assert(method.IsSource);
-    Debug.Assert(!method.ContainsGenericParameters);
+    Debug.Assert(!method.IsOpenGeneric);
 
     ImmutableArray<IParameterSymbol> parameters = method.Definition.Symbol.Parameters;
     int length = parameters.Length;
     if (arguments.Length != length)
       throw new ArgumentException($"Wrong number of arguments supplied to method {method}.", nameof(arguments));
 
-    Dictionary<string, object?> values = CreateValues(arguments.Length);
+    IDictionary<ISymbol, object?> values = _dictionaryProvider.GetValues(arguments.Length);
+    InterpreterFrame methodFrame = InterpreterFrame.NewMethodFrame(parent, values, method.TypeArguments);
     for (int i = 0; i < length; i++)
     {
-      values[parameters[i].Name] = arguments[i];
+      methodFrame.Define(parameters[i], arguments[i]);
     }
 
-    return InterpreterFrame.NewMethodFrame(parent, values, method.TypeArguments);
+    return methodFrame;
   }
 
-  public InterpreterFrame GetConstructorFrame(InterpreterFrame classFrame, SymbolConstructorInfo constructor, object?[] arguments)
+  public InterpreterFrame GetConstructorFrame(InterpreterFrame classFrame, IRuntimeConstructor constructor, object?[] arguments)
   {
+    Debug.Assert(constructor.IsSource);
+
     ImmutableArray<IParameterSymbol> parameters = constructor.Symbol.Parameters;
     int length = parameters.Length;
     if (arguments.Length != length)
       throw new ArgumentException($"Wrong number of arguments supplied to method {constructor}.", nameof(arguments));
 
-    Dictionary<string, object?> values = CreateValues(arguments.Length);
+    IDictionary<ISymbol, object?> values = _dictionaryProvider.GetValues(arguments.Length);
+    InterpreterFrame constructorFrame = InterpreterFrame.NewMethodFrame(classFrame, values, Type.EmptyTypes);
     for (int i = 0; i < length; i++)
     {
-      values[parameters[i].Name] = arguments[i];
+      constructorFrame.Define(parameters[i], arguments[i]);
     }
 
-    return InterpreterFrame.NewMethodFrame(classFrame, values, Type.EmptyTypes);
+    return constructorFrame;
   }
 
   public InterpreterFrame NewScopeFrame(InterpreterFrame parent)
   {
-    return InterpreterFrame.NewScopeFrame(parent, CreateValues());
-  }
-
-  private static Dictionary<string, object?> CreateValues(int capacity = 0)
-  {
-    return new Dictionary<string, object?>(capacity);
+    return InterpreterFrame.NewScopeFrame(parent, _dictionaryProvider.GetValues());
   }
 
   private class RuntimeTypeEqualityComparer : IEqualityComparer<IRuntimeType>
   {
+    public static RuntimeTypeEqualityComparer Default = new RuntimeTypeEqualityComparer();
+
+    private RuntimeTypeEqualityComparer() { }
+
     public bool Equals(IRuntimeType t1, IRuntimeType t2)
     {
       if (ReferenceEquals(t1, t2))

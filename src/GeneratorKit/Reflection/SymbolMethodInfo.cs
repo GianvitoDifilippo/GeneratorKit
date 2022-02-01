@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Diagnostics.SymbolStore;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -34,7 +35,7 @@ internal class SymbolMethodInfo : SymbolMethodInfoBase, IRuntimeMethod
   public IMethodSymbol Symbol { get; }
 
   // TODO: Assert not in source
-  internal MethodInfo UnderlyingSystemMethod => _underlyingSystemMethod ??= DelegatorBinder.ResolveMethod(ReflectedType.UnderlyingSystemType, this);
+  public MethodInfo UnderlyingSystemMethod => _underlyingSystemMethod ??= DelegatorBinder.ResolveMethod(ReflectedType.UnderlyingSystemType, this);
 
 
   // System.Reflection.MethodInfo overrides
@@ -90,7 +91,7 @@ internal class SymbolMethodInfo : SymbolMethodInfoBase, IRuntimeMethod
     ? CallingConventions.Standard
     : CallingConventions.Standard | CallingConventions.HasThis;
 
-  public override bool ContainsGenericParameters =>
+  public override bool ContainsGenericParameters => // TODO: Deep check
     Symbol.IsGenericMethod && Symbol.TypeArguments.Any(t => t.TypeKind is TypeKind.TypeParameter) ||
     DeclaringTypeCore is not null && DeclaringTypeCore.ContainsGenericParameters;
 
@@ -153,9 +154,7 @@ internal class SymbolMethodInfo : SymbolMethodInfoBase, IRuntimeMethod
 
   public override object? Invoke(object obj, BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
   {
-    return Symbol.ContainingAssembly is ISourceAssemblySymbol
-      ? _runtime.InvokeMethod(this, obj, parameters)
-      : UnderlyingSystemMethod.Invoke(obj, invokeAttr, binder, parameters, culture);
+    return _runtime.InvokeMethod(this, obj, parameters);
   }
 
   public override bool IsDefined(Type attributeType, bool inherit)
@@ -163,13 +162,23 @@ internal class SymbolMethodInfo : SymbolMethodInfoBase, IRuntimeMethod
     throw new NotImplementedException();
   }
 
-  public override MethodInfo MakeGenericMethod(params Type[] typeArguments)
+  protected override SymbolMethodInfo MakeGenericMethodCore(SymbolType[] typeArguments)
   {
     if (!IsGenericMethodDefinition)
-      throw new InvalidOperationException();
+      throw new InvalidOperationException(); // TODO: Message
 
-    if (typeArguments is SymbolType[] symbolTypeArguments)
-      return MakeGenericMethod(symbolTypeArguments);
+    ITypeSymbol[] typeSymbolArguments = typeArguments.Select(x => x.Symbol).ToArray();
+    IMethodSymbol constructed = Symbol.Construct(typeSymbolArguments);
+
+    return _reflectedType is null
+      ? _runtime.CreateMethodInfoDelegator(constructed)
+      : new SymbolMethodInfo(_runtime, constructed, _reflectedType);
+  }
+
+  protected override HybridGenericMethod MakeGenericMethodCore(Type[] typeArguments)
+  {
+    if (!IsGenericMethodDefinition)
+      throw new InvalidOperationException(); // TODO: Message
 
     return new HybridGenericMethod(this, typeArguments);
   }
@@ -292,6 +301,8 @@ internal class SymbolMethodInfo : SymbolMethodInfoBase, IRuntimeMethod
 
   public new SymbolArgumentParameter[] GetParameters() => GetParametersCore();
 
+  public new HybridGenericMethod MakeGenericMethod(Type[] typeArguments) => MakeGenericMethodCore(typeArguments);
+
 
   // IRuntimeMethod members
 
@@ -301,7 +312,9 @@ internal class SymbolMethodInfo : SymbolMethodInfoBase, IRuntimeMethod
 
   IRuntimeType IRuntimeMethod.DeclaringType => DeclaringType;
 
-  bool IRuntimeMethod.IsSource => Symbol.ContainingAssembly is ISourceAssemblySymbol;
+  bool IRuntimeMethod.IsOpenGeneric => Symbol.IsGenericMethod && Symbol.TypeArguments.Any(t => t.TypeKind is TypeKind.TypeParameter); // TODO: Deep check
+
+  bool IRuntimeMethod.IsSource => Symbol.IsSource();
 
 
   // Other members
@@ -310,12 +323,7 @@ internal class SymbolMethodInfo : SymbolMethodInfoBase, IRuntimeMethod
 
   public SymbolMethodInfo MakeGenericMethod(params SymbolType[] typeArguments)
   {
-    ITypeSymbol[] typeSymbolArguments = typeArguments.Select(x => x.Symbol).ToArray();
-    IMethodSymbol constructed = Symbol.Construct(typeSymbolArguments);
-
-    return _reflectedType is null
-      ? _runtime.CreateMethodInfoDelegator(constructed)
-      : new SymbolMethodInfo(_runtime, constructed, _reflectedType);
+    return MakeGenericMethodCore(typeArguments);
   }
 
   private bool ImplementsAnyInterfaceMethod
@@ -361,6 +369,13 @@ internal abstract class SymbolMethodInfoBase : MethodInfo
 
   public sealed override ParameterInfo[] GetParameters() => GetParametersCore();
 
+  public sealed override MethodInfo MakeGenericMethod(params Type[] typeArguments)
+  {
+    return typeArguments is SymbolType[] symbolTypeArguments
+      ? MakeGenericMethodCore(symbolTypeArguments)
+      : MakeGenericMethodCore(typeArguments);
+  }
+
 
   // Abstract members
 
@@ -386,4 +401,8 @@ internal abstract class SymbolMethodInfoBase : MethodInfo
   protected abstract SymbolMethodInfo GetGenericMethodDefinitionCore();
 
   protected abstract SymbolArgumentParameter[] GetParametersCore();
+
+  protected abstract HybridGenericMethod MakeGenericMethodCore(Type[] typeArguments);
+
+  protected abstract SymbolMethodInfo MakeGenericMethodCore(SymbolType[] typeArguments);
 }

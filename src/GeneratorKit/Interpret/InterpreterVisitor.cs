@@ -190,7 +190,6 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
       BeginScope();
       result = operation.WhenFalse.Accept(this, default);
       EndScope();
-      return result;
     }
     return result;
   }
@@ -293,16 +292,16 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
     IFieldSymbol symbol = operation.Field;
     InterpreterFrame frame = Frame;
     
-    if (frame.IsDefined(symbol.Name))
+    if (frame.IsDefined(symbol))
     {
       if (argument.HasValue)
       {
-        frame.Assign(symbol.Name, argument.Value);
+        frame.Assign(symbol, argument.Value);
         return null;
       }
       else
       {
-        return frame.Get(symbol.Name);
+        return frame.Get(symbol);
       }
     }
 
@@ -459,10 +458,7 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
     IMethodSymbol targetMethod = operation.TargetMethod;
 
     InterpreterRuntimeMethod method = new InterpreterRuntimeMethod(_runtime, targetMethod, Frame);
-
-    return targetMethod.ContainingAssembly is ISourceAssemblySymbol
-      ? InvokeMethod(method, instance, arguments)
-      : method.Invoke(instance, arguments);
+    return _runtime.InvokeMethod(method, instance, arguments);
   }
 
   public override object? VisitIsType(IIsTypeOperation operation, Optional<object?> argument)
@@ -489,17 +485,17 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
     {
       if (operation.IsDeclaration)
       {
-        Frame.Define(operation.Local.Name, argument.Value);
+        Frame.Define(operation.Local, argument.Value);
       }
       else
       {
-        Frame.Assign(operation.Local.Name, argument.Value);
+        Frame.Assign(operation.Local, argument.Value);
       }
       return null;
     }
     else
     {
-      return Frame.Get(operation.Local.Name);
+      return Frame.Get(operation.Local);
     }
   }
 
@@ -519,12 +515,20 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
     // return Delegate.CreateDelegate(DelegateHelper.GetDelegateType(_runtime, operation.Method), instance, method);
   }
 
+  public override object? VisitNameOf(INameOfOperation operation, Optional<object?> argument)
+  {
+    Optional<object?> constantValue = operation.ConstantValue;
+    Debug.Assert(constantValue.HasValue);
+    return constantValue.Value;
+  }
+
   public override object? VisitObjectCreation(IObjectCreationOperation operation, Optional<object?> argument)
   {
-    ConstructorInfo constructor = _runtime.CreateConstructorInfoDelegator(operation.Constructor); // TODO: Why can it be null?
+    IMethodSymbol targetConstructor = operation.Constructor; // TODO: Why can it be null?
     object?[] arguments = operation.Arguments.Map(arg => arg.Accept(this, default));
+    InterpreterRuntimeConstructor constructor = new InterpreterRuntimeConstructor(_runtime, targetConstructor, Frame);
 
-    object result = constructor.Invoke(arguments);
+    object? result = _runtime.InvokeConstructor(constructor, arguments);
 
     if (operation.Initializer is IObjectOrCollectionInitializerOperation initializerOperation)
     {
@@ -534,13 +538,6 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
     }
 
     return result;
-  }
-
-  public override object? VisitNameOf(INameOfOperation operation, Optional<object?> argument)
-  {
-    Optional<object?> constantValue = operation.ConstantValue;
-    Debug.Assert(constantValue.HasValue);
-    return constantValue.Value;
   }
 
   public override object? VisitObjectOrCollectionInitializer(IObjectOrCollectionInitializerOperation operation, Optional<object?> argument)
@@ -557,12 +554,12 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
   {
     if (argument.HasValue)
     {
-      Frame.Assign(operation.Parameter.Name, argument.Value);
+      Frame.Assign(operation.Parameter, argument.Value);
       return argument.Value;
     }
     else
     {
-      return Frame.Get(operation.Parameter.Name);
+      return Frame.Get(operation.Parameter);
     }
   }
 
@@ -576,16 +573,17 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
     object? instance = operation.Property.IsStatic ? null : operation.Instance!.Accept(this, default);
     object?[] arguments = operation.Arguments.Map(arg => arg.Accept(this, default));
     IPropertySymbol targetProperty = operation.Property;
+    InterpreterRuntimeProperty property = new InterpreterRuntimeProperty(_runtime, targetProperty, Frame);
 
-    IMethodSymbol targetMethod = argument.HasValue
-      ? targetProperty.SetMethod!
-      : targetProperty.GetMethod!;
-
-    InterpreterRuntimeMethod method = new InterpreterRuntimeMethod(_runtime, targetMethod, Frame);
-
-    return targetProperty.ContainingAssembly is ISourceAssemblySymbol
-      ? InvokeMethod(method, instance, arguments)
-      : method.Invoke(instance, arguments);
+    if (argument.HasValue)
+    {
+      _runtime.InvokeSetter(property, instance, arguments, argument.Value);
+      return null;
+    }
+    else
+    {
+      return _runtime.InvokeGetter(property, instance, arguments);
+    }
   }
 
   public override object? VisitRangeOperation(IRangeOperation operation, Optional<object?> argument)
@@ -691,15 +689,15 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
     if (operation.Initializer is IVariableInitializerOperation initializerOperation)
     {
       object? initializer = VisitVariableInitializer(initializerOperation, default);
-      Frame.Define(operation.Symbol.Name, initializer);
+      Frame.Define(operation.Symbol, initializer);
     }
     else if (argument.HasValue)
     {
-      Frame.DefineOrAssign(operation.Symbol.Name, argument.Value);
+      Frame.DefineOrAssign(operation.Symbol, argument.Value);
     }
     else
     {
-      Frame.Declare(operation.Symbol.Name);
+      Frame.Declare(operation.Symbol);
     }
     return null;
   }

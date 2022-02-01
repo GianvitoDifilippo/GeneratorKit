@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis;
 using System;
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 
@@ -21,7 +22,7 @@ internal class HybridGenericMethod : HybridGenericMethodBase, IRuntimeMethod
     _typeArguments = typeArguments;
   }
 
-  internal MethodInfo UnderlyingSystemMethod => _underlyingSystemMethod ??= DelegatorBinder.ResolveMethod(ReflectedTypeCore.UnderlyingSystemType, this);
+  public MethodInfo UnderlyingSystemMethod => _underlyingSystemMethod ??= DelegatorBinder.ResolveMethod(ReflectedTypeCore.UnderlyingSystemType, this);
 
 
   // System.Reflection.MethodInfo overrides
@@ -147,7 +148,9 @@ internal class HybridGenericMethod : HybridGenericMethodBase, IRuntimeMethod
 
   IRuntimeType IRuntimeMethod.DeclaringType => DeclaringType;
 
-  bool IRuntimeMethod.IsSource => _definition.Symbol.ContainingAssembly is ISourceAssemblySymbol;
+  bool IRuntimeMethod.IsOpenGeneric => _typeArguments.Any(t => t.IsGenericParameter); // TODO: Deep check
+
+  bool IRuntimeMethod.IsSource => _definition.Symbol.IsSource();
 
 
   // New members

@@ -3,9 +3,9 @@ using GeneratorKit.Reflection;
 using GeneratorKit.TestHelpers;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
-using Moq;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using Xunit;
 using static GeneratorKit.TestHelpers.ProxyTypes;
 
@@ -91,6 +91,26 @@ namespace " + Namespace + @"
     {
       return nameof(NonGenericClass_Interpret);
     }
+
+    public int For()
+    {
+      int total = 0;
+      for (int i = 0; i < 5; i++)
+      {
+        total += i;
+      }
+      return total;
+    }
+
+    public int ForEach(System.Collections.Generic.IEnumerable<int> enumerable)
+    {
+      int total = 1;
+      foreach (int integer in enumerable)
+      {
+        total *= integer;
+      }
+      return total;
+    }
   }
 
   public class GenericClass_Interpret<T>
@@ -125,6 +145,14 @@ namespace " + Namespace + @"
       return StaticProperty;
     }
 
+    public void GenericObjectCreation(T arg1)
+    {
+      OtherGenericClass<T, int> obj = new OtherGenericClass<T, int>(arg1, 4);
+      T value1 = obj.Arg1;
+      int value2 = obj.Arg2;
+    }
+
+
     private int NonGenericMethod_GenericType()
     {
       return typeof(T).Name.Length;
@@ -144,11 +172,24 @@ namespace " + Namespace + @"
 
     private static int StaticProperty => typeof(T).Name.Length;
   }
+
+  public class OtherGenericClass<T1, T2>
+  {
+    private int _a;
+
+    public OtherGenericClass(T1 arg1, T2 arg2)
+    {
+      Arg1 = arg1;
+      Arg2 = arg2;
+    }
+
+    public T1 Arg1 { get; }
+    public T2 Arg2 { get; }
+  }
 }
 ";
 
   private readonly Compilation _compilation;
-  private readonly FakeGeneratorRuntime _runtime;
   private readonly FakeOperationManager _operationManager;
 
   private readonly INamedTypeSymbol _nonGenericClassSourceSymbol;
@@ -156,8 +197,8 @@ namespace " + Namespace + @"
   private readonly INamedTypeSymbol _genericClassSourceSymbol;
   private readonly INamedTypeSymbol _genericClassWithMembersSourceSymbol;
   private readonly INamedTypeSymbol _interfaceSourceSymbol;
-  private readonly SymbolType _nongenericClassInterpretType;
-  private readonly SymbolType _genericClassInterpretType;
+  private readonly INamedTypeSymbol _nongenericClassInterpretSymbol;
+  private readonly INamedTypeSymbol _genericClassInterpretSymbol;
 
   public InterpreterFixture()
   {
@@ -165,7 +206,6 @@ namespace " + Namespace + @"
     Assert.True(output.IsValid, $"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
 
     _compilation = output.Compilation;
-    _runtime = new FakeGeneratorRuntime(_compilation);
     _operationManager = new FakeOperationManager(_compilation);
 
     _nonGenericClassSourceSymbol = GetTypeSymbolFromCompilation("NonGenericClassSource");
@@ -173,18 +213,8 @@ namespace " + Namespace + @"
     _genericClassSourceSymbol = GetTypeSymbolFromCompilation("GenericClassSource`1");
     _genericClassWithMembersSourceSymbol = GetTypeSymbolFromCompilation("GenericClassWithMembersSource`1");
     _interfaceSourceSymbol = GetTypeSymbolFromCompilation("InterfaceSource");
-
-    _runtime.AddType(_nonGenericClassSourceSymbol, typeof(NonGenericClassProxy));
-    _runtime.AddType(_nonGenericClassWithMembersSourceSymbol, typeof(NonGenericClassWithMembersProxy));
-
-    INamedTypeSymbol nongenericClassInterpretSymbol = GetTypeSymbolFromCompilation("NonGenericClass_Interpret");
-    INamedTypeSymbol genericClassInterpretSymbol = GetTypeSymbolFromCompilation("GenericClass_Interpret`1");
-    _nongenericClassInterpretType = new SymbolNamedType(_runtime, nongenericClassInterpretSymbol);
-    _genericClassInterpretType = new SymbolNamedType(_runtime, genericClassInterpretSymbol);
-    
-    _runtime.AddType(_nonGenericClassSourceSymbol, typeof(NonGenericClassProxy));
-    _runtime.AddType(_nongenericClassInterpretType, typeof(ObjectProxy));
-    _runtime.AddType(_genericClassInterpretType, typeof(ObjectProxy));
+    _nongenericClassInterpretSymbol = GetTypeSymbolFromCompilation("NonGenericClass_Interpret");
+    _genericClassInterpretSymbol = GetTypeSymbolFromCompilation("GenericClass_Interpret`1");
 
     INamedTypeSymbol GetTypeSymbolFromCompilation(string name)
     {
@@ -194,12 +224,19 @@ namespace " + Namespace + @"
     }
   }
 
-  internal Interpreter CreateSut(IFrameProvider frameProvider)
+  internal Interpreter CreateSut(FrameProvider frameProvider, out GeneratorRuntime runtime)
   {
-    return new Interpreter(_runtime, _operationManager, frameProvider);
+    ProxyManager proxyManager = new ProxyManager();
+    proxyManager.RegisterProxyType(typeof(NonGenericClassProxy));
+    proxyManager.RegisterProxyType(typeof(NonGenericClassWithMembersProxy));
+
+    FakeDependencyFactory dependencyFactory = new FakeDependencyFactory(frameProvider);
+    ConcreteGeneratorRuntime concreteRuntime = new ConcreteGeneratorRuntime(_compilation, proxyManager, dependencyFactory, CancellationToken.None);
+    runtime = concreteRuntime;
+    return new Interpreter(concreteRuntime, _operationManager, frameProvider);
   }
 
-  internal SymbolType GetSourceType(SourceType sourceType)
+  internal SymbolType GetSourceType(GeneratorRuntime runtime, SourceType sourceType)
   {
     INamedTypeSymbol symbol = sourceType switch
     {
@@ -211,40 +248,40 @@ namespace " + Namespace + @"
       _                                           => throw Errors.Unreacheable
     };
 
-    return new SymbolNamedType(_runtime, symbol);
+    return new SymbolNamedType(runtime, symbol);
   }
 
-  internal SymbolMethodInfo GetInterpretedOperationMethod(InterpretedOperationType operationType)
+  internal SymbolMethodInfo GetInterpretedOperationMethod(GeneratorRuntime runtime, InterpretedOperationType operationType)
   {
-    SymbolType type = GetType(operationType);
+    SymbolType type = GetType(runtime, operationType);
     SymbolMethodInfo? method = type.GetMethod(operationType.ToString());
     Assert.NotNull(method);
-    return _runtime.CreateMethodInfoDelegator(method!.Symbol);
+    return runtime.CreateMethodInfoDelegator(method!.Symbol);
   }
 
-  internal InterpreterFrame GetClassFrame(IFrameProvider frameProvider, SymbolType sourceType, params Type[] genericArguments)
+  internal static InterpreterFrame GetClassFrame(IFrameProvider frameProvider, SymbolType sourceType, params Type[] genericArguments)
   {
     return genericArguments.Length > 0
       ? frameProvider.GetClassFrame(sourceType.MakeGenericType(genericArguments))
       : frameProvider.GetClassFrame(sourceType);
   }
 
-  internal InterpreterFrame GetInstanceFrame(IFrameProvider frameProvider, Interpreter sut, InterpretedOperationType operationType, params Type[] genericArguments)
+  internal InterpreterFrame GetInstanceFrame(GeneratorRuntime runtime, IFrameProvider frameProvider, Interpreter sut, InterpretedOperationType operationType, params Type[] genericArguments)
   {
-    SymbolType type = GetType(operationType);
+    SymbolType type = GetType(runtime, operationType);
     InterpreterFrame classFrame = GetClassFrame(frameProvider, type, genericArguments);
     ObjectProxy instance = new ObjectProxy();
-    InterpreterFrame instanceFrame = frameProvider.GetInstanceFrame(classFrame, instance);
+    InterpreterFrame instanceFrame = frameProvider.GetInstanceFrame(classFrame, type, instance);
     instance.Delegate = new OperationDelegate(sut, instanceFrame, new Dictionary<int, SymbolMethodInfo>());
     return instanceFrame;
   }
 
-  private SymbolType GetType(InterpretedOperationType operationType)
+  private SymbolType GetType(GeneratorRuntime runtime, InterpretedOperationType operationType)
   {
     return (int)operationType switch
     {
-      < 4096 => _nongenericClassInterpretType,
-      < 8192 => _genericClassInterpretType,
+      < 4096 => runtime.CreateTypeDelegator(_nongenericClassInterpretSymbol),
+      < 8192 => runtime.CreateTypeDelegator(_genericClassInterpretSymbol),
       _      => throw Errors.Unreacheable
     };
   }
@@ -265,12 +302,15 @@ namespace " + Namespace + @"
     IfElse,
     TupleAssignment,
     NameOf,
+    For,
+    ForEach,
 
     Invocation_NonGenericMethod_GenericType = 4096,
     Invocation_GenericMethod_GenericType1,
     Invocation_GenericMethod_GenericType2,
     Invocation_StaticMethod,
     Property_InstanceProperty,
-    Property_StaticProperty
+    Property_StaticProperty,
+    GenericObjectCreation
   }
 }

@@ -4,5 +4,6 @@ namespace GeneratorKit;
 
 internal interface IActivator
 {
-  T CreateInstance<T>(IRuntimeType type, params object?[] arguments);
+  object CreateInstance(IRuntimeType type, object?[] arguments);
+  object CreateInstance(IRuntimeConstructor constructor, object?[] arguments);
 }

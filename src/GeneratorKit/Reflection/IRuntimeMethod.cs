@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 
 namespace GeneratorKit.Reflection;
 
@@ -8,6 +9,9 @@ internal interface IRuntimeMethod
   Type[] TypeArguments { get; }
   IRuntimeType DeclaringType { get; }
   bool IsStatic { get; }
-  bool ContainsGenericParameters { get; }
+  bool IsGenericMethod { get; }
+  bool IsGenericMethodDefinition { get; }
+  bool IsOpenGeneric { get; }
   bool IsSource { get; }
+  MethodInfo UnderlyingSystemMethod { get; }
 }

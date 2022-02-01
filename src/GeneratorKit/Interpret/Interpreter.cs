@@ -17,14 +17,14 @@ internal class Interpreter : IInterpreter
     _frameProvider = frameProvider;
   }
 
-  public object?[] GetProxyArguments(SymbolConstructorInfo constructor, InterpreterFrame classFrame, object?[] arguments)
+  public object?[] GetProxyArguments(IRuntimeConstructor constructor, InterpreterFrame classFrame, object?[] arguments)
   {
     if (!_operationManager.TryGetOperation(constructor.Symbol, out IOperation? operation))
       throw new InvalidUserCodeException(); // TODO: Message
 
     InterpreterFrame constructorFrame = _frameProvider.GetConstructorFrame(classFrame, constructor, arguments);
 
-    return (object?[])new ConstructorInitializerVisitor(_runtime, this, _frameProvider, constructorFrame).Visit(operation, default)!;
+    return (object?[])new ConstructorInitializerVisitor(_runtime, _frameProvider, constructorFrame).Visit(operation, default)!;
   }
 
   public object? Interpret(IRuntimeMethod method, InterpreterFrame frame, object?[] arguments)
@@ -34,6 +34,16 @@ internal class Interpreter : IInterpreter
 
     InterpreterFrame methodFrame = _frameProvider.GetMethodFrame(frame, method, arguments);
 
-    return new InterpreterVisitor(_runtime, this, _frameProvider, methodFrame).Visit(operation, default);
+    return new InterpreterVisitor(_runtime, _frameProvider, methodFrame).Visit(operation, default);
+  }
+
+  public void Interpret(IRuntimeConstructor constructor, InterpreterFrame frame, object?[] arguments)
+  {
+    if (!_operationManager.TryGetOperation(constructor.Symbol, out IOperation? operation))
+      throw new InvalidUserCodeException(); // TODO: Message
+
+    InterpreterFrame methodFrame = _frameProvider.GetConstructorFrame(frame, constructor, arguments);
+
+    new InterpreterVisitor(_runtime, _frameProvider, methodFrame).Visit(operation, default);
   }
 }

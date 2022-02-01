@@ -367,7 +367,7 @@ internal abstract class SymbolType : SymbolTypeBase
 
   // GeneratorRuntimeType overrides
 
-  protected override bool IsSource => Symbol.ContainingAssembly is ISourceAssemblySymbol;
+  protected override bool IsSource => Symbol.IsSource();
 
 
   // System.Object overrides
@@ -465,7 +465,10 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public Type RuntimeType => _runtimeType ??= _runtime.GetRuntimeType(this);
 
-  public SymbolType MakeGenericType(params SymbolType[] typeArguments) => MakeGenericTypeCore(typeArguments);
+  public SymbolType MakeGenericType(params SymbolType[] typeArguments)
+  {
+    return MakeGenericTypeCore(typeArguments);
+  }
 
   private IEnumerable<SymbolConstructorInfo> GetConstructorsEnumerable(BindingFlags bindingAttr)
   {

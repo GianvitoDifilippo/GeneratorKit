@@ -1,5 +1,4 @@
 ﻿using GeneratorKit.Proxy;
-using System;
 
 namespace GeneratorKit.TestHelpers;
 
@@ -63,6 +62,7 @@ public static class ProxyTypes
     public int Method2(int arg1, string arg2) => throw null!;
   }
 
+  [ProxyClass(typeof(NonGenericClassWithMembers))]
   public class NonGenericClassWithMembersProxy : NonGenericClassWithMembers, IProxied
   {
     public NonGenericClassWithMembersProxy(int value1) : base(value1) { }
@@ -89,6 +89,7 @@ public static class ProxyTypes
     public T? Value2 { get; }
   }
 
+  [ProxyClass(typeof(GenericClassWithMembers<>))]
   public class GenericClassWithMembersProxy<T> : GenericClassWithMembers<T>, IProxied
     where T : class
   {

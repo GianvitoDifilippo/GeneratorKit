@@ -39,13 +39,25 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
       throw new NotSupportedException("Arrays, pointers and by ref types are not supported.");
     if (type is not IRuntimeType runtimeType)
       throw new ArgumentException("The type must be provided by this runtime.", nameof(type));
+    if (!typeof(T).IsAssignableFrom(runtimeType.UnderlyingSystemType))
+      throw new ArgumentException($"{type.FullName} is not assignable to {typeof(T).FullName}", nameof(type));
 
-    return _activator.CreateInstance<T>(runtimeType, arguments);
+    return (T)_activator.CreateInstance(runtimeType, arguments);
+  }
+
+  public override object InvokeConstructor(IRuntimeConstructor constructor, object?[] arguments)
+  {
+    if (!constructor.IsSource)
+      return constructor.UnderlyingSystemConstructor.Invoke(arguments);
+
+    return _activator.CreateInstance(constructor, arguments);
   }
 
   public override object? InvokeMethod(IRuntimeMethod method, object? instance, object?[] arguments)
   {
-    Debug.Assert(method.IsSource);
+    if (!method.IsSource)
+      return method.UnderlyingSystemMethod.Invoke(instance, arguments);
+
     InterpreterFrame frame;
     if (method.IsStatic)
     {
@@ -63,6 +75,82 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
     }
 
     return _interpreter.Interpret(method, frame, arguments);
+  }
+
+  public override object? InvokeGetter(IRuntimeProperty property, object? instance, object?[] arguments)
+  {
+    if (!property.IsSource)
+      return property.UnderlyingSystemProperty.GetValue(instance, arguments);
+
+    InterpreterFrame frame;
+    if (property.IsStatic)
+    {
+      Debug.Assert(instance is null);
+
+      frame = _frameProvider.GetClassFrame(property.DeclaringType);
+    }
+    else
+    {
+      Debug.Assert(instance is not null);
+      if (instance is not IProxied proxied || proxied.Delegate is not OperationDelegate @delegate)
+        throw new ArgumentException("The instance must be provided by the runtime.", nameof(instance));
+
+      frame = @delegate.InstanceFrame;
+    }
+
+    if (frame.IsDefined(property.Symbol))
+    {
+      return frame.Get(property.Symbol);
+    }
+
+    IRuntimeMethod getter = property.Getter ?? throw new InvalidOperationException($"Property {property} does not have a getter.");
+    return _interpreter.Interpret(getter, frame, arguments);
+  }
+
+  public override void InvokeSetter(IRuntimeProperty property, object? instance, object?[] arguments, object? value)
+  {
+    if (!property.IsSource)
+    {
+      property.UnderlyingSystemProperty.SetValue(instance, value, arguments);
+      return;
+    }
+
+    InterpreterFrame frame;
+    if (property.IsStatic)
+    {
+      Debug.Assert(instance is null);
+
+      frame = _frameProvider.GetClassFrame(property.DeclaringType);
+    }
+    else
+    {
+      Debug.Assert(instance is not null);
+      if (instance is not IProxied proxied || proxied.Delegate is not OperationDelegate @delegate)
+        throw new ArgumentException("The instance must be provided by the runtime.", nameof(instance));
+
+      frame = @delegate.InstanceFrame;
+    }
+
+    if (frame.IsDefined(property.Symbol))
+    {
+      frame.Assign(property.Symbol, value);
+      return;
+    }
+
+    object?[] setterArguments;
+    if (arguments.Length == 0)
+    {
+      setterArguments = new object?[] { value };
+    }
+    else
+    {
+      setterArguments = new object[arguments.Length + 1];
+      Array.Copy(arguments, setterArguments, arguments.Length);
+      setterArguments[arguments.Length] = value;
+    }
+
+    IRuntimeMethod setter = property.Setter ?? throw new InvalidOperationException($"Property {property} does not have a setter.");
+    _interpreter.Interpret(setter, frame, setterArguments);
   }
 
   public override Type GetRuntimeType(SymbolType type)
@@ -115,6 +203,8 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
   private Type GetRuntimeConstructedType(SymbolType typeDefinition, Type[] typeArguments)
   {
     Type runtimeGenericDefinition = typeDefinition.RuntimeType;
+    if (runtimeGenericDefinition == typeof(ObjectProxy))
+      return runtimeGenericDefinition;
 
     Type[]? runtimeDefinitionTypeArguments = null;
     Type[] runtimeTypeArguments = new Type[typeArguments.Length];

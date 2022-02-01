@@ -1,7 +1,12 @@
-﻿using GeneratorKit.Reflection;
+﻿#pragma warning disable RS1024 // Compare symbols correctly
+
+using GeneratorKit.Interpret;
+using GeneratorKit.Reflection;
 using GeneratorKit.TestHelpers;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
+using System;
+using System.Collections.Generic;
 using Xunit;
 using static GeneratorKit.TestHelpers.ProxyTypes;
 
@@ -146,6 +151,21 @@ namespace " + Namespace + @"
     };
 
     return new SymbolNamedType(_runtime, symbol);
+  }
+
+  internal static InterpreterFrame GetClassFrame(params Type[] typeArguments)
+  {
+    return InterpreterFrame.NewClassFrame(null, new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default), typeArguments);
+  }
+
+  internal static InterpreterFrame GetInstanceFrame(InterpreterFrame classFrame, IRuntimeType type, object instance)
+  {
+    return InterpreterFrame.NewInstanceFrame(classFrame, new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default), instance);
+  }
+
+  internal static InterpreterFrame GetConstructorFrame(InterpreterFrame classFrame)
+  {
+    return InterpreterFrame.NewMethodFrame(classFrame, new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default), Type.EmptyTypes);
   }
 
   public enum SourceType

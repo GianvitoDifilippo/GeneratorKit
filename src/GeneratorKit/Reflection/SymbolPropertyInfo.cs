@@ -12,17 +12,15 @@ using System.Text;
 
 namespace GeneratorKit.Reflection;
 
-internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
+internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase, IRuntimeProperty
 {
   private readonly GeneratorRuntime _runtime;
   private readonly SymbolType? _reflectedType;
-  private readonly bool _isInSourceAssembly;
   private PropertyInfo? _underlyingSystemProperty;
 
   public SymbolPropertyInfo(GeneratorRuntime runtime, IPropertySymbol symbol)
   {
     _runtime = runtime;
-    _isInSourceAssembly = symbol.ContainingAssembly is ISourceAssemblySymbol;
     Symbol = symbol;
   }
 
@@ -34,7 +32,6 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
 
   public IPropertySymbol Symbol { get; }
 
-  // TODO: Assert not in source
   public PropertyInfo UnderlyingSystemProperty => _underlyingSystemProperty ??= DelegatorBinder.ResolveProperty(ReflectedType.UnderlyingSystemType, this);
 
 
@@ -93,10 +90,9 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
 
   public override object? GetValue(object obj, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
   {
-    if (Symbol.ContainingAssembly is ISourceAssemblySymbol)
+    if (Symbol.IsSource())
     {
-      SymbolMethodInfo getMethod = GetMethod ?? throw new InvalidOperationException(); // TODO: Message
-      return _runtime.InvokeMethod(getMethod, obj, index);
+      return _runtime.InvokeGetter(this, obj, index);
     }
     else
     {
@@ -111,10 +107,9 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
 
   public override void SetValue(object obj, object value, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
   {
-    if (Symbol.ContainingAssembly is ISourceAssemblySymbol)
+    if (Symbol.IsSource())
     {
-      SymbolMethodInfo setMethod = SetMethod ?? throw new InvalidOperationException(); // TODO: Message
-      _runtime.InvokeMethod(setMethod, obj, index);
+      _runtime.InvokeSetter(this, obj, index, value);
     }
     else
     {
@@ -205,6 +200,21 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
     }
     return builder.ToString();
   }
+
+
+  // IRuntimeProperty members
+
+  IRuntimeMethod? IRuntimeProperty.Getter => GetMethod;
+
+  IRuntimeMethod? IRuntimeProperty.Setter => SetMethod;
+
+  IPropertySymbol IRuntimeProperty.Symbol => Symbol;
+
+  bool IRuntimeProperty.IsSource => Symbol.IsSource();
+
+  bool IRuntimeProperty.IsStatic => Symbol.IsStatic;
+
+  IRuntimeType IRuntimeProperty.DeclaringType => DeclaringTypeCore;
 
 
   // New members

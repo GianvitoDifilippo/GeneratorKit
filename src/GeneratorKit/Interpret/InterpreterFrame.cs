@@ -7,9 +7,9 @@ namespace GeneratorKit.Interpret;
 
 public abstract class InterpreterFrame
 {
-  private readonly Dictionary<string, object?> _values;
+  private readonly IDictionary<ISymbol, object?> _values;
 
-  public InterpreterFrame(Dictionary<string, object?> values)
+  public InterpreterFrame(IDictionary<ISymbol, object?> values)
   {
     _values = values;
   }
@@ -18,100 +18,100 @@ public abstract class InterpreterFrame
 
   public abstract Type GetGenericArgument(ITypeParameterSymbol parameter);
 
-  protected abstract bool TryAssignToParent(string name, object? value);
+  protected abstract bool TryAssignToParent(ISymbol symbol, object? value);
 
-  protected abstract bool TryGetFromParent(string name, out object? value);
+  protected abstract bool TryGetFromParent(ISymbol symbol, out object? value);
 
-  protected abstract bool IsDefinedInParent(string name);
+  protected abstract bool IsDefinedInParent(ISymbol symbol);
 
-  public void Declare(string name)
+  public void Declare(ISymbol symbol)
   {
-    _values[name] = Unit.Instance;
+    _values[symbol] = Unit.Instance;
   }
 
-  public void Define(string name, object? value)
+  public void Define(ISymbol symbol, object? value)
   {
-    if (IsDefined(name))
+    if (IsDefined(symbol))
     {
-      throw new InvalidOperationException($"A local variable or function named '{name}' is already defined in this scope.");
+      throw new InvalidOperationException($"A local variable or function named '{symbol.Name}' is already defined in this scope.");
     }
-    _values[name] = value;
+    _values[symbol] = value;
   }
 
-  public void DefineOrAssign(string name, object? value)
+  public void DefineOrAssign(ISymbol symbol, object? value)
   {
-    if (IsDefined(name))
+    if (IsDefined(symbol))
     {
-      Assign(name, value);
+      Assign(symbol, value);
       return;
     }
-    Define(name, value);
+    Define(symbol, value);
   }
 
-  public void Assign(string name, object? value)
+  public void Assign(ISymbol symbol, object? value)
   {
-    if (!TryAssign(name, value))
+    if (!TryAssign(symbol, value))
     {
-      throw new InvalidOperationException($"The symbol {name} does not exist in the current context.");
+      throw new InvalidOperationException($"The symbol {symbol.Name} does not exist in the current context.");
     }
   }
 
-  public object? Get(string name)
+  public object? Get(ISymbol symbol)
   {
-    if (!TryGet(name, out object? value))
+    if (!TryGet(symbol, out object? value))
     {
-      throw new InvalidOperationException($"The symbol {name} does not exist in the current context.");
+      throw new InvalidOperationException($"The symbol {symbol.Name} does not exist in the current context.");
     }
     if (ReferenceEquals(value, Unit.Instance))
     {
-      throw new InvalidOperationException($"Use of unassigned local variable '{name}'.");
+      throw new InvalidOperationException($"Use of unassigned local variable '{symbol.Name}'.");
     }
 
     return value;
   }
 
-  public bool IsDefined(string name)
+  public bool IsDefined(ISymbol symbol)
   {
-    return _values.ContainsKey(name) || IsDefinedInParent(name);
+    return _values.ContainsKey(symbol) || IsDefinedInParent(symbol);
   }
 
-  private bool TryGet(string name, out object? value)
+  private bool TryGet(ISymbol symbol, out object? value)
   {
-    if (_values.ContainsKey(name))
+    if (_values.ContainsKey(symbol))
     {
-      value = _values[name];
+      value = _values[symbol];
       return true;
     }
 
-    return TryGetFromParent(name, out value);
+    return TryGetFromParent(symbol, out value);
   }
 
-  private bool TryAssign(string name, object? value)
+  private bool TryAssign(ISymbol symbol, object? value)
   {
-    if (_values.ContainsKey(name))
+    if (_values.ContainsKey(symbol))
     {
-      _values[name] = value;
+      _values[symbol] = value;
       return true;
     }
-    return TryAssignToParent(name, value);
+    return TryAssignToParent(symbol, value);
   }
 
-  public static InterpreterFrame NewClassFrame(InterpreterFrame? parent, Dictionary<string, object?> values, Type[] typeArguments)
+  public static InterpreterFrame NewClassFrame(InterpreterFrame? parent, IDictionary<ISymbol, object?> values, Type[] typeArguments)
   {
     return new ClassFrame(parent, values, typeArguments);
   }
 
-  public static InterpreterFrame NewInstanceFrame(InterpreterFrame parent, Dictionary<string, object?> values, object instance)
+  public static InterpreterFrame NewInstanceFrame(InterpreterFrame parent, IDictionary<ISymbol, object?> values, object instance)
   {
     return new InstanceFrame(parent, values, instance);
   }
 
-  public static InterpreterFrame NewMethodFrame(InterpreterFrame parent, Dictionary<string, object?> values, Type[] typeArguments)
+  public static InterpreterFrame NewMethodFrame(InterpreterFrame parent, IDictionary<ISymbol, object?> values, Type[] typeArguments)
   {
     return new MethodFrame(parent, values, typeArguments);
   }
 
-  public static InterpreterFrame NewScopeFrame(InterpreterFrame parent, Dictionary<string, object?> values)
+  public static InterpreterFrame NewScopeFrame(InterpreterFrame parent, IDictionary<ISymbol, object?> values)
   {
     return new ScopeFrame(parent, values);
   }
@@ -121,7 +121,7 @@ public abstract class InterpreterFrame
     private readonly InterpreterFrame? _parent;
     private readonly Type[] _typeArguments;
 
-    public ClassFrame(InterpreterFrame? parent, Dictionary<string, object?> values, Type[] typeArguments)
+    public ClassFrame(InterpreterFrame? parent, IDictionary<ISymbol, object?> values, Type[] typeArguments)
       : base(values)
     {
       _parent = parent;
@@ -137,17 +137,17 @@ public abstract class InterpreterFrame
       return _typeArguments[parameter.Ordinal];
     }
 
-    protected override bool IsDefinedInParent(string symbol)
+    protected override bool IsDefinedInParent(ISymbol symbol)
     {
       return _parent is not null && _parent.IsDefined(symbol);
     }
 
-    protected override bool TryAssignToParent(string symbol, object? value)
+    protected override bool TryAssignToParent(ISymbol symbol, object? value)
     {
       return _parent is not null && _parent.TryAssign(symbol, value);
     }
 
-    protected override bool TryGetFromParent(string symbol, out object? value)
+    protected override bool TryGetFromParent(ISymbol symbol, out object? value)
     {
       if (_parent is not null)
         return _parent.TryGet(symbol, out value);
@@ -161,7 +161,7 @@ public abstract class InterpreterFrame
   {
     private readonly InterpreterFrame _parent;
 
-    public InstanceFrame(InterpreterFrame parent, Dictionary<string, object?> values, object instance)
+    public InstanceFrame(InterpreterFrame parent, IDictionary<ISymbol, object?> values, object instance)
       : base(values)
     {
       _parent = parent;
@@ -175,17 +175,17 @@ public abstract class InterpreterFrame
       return _parent.GetGenericArgument(parameter);
     }
 
-    protected override bool IsDefinedInParent(string symbol)
+    protected override bool IsDefinedInParent(ISymbol symbol)
     {
       return _parent.IsDefined(symbol);
     }
 
-    protected override bool TryAssignToParent(string symbol, object? value)
+    protected override bool TryAssignToParent(ISymbol symbol, object? value)
     {
       return _parent.TryAssign(symbol, value);
     }
 
-    protected override bool TryGetFromParent(string symbol, out object? value)
+    protected override bool TryGetFromParent(ISymbol symbol, out object? value)
     {
       return _parent.TryGet(symbol, out value);
     }
@@ -196,7 +196,7 @@ public abstract class InterpreterFrame
     private readonly InterpreterFrame _parent;
     private readonly Type[] _typeArguments;
 
-    public MethodFrame(InterpreterFrame parent, Dictionary<string, object?> values, Type[] typeArguments)
+    public MethodFrame(InterpreterFrame parent, IDictionary<ISymbol, object?> values, Type[] typeArguments)
       : base(values)
     {
       _parent = parent;
@@ -214,17 +214,17 @@ public abstract class InterpreterFrame
       return _parent.GetGenericArgument(parameter);
     }
 
-    protected override bool IsDefinedInParent(string symbol)
+    protected override bool IsDefinedInParent(ISymbol symbol)
     {
       return _parent.IsDefined(symbol);
     }
 
-    protected override bool TryAssignToParent(string symbol, object? value)
+    protected override bool TryAssignToParent(ISymbol symbol, object? value)
     {
       return _parent.TryAssign(symbol, value);
     }
 
-    protected override bool TryGetFromParent(string symbol, out object? value)
+    protected override bool TryGetFromParent(ISymbol symbol, out object? value)
     {
       return _parent.TryGet(symbol, out value);
     }
@@ -234,7 +234,7 @@ public abstract class InterpreterFrame
   {
     private readonly InterpreterFrame _parent;
 
-    public ScopeFrame(InterpreterFrame parent, Dictionary<string, object?> values)
+    public ScopeFrame(InterpreterFrame parent, IDictionary<ISymbol, object?> values)
       : base(values)
     {
       _parent = parent;
@@ -248,17 +248,17 @@ public abstract class InterpreterFrame
       return _parent.GetGenericArgument(parameter);
     }
 
-    protected override bool IsDefinedInParent(string symbol)
+    protected override bool IsDefinedInParent(ISymbol symbol)
     {
       return _parent.IsDefined(symbol);
     }
 
-    protected override bool TryAssignToParent(string symbol, object? value)
+    protected override bool TryAssignToParent(ISymbol symbol, object? value)
     {
       return _parent.TryAssign(symbol, value);
     }
 
-    protected override bool TryGetFromParent(string symbol, out object? value)
+    protected override bool TryGetFromParent(ISymbol symbol, out object? value)
     {
       return _parent.TryGet(symbol, out value);
     }

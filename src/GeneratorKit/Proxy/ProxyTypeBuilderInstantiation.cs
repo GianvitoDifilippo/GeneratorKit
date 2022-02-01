@@ -10,6 +10,7 @@ internal class ProxyTypeBuilderInstantiation : Type
   private readonly Type _proxyTypeDefinition;
   private readonly SymbolType[] _genericArguments;
   private readonly int[] _positions;
+  private Type? _underlyingSystemType;
 
   private ProxyTypeBuilderInstantiation(Type proxyTypeDefinition, SymbolType[] genericArguments, int[] positions)
   {
@@ -34,23 +35,7 @@ internal class ProxyTypeBuilderInstantiation : Type
 
   public override string Name => _proxyTypeDefinition.Name;
 
-  public override Type UnderlyingSystemType
-  {
-    get
-    {
-      int length = _genericArguments.Length;
-      Type[] typeArguments = new Type[length];
-      Type[] genericParameters = _proxyTypeDefinition.GetGenericArguments();
-      for (int i = 0; i < length; i++)
-      {
-        SymbolType genericArgument = _genericArguments[i];
-        typeArguments[i] = genericArgument.IsGenericParameter
-          ? genericParameters[_positions[genericArgument.GenericParameterPosition]]
-          : genericArgument.UnderlyingSystemType;
-      }
-      return _proxyTypeDefinition.MakeGenericType(typeArguments);
-    }
-  }
+  public override Type UnderlyingSystemType => _underlyingSystemType ??= GetUnderlyingSystemType();
 
   public override Type[] GetGenericArguments()
   {
@@ -134,6 +119,21 @@ internal class ProxyTypeBuilderInstantiation : Type
       }
     }
     return new ProxyTypeBuilderInstantiation(proxyTypeDefinition, genericArguments, positions!);
+  }
+
+  private Type GetUnderlyingSystemType()
+  {
+    int length = _genericArguments.Length;
+    Type[] typeArguments = new Type[length];
+    Type[] genericParameters = _proxyTypeDefinition.GetGenericArguments();
+    for (int i = 0; i < length; i++)
+    {
+      SymbolType genericArgument = _genericArguments[i];
+      typeArguments[i] = genericArgument.IsGenericParameter
+        ? genericParameters[_positions[genericArgument.GenericParameterPosition]]
+        : genericArgument.UnderlyingSystemType;
+    }
+    return _proxyTypeDefinition.MakeGenericType(typeArguments);
   }
 
   private static int[] CreatePositions(int length)
