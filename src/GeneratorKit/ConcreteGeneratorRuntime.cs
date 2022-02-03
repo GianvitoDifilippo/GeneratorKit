@@ -38,7 +38,7 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
       throw new NotSupportedException("Arrays, pointers and by ref types are not supported.");
     if (type is not IRuntimeType runtimeType)
       throw new ArgumentException("The type must be provided by this runtime.", nameof(type));
-    if (!typeof(T).IsAssignableFrom(runtimeType.UnderlyingSystemType))
+    if (!typeof(T).IsAssignableFrom(runtimeType.RuntimeType.UnderlyingSystemType))
       throw new ArgumentException($"{type.FullName} is not assignable to {typeof(T).FullName}", nameof(type));
 
     return (T)_activator.CreateInstance(runtimeType, arguments);
@@ -46,7 +46,7 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
 
   public override object InvokeConstructor(IRuntimeConstructor constructor, object?[] arguments)
   {
-    if (!constructor.IsSource)
+    if (!constructor.Symbol.IsSource())
       return constructor.UnderlyingSystemConstructor.Invoke(arguments);
 
     return _activator.CreateInstance(constructor, arguments);
@@ -54,7 +54,7 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
 
   public override object? InvokeMethod(IRuntimeMethod method, object? instance, object?[] arguments)
   {
-    if (!method.IsSource)
+    if (!method.Definition.Symbol.IsSource())
       return method.UnderlyingSystemMethod.Invoke(instance, arguments);
 
     InterpreterFrame frame;
@@ -78,7 +78,7 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
 
   public override object? InvokeGetter(IRuntimeProperty property, object? instance, object?[] arguments)
   {
-    if (!property.IsSource)
+    if (!property.Symbol.IsSource())
       return property.UnderlyingSystemProperty.GetValue(instance, arguments);
 
     InterpreterFrame frame;
@@ -108,7 +108,7 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
 
   public override void InvokeSetter(IRuntimeProperty property, object? instance, object?[] arguments, object? value)
   {
-    if (!property.IsSource)
+    if (!property.Symbol.IsSource())
     {
       property.UnderlyingSystemProperty.SetValue(instance, value, arguments);
       return;
@@ -152,37 +152,32 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
     _interpreter.Interpret(setter, frame, setterArguments);
   }
 
-  public override Type GetRuntimeType(SymbolType type)
+  public override Type GetRuntimeType(IRuntimeType type)
   {
     if (type.HasElementType)
       return GetRuntimeTypeWithElement(type);
 
     if (type.IsConstructedGenericType)
-      return GetRuntimeConstructedType(type.GetGenericTypeDefinition(), type.GetGenericArguments());
+      return GetRuntimeConstructedType(type.Definition, type.TypeArguments);
 
     if (type.IsGenericParameter)
       return GetRuntimeTypeParameter(type);
 
     // _cache.CacheType(type);
 
-    if (type.Symbol.ContainingAssembly is not ISourceAssemblySymbol)
+    if (!type.Definition.Symbol.IsSource())
       return GetReferencedType(type);
 
     return _proxyManager.GetProxyType(type);
   }
 
-  public override Type GetRuntimeType(HybridGenericType type)
+  private Type GetRuntimeTypeWithElement(IRuntimeType type)
   {
-    return GetRuntimeConstructedType(type.GetGenericTypeDefinition(), type.GetGenericArguments());
-  }
-
-  private Type GetRuntimeTypeWithElement(Type type)
-  {
-    Type runtimeElementType = type.GetElementType()!.UnderlyingSystemType;
+    Type runtimeElementType = type.ElementType.RuntimeType;
 
     if (type.IsArray)
     {
-      int rank = type.GetArrayRank();
+      int rank = type.ArrayRank;
       return rank == 1
         ? runtimeElementType.MakeArrayType()
         : runtimeElementType.MakeArrayType(rank);
@@ -199,42 +194,21 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
     throw Errors.Unreacheable;
   }
 
-  private Type GetRuntimeConstructedType(SymbolType typeDefinition, Type[] typeArguments)
+  private Type GetRuntimeConstructedType(IRuntimeType typeDefinition, Type[] typeArguments)
   {
     Type runtimeGenericDefinition = typeDefinition.RuntimeType;
     if (runtimeGenericDefinition == typeof(ObjectProxy))
       return runtimeGenericDefinition;
 
-    Type[]? runtimeDefinitionTypeArguments = null;
-    Type[] runtimeTypeArguments = new Type[typeArguments.Length];
-    for (int i = 0; i < typeArguments.Length; i++)
-    {
-      Type typeArgument = typeArguments[i];
-      if (typeArgument.IsGenericParameter)
-      {
-        runtimeDefinitionTypeArguments ??= typeArgument.DeclaringType!.UnderlyingSystemType.GetGenericArguments(); // TODO: This can be optimized
-        runtimeTypeArguments[i] = runtimeDefinitionTypeArguments[i];
-      }
-      else
-      {
-        runtimeTypeArguments[i] = typeArgument.UnderlyingSystemType;
-      }
-    }
-
-    return runtimeGenericDefinition.MakeGenericType(runtimeTypeArguments);
+    return runtimeGenericDefinition.MakeGenericType(typeArguments.Map(t => t.UnderlyingSystemType));
   }
 
-  private Type GetRuntimeTypeParameter(Type type)
+  private Type GetRuntimeTypeParameter(IRuntimeType type)
   {
-    if (type.DeclaringType is not SymbolType declaringType)
-      throw new NotSupportedException("Generic parameter was supposed to have a declaring type.");
-
-    Type runtimeDeclaringType = declaringType.UnderlyingSystemType;
-
-    return runtimeDeclaringType.GenericTypeArguments[type.GenericParameterPosition];
+    return type.DeclaringType.TypeParameters[type.GenericParameterPosition];
   }
 
-  private static Type GetReferencedType(SymbolType type)
+  private static Type GetReferencedType(IRuntimeType type)
   {
     return Type.GetType(type.AssemblyQualifiedName, true, false);
   }

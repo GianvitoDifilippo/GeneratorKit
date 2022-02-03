@@ -22,43 +22,12 @@ internal class FakeGeneratorRuntime : GeneratorRuntime
 
   public override CancellationToken CancellationToken => CancellationToken.None;
 
-  public override T CreateInstance<T>(Type type, params object?[] arguments)
-  {
-    throw new NotImplementedException();
-  }
-
-  public override object InvokeConstructor(IRuntimeConstructor constructor, object?[] arguments)
-  {
-    throw new NotImplementedException();
-  }
-
-  public override object? InvokeMethod(IRuntimeMethod method, object? instance, object?[] arguments)
-  {
-    throw new NotImplementedException();
-  }
-
-  public override object? InvokeGetter(IRuntimeProperty property, object? instance, object?[] arguments)
-  {
-    throw new NotImplementedException();
-  }
-
-  public override void InvokeSetter(IRuntimeProperty property, object? instance, object?[] arguments, object? value)
-  {
-    throw new NotImplementedException();
-  }
-
-  public override Type GetRuntimeType(SymbolType type)
+  public override Type GetRuntimeType(IRuntimeType type)
   {
     if (type.AssemblyQualifiedName is string name && Type.GetType(name) is Type result)
       return result;
 
-    return _typeMap[type];
-  }
-
-  public override Type GetRuntimeType(HybridGenericType type)
-  {
-    Type definition = GetRuntimeType(type.GetGenericTypeDefinition());
-    return definition.MakeGenericType(type.GetGenericArguments());
+    return _typeMap[(Type)type];
   }
 
   public void AddType(ITypeSymbol symbol, Type value)
@@ -71,4 +40,10 @@ internal class FakeGeneratorRuntime : GeneratorRuntime
   {
     _typeMap[key] = value;
   }
+
+  public override T CreateInstance<T>(Type type, params object?[] arguments) => throw new NotImplementedException();
+  public override object InvokeConstructor(IRuntimeConstructor constructor, object?[] arguments) => throw new NotImplementedException();
+  public override object? InvokeMethod(IRuntimeMethod method, object? instance, object?[] arguments) => throw new NotImplementedException();
+  public override object? InvokeGetter(IRuntimeProperty property, object? instance, object?[] arguments) => throw new NotImplementedException();
+  public override void InvokeSetter(IRuntimeProperty property, object? instance, object?[] arguments, object? value) => throw new NotImplementedException();
 }

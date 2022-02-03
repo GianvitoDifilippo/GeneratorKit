@@ -67,13 +67,9 @@ internal class SymbolByRefType : SymbolType
   }
 
 
-  // GeneratorRuntimeType overrides
+  // RuntimeTypeBase overrides
 
-  protected override SymbolNamedType RuntimeDefinition => throw new InvalidOperationException();
-
-  protected override Type[] RuntimeTypeArguments => throw new InvalidOperationException();
-
-  protected override IRuntimeType? RuntimeBaseType => throw new InvalidOperationException();
+  protected override Type[] RuntimeTypeParameters => throw new InvalidOperationException(); // TODO: Message
 
 
   // SymbolTypeBase overrides

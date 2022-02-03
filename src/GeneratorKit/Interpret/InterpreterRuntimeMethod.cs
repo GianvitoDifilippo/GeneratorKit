@@ -36,11 +36,15 @@ internal class InterpreterRuntimeMethod : IRuntimeMethod
 
   public bool IsOpenGeneric => false;
 
-  public bool IsSource => _symbol.IsSource();
-
-  public MethodInfo UnderlyingSystemMethod => _underlyingSystemMethod ??= DelegatorBinder.ResolveMethod(DeclaringType.UnderlyingSystemType, this);
+  public MethodInfo UnderlyingSystemMethod => _underlyingSystemMethod ??= DelegatorBinder.ResolveMethod(DeclaringType.RuntimeType.UnderlyingSystemType, this);
 
   public bool IsGenericMethod => Definition.IsGenericMethod;
 
   public bool IsGenericMethodDefinition => false;
+
+  public string Name => _symbol.Name;
+
+  public CallingConventions CallingConvention => _symbol.IsStatic
+    ? CallingConventions.Standard
+    : CallingConventions.Standard | CallingConventions.HasThis;
 }

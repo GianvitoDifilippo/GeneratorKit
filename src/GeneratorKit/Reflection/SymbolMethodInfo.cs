@@ -314,8 +314,6 @@ internal class SymbolMethodInfo : SymbolMethodInfoBase, IRuntimeMethod
 
   bool IRuntimeMethod.IsOpenGeneric => Symbol.IsGenericMethod && Symbol.TypeArguments.Any(t => t.TypeKind is TypeKind.TypeParameter); // TODO: Deep check
 
-  bool IRuntimeMethod.IsSource => Symbol.IsSource();
-
 
   // Other members
 

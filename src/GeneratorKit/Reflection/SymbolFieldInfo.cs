@@ -11,7 +11,7 @@ using System.Reflection;
 
 namespace GeneratorKit.Reflection;
 
-internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
+internal sealed class SymbolFieldInfo : SymbolFieldInfoBase, IRuntimeField
 {
   private readonly GeneratorRuntime _runtime;
   private readonly SymbolType? _reflectedType;
@@ -31,7 +31,6 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
 
   public IFieldSymbol Symbol { get; }
 
-  // TODO: Assert not in source
   public FieldInfo UnderlyingSystemField => _underlyingSystemField ??= DelegatorBinder.ResolveField(ReflectedType.UnderlyingSystemType, this);
 
 
@@ -147,6 +146,11 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
   {
     UnderlyingSystemField.SetValue(obj, value, invokeAttr, binder, culture);
   }
+
+
+  // IRuntimeField members
+
+  IRuntimeType IRuntimeField.DeclaringType => DeclaringTypeCore;
 
 
   // SymbolFieldInfoBase overrides

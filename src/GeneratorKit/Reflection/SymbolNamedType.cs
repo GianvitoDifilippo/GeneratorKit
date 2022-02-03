@@ -1,4 +1,5 @@
 ﻿using GeneratorKit.Comparers;
+using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -323,13 +324,9 @@ internal sealed class SymbolNamedType : SymbolType
   }
 
 
-  // GeneratorRuntimeType overrides
+  // RuntimeTypeBase overrides
 
-  protected override SymbolNamedType RuntimeDefinition => IsConstructedGenericType ? (SymbolNamedType)GetGenericTypeDefinition() : this;
-
-  protected override Type[] RuntimeTypeArguments => IsGenericType ? GetGenericArguments() : EmptyTypes;
-
-  protected override IRuntimeType? RuntimeBaseType => BaseTypeCore;
+  protected override Type[] RuntimeTypeParameters => Symbol.TypeParameters.Map(_runtime.CreateTypeDelegator);
 
 
   // SymbolTypeBase overrides

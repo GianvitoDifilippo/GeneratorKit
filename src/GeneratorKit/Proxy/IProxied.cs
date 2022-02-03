@@ -1,6 +1,6 @@
 ﻿namespace GeneratorKit.Proxy;
 
-internal interface IProxied
+public interface IProxied
 {
   IOperationDelegate Delegate { get; set; }
 }

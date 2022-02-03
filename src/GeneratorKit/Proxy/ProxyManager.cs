@@ -16,37 +16,31 @@ internal class ProxyManager : IProxyManager, IProxyTypeSetup
     _proxyTypes = new Dictionary<Type, Type>(TypeEqualityComparer.Default);
   }
 
-  public Type GetProxyType(SymbolType sourceType)
+  public Type GetProxyType(IRuntimeType type)
   {
-    SymbolType baseType = sourceType.BaseType!;
-    SymbolType? signatureType = null;
-    if (baseType.IsGenericType)
-      baseType = baseType.GetGenericTypeDefinition();
+    IRuntimeType baseType = type.BaseType!;
+    IRuntimeType? signatureType = null;
 
-    bool found = _proxyTypes.TryGetValue(baseType, out Type? proxyTypeDefinition);
+    bool found = _proxyTypes.TryGetValue(baseType.Definition, out Type? proxyTypeDefinition);
     if (found)
     {
-      signatureType = sourceType.BaseType!;
+      signatureType = baseType;
     }
     else
     {
-      if (!baseType.Equals(typeof(object)))
-        throw ProxyMatchException.NotFound(sourceType);
+      if (!baseType.Definition.Equals(typeof(object)))
+        throw ProxyMatchException.NotFound(type);
     }
 
-    SymbolType[] interfaceTypes = sourceType.GetInterfaces();
-    for (int i = 0; i < interfaceTypes.Length; i++)
+    foreach (IRuntimeType interfaceType in type.Interfaces)
     {
-      SymbolType interfaceType = interfaceTypes[i];
-      if (interfaceType.IsGenericType)
-        interfaceType = interfaceType.GetGenericTypeDefinition();
-      if (_proxyTypes.TryGetValue(interfaceType, out Type? proxyTypeFromInterface))
+      if (_proxyTypes.TryGetValue(interfaceType.Definition, out Type? proxyTypeFromInterface))
       {
         if (found)
-          throw ProxyMatchException.AmbiguousMatch(sourceType);
+          throw ProxyMatchException.AmbiguousMatch(type);
 
         proxyTypeDefinition = proxyTypeFromInterface;
-        signatureType = interfaceTypes[i];
+        signatureType = interfaceType;
         found = true;
       }
     }
@@ -54,7 +48,7 @@ internal class ProxyManager : IProxyManager, IProxyTypeSetup
     if (!found)
       return typeof(ObjectProxy);
 
-    return ProxyTypeBuilderInstantiation.Create(proxyTypeDefinition, sourceType, signatureType!);
+    return ProxyTypeBuilderInstantiation.Create(type, signatureType!, proxyTypeDefinition);
   }
 
   public void RegisterProxyType(Type proxyType)

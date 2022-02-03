@@ -26,8 +26,6 @@ internal class Activator : IActivator
 
   public object CreateInstance(IRuntimeType type, object?[] arguments)
   {
-    CheckType(type);
-
     InterpreterFrame classFrame = _interpreter.GetClassFrame(type);
     SymbolConstructorInfo constructor = FindConstructor(type.Definition, arguments, classFrame);
 
@@ -37,8 +35,6 @@ internal class Activator : IActivator
   public object CreateInstance(IRuntimeConstructor constructor, object?[] arguments)
   {
     IRuntimeType type = constructor.DeclaringType;
-    CheckType(type);
-
     InterpreterFrame classFrame = _interpreter.GetClassFrame(type);
 
     return CreateInstance(constructor, type, classFrame, arguments);
@@ -46,7 +42,7 @@ internal class Activator : IActivator
 
   private object CreateInstance(IRuntimeConstructor constructor, IRuntimeType type, InterpreterFrame classFrame, object?[] arguments)
   {
-    Type proxyType = type.UnderlyingSystemType;
+    Type proxyType = type.RuntimeType.UnderlyingSystemType;
     object?[] proxyArguments = constructor.Symbol.IsImplicitlyDeclared
       ? arguments
       : _interpreter.GetProxyArguments(constructor, classFrame, arguments);
@@ -59,16 +55,6 @@ internal class Activator : IActivator
     _interpreter.Interpret(constructor, instanceFrame, arguments);
 
     return instance;
-  }
-
-  private void CheckType(IRuntimeType type)
-  {
-    if (type.ContainsGenericParameters)
-      throw new ArgumentException("Cannot create an instance of a type which contains generic parameters.", nameof(type));
-    if (type.IsInterface)
-      throw new ArgumentException("Cannot create an instance of an interface.", nameof(type));
-    if (type.IsAbstract)
-      throw new ArgumentException("Cannot create an instance of an abstract class.", nameof(type));
   }
 
   private IReadOnlyDictionary<int, SymbolMethodInfo> GetMethods(SymbolType typeDefinition)

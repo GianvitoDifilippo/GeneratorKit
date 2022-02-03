@@ -2,6 +2,7 @@
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Globalization;
@@ -29,7 +30,7 @@ internal class HybridGenericType : HybridGenericTypeBase
 
   public override string? AssemblyQualifiedName => TypeNameBuilder.ToString(this, TypeNameBuilder.Format.AssemblyQualifiedName);
 
-  public override bool ContainsGenericParameters => _typeArguments.Any(x => x.IsGenericParameter); // TODO: Check deep
+  public override bool ContainsGenericParameters => _typeArguments.Any(t => t.IsGenericParameter); // TODO: Check deep
 
   public override string? FullName => TypeNameBuilder.ToString(this, TypeNameBuilder.Format.FullName);
 
@@ -200,7 +201,7 @@ internal class HybridGenericType : HybridGenericTypeBase
 
   protected override SymbolType? ReflectedTypeCore => throw new NotImplementedException();
 
-  protected override GeneratorRuntimeType BaseTypeCore
+  protected override RuntimeTypeBase BaseTypeCore
   {
     get
     {
@@ -210,9 +211,9 @@ internal class HybridGenericType : HybridGenericTypeBase
         return definitionBaseType;
 
       ImmutableArray<ITypeSymbol> baseTypeArgumentSymbols = ((INamedTypeSymbol)definitionBaseType.Symbol).TypeArguments;
-      Type[] baseTypeArguments = baseTypeArgumentSymbols.Select(x => x.TypeKind is TypeKind.TypeParameter
-        ? _typeArguments[((ITypeParameterSymbol)x).Ordinal]
-        : _runtime.CreateTypeDelegator(x))
+      Type[] baseTypeArguments = baseTypeArgumentSymbols.Select(t => t.TypeKind is TypeKind.TypeParameter
+        ? _typeArguments[((ITypeParameterSymbol)t).Ordinal]
+        : _runtime.CreateTypeDelegator(t))
         .ToArray();
 
       return definitionBaseType.GetGenericTypeDefinition().MakeGenericType(baseTypeArguments);
@@ -225,15 +226,21 @@ internal class HybridGenericType : HybridGenericTypeBase
   }
 
 
-  // GeneratorRuntimeType overrides
-
-  protected override SymbolNamedType RuntimeDefinition => _definition;
-
-  protected override Type[] RuntimeTypeArguments => _typeArguments;
+  // RuntimeTypeBase overrides
 
   protected override IRuntimeType? RuntimeBaseType => BaseTypeCore;
 
-  protected override bool IsSource => ((IRuntimeType)_definition).IsSource;
+  protected override IRuntimeType RuntimeDeclaringType => throw new InvalidOperationException(); // TODO: Message
+
+  protected override SymbolType RuntimeDefinition => _definition;
+
+  protected override IRuntimeType RuntimeElementType => throw new InvalidOperationException(); // TODO: Message
+
+  protected override IEnumerable<IRuntimeType> RuntimeInterfaces => throw new NotImplementedException();
+
+  protected override Type RuntimeType => _runtimeType ??= _runtime.GetRuntimeType(this);
+
+  protected override Type[] RuntimeTypeParameters => _definition.GetGenericArguments();
 
 
   // System.Object overrides
@@ -249,9 +256,6 @@ internal class HybridGenericType : HybridGenericTypeBase
   }
 
 
-  // IRuntimeType members
-
-
   // New members
 
   public new SymbolAssembly Assembly => AssemblyCore;
@@ -263,14 +267,9 @@ internal class HybridGenericType : HybridGenericTypeBase
   public new SymbolType? ReflectedType => ReflectedTypeCore;
 
   public new SymbolType GetGenericTypeDefinition() => GetGenericTypeDefinitionCore();
-
-
-  // Other members
-
-  public Type RuntimeType => _runtimeType ??= _runtime.GetRuntimeType(this);
 }
 
-internal abstract class HybridGenericTypeBase : GeneratorRuntimeType
+internal abstract class HybridGenericTypeBase : RuntimeTypeBase
 {
   // System.Type overrides
 
@@ -293,7 +292,7 @@ internal abstract class HybridGenericTypeBase : GeneratorRuntimeType
   protected abstract SymbolAssembly AssemblyCore { get; }
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  protected abstract GeneratorRuntimeType BaseTypeCore { get; }
+  protected abstract RuntimeTypeBase BaseTypeCore { get; }
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   protected abstract SymbolType? DeclaringTypeCore { get; }

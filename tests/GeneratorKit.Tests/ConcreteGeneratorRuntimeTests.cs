@@ -128,7 +128,7 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
 
     _proxyManagerMock
       .Setup(x => x.GetProxyType(sourceType))
-      .Returns(ProxyTypeBuilderInstantiation.Create(proxyType, sourceType, sourceType.BaseType!));
+      .Returns(ProxyTypeBuilderInstantiation.Create(sourceType, sourceType.BaseType!, proxyType));
 
     // Act
     Type actual = sut.GetRuntimeType(type);
@@ -151,7 +151,7 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
 
     _proxyManagerMock
       .Setup(x => x.GetProxyType(sourceType))
-      .Returns(ProxyTypeBuilderInstantiation.Create(proxyType, sourceType, sourceType.BaseType!));
+      .Returns(ProxyTypeBuilderInstantiation.Create(sourceType, sourceType.BaseType!, proxyType));
 
     // Act
     Type actual = sut.GetRuntimeType(type);
@@ -174,7 +174,7 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
 
     _proxyManagerMock
       .Setup(x => x.GetProxyType(sourceType))
-      .Returns(ProxyTypeBuilderInstantiation.Create(proxyType, sourceType, sourceType.BaseType!));
+      .Returns(ProxyTypeBuilderInstantiation.Create(sourceType, sourceType.BaseType!, proxyType));
 
     // Act
     Type actual = sut.GetRuntimeType(type);
@@ -197,7 +197,7 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
 
     _proxyManagerMock
       .Setup(x => x.GetProxyType(sourceType))
-      .Returns(ProxyTypeBuilderInstantiation.Create(proxyType, sourceType, sourceType.BaseType!));
+      .Returns(ProxyTypeBuilderInstantiation.Create(sourceType, sourceType.BaseType!, proxyType));
 
     // Act
     Type actual = sut.GetRuntimeType(type);
@@ -220,7 +220,7 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
 
     _proxyManagerMock
       .Setup(x => x.GetProxyType(sourceType))
-      .Returns(ProxyTypeBuilderInstantiation.Create(proxyType, sourceType, sourceType.BaseType!));
+      .Returns(ProxyTypeBuilderInstantiation.Create(sourceType, sourceType.BaseType!, proxyType));
 
     // Act
     Type actual = sut.GetRuntimeType(type);
@@ -246,7 +246,7 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
 
     _proxyManagerMock
       .Setup(x => x.GetProxyType(sourceType))
-      .Returns(ProxyTypeBuilderInstantiation.Create(proxyType, sourceType, sourceType.BaseType!));
+      .Returns(ProxyTypeBuilderInstantiation.Create(sourceType, sourceType.BaseType!, proxyType));
 
     // Act
     Type actual = sut.GetRuntimeType(type);
@@ -272,7 +272,7 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
 
     _proxyManagerMock
       .Setup(x => x.GetProxyType(sourceType))
-      .Returns(ProxyTypeBuilderInstantiation.Create(proxyType, sourceType, sourceType.BaseType!));
+      .Returns(ProxyTypeBuilderInstantiation.Create(sourceType, sourceType.BaseType!, proxyType));
 
     // Act
     Type actual = sut.GetRuntimeType(type);
@@ -295,7 +295,7 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
 
     _proxyManagerMock
       .Setup(x => x.GetProxyType(sourceType))
-      .Returns(ProxyTypeBuilderInstantiation.Create(proxyType, sourceType, sourceType.BaseType!));
+      .Returns(ProxyTypeBuilderInstantiation.Create(sourceType, sourceType.BaseType!, proxyType));
 
     // Act
     Type actual = sut.GetRuntimeType(type);
@@ -321,7 +321,7 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
 
     _proxyManagerMock
       .Setup(x => x.GetProxyType(sourceType))
-      .Returns(ProxyTypeBuilderInstantiation.Create(proxyType, sourceType, sourceType.BaseType!));
+      .Returns(ProxyTypeBuilderInstantiation.Create(sourceType, sourceType.BaseType!, proxyType));
 
     // Act
     Type actual = sut.GetRuntimeType(type);
@@ -347,7 +347,7 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
 
     _proxyManagerMock
       .Setup(x => x.GetProxyType(sourceType))
-      .Returns(ProxyTypeBuilderInstantiation.Create(proxyType, sourceType, sourceType.BaseType!));
+      .Returns(ProxyTypeBuilderInstantiation.Create(sourceType, sourceType.BaseType!, proxyType));
 
     // Act
     Type actual = sut.GetRuntimeType(type);

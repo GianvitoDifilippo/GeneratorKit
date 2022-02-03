@@ -150,8 +150,6 @@ internal class HybridGenericMethod : HybridGenericMethodBase, IRuntimeMethod
 
   bool IRuntimeMethod.IsOpenGeneric => _typeArguments.Any(t => t.IsGenericParameter); // TODO: Deep check
 
-  bool IRuntimeMethod.IsSource => _definition.Symbol.IsSource();
-
 
   // New members
 

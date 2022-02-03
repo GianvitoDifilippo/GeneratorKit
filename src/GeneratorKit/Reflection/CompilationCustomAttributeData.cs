@@ -46,10 +46,10 @@ internal class CompilationCustomAttributeData : CustomAttributeData
   {
     ConstructorInfo constructor = runtime.CreateConstructorInfoDelegator(data.AttributeConstructor!);
     IList<CustomAttributeTypedArgument> constructorArguments = data.ConstructorArguments
-      .Select(x => CreateCustomAttributeTypedArgument(runtime, x))
+      .Select(c => CreateCustomAttributeTypedArgument(runtime, c))
       .ToList();
     IList<CustomAttributeNamedArgument> namedArguments = data.NamedArguments
-      .Select(x => new CustomAttributeNamedArgument(GetMember(runtime, data.AttributeClass!, x.Key), CreateCustomAttributeTypedArgument(runtime, x.Value)))
+      .Select(arg => new CustomAttributeNamedArgument(GetMember(runtime, data.AttributeClass!, arg.Key), CreateCustomAttributeTypedArgument(runtime, arg.Value)))
       .ToList();
 
     return new CompilationCustomAttributeData(constructor, constructorArguments, namedArguments);

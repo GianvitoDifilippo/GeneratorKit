@@ -9,12 +9,12 @@ namespace GeneratorKit.Reflection.Binders;
 
 internal abstract partial class DelegatorBinder : Binder
 {
-  protected DelegatorBinder(ParameterInfo[] parameters)
-  {
-    Parameters = parameters;
-  }
+  private readonly Type[] _parameterTypes;
 
-  protected ParameterInfo[] Parameters { get; }
+  protected DelegatorBinder(Type[] parameterTypes)
+  {
+    _parameterTypes = parameterTypes;
+  }
 
   public override MethodBase? SelectMethod(BindingFlags bindingAttr, MethodBase[] match, Type[] types, ParameterModifier[] modifiers)
   {
@@ -28,30 +28,28 @@ internal abstract partial class DelegatorBinder : Binder
 
   protected bool ParametersMatch(ParameterInfo[] parameters)
   {
-    if (Parameters.Length != parameters.Length)
+    if (_parameterTypes.Length != parameters.Length)
       return false;
 
-    for (int i = 0; i < Parameters.Length; i++)
+    for (int i = 0; i < _parameterTypes.Length; i++)
     {
-      if (!TypeEqualityComparer.Default.Equals(Parameters[i].ParameterType, parameters[i].ParameterType))
+      if (!TypeEqualityComparer.Default.Equals(_parameterTypes[i], parameters[i].ParameterType))
         return false;
     }
 
     return true;
   }
 
-  public static PropertyInfo ResolveProperty(Type type, SymbolPropertyInfo property)
+  public static PropertyInfo ResolveProperty(Type type, IRuntimeProperty property)
   {
     BindingFlags bindingAttr = GetBindingAttr(property.Symbol);
-    ParameterInfo[] parameters = property.GetIndexParameters();
 
     PropertyInfo? result;
-    if (parameters.Length != 0)
+    if (property.ParameterTypes.Length != 0)
     {
-      Type[] parameterTypes = parameters.Map(p => p.ParameterType);
-      IndexerBinder binder = new IndexerBinder(parameters);
+      IndexerBinder binder = new IndexerBinder(property.ParameterTypes);
 
-      result = type.GetProperty(property.Name, bindingAttr, binder, property.PropertyType, parameterTypes, null);
+      result = type.GetProperty(property.Name, bindingAttr, binder, property.PropertyType, property.ParameterTypes, null);
     }
     else
     {
@@ -63,61 +61,29 @@ internal abstract partial class DelegatorBinder : Binder
 
   public static MethodInfo ResolveMethod(Type type, IRuntimeMethod method)
   {
-    MethodInfo? result = method.IsGenericMethod
-      ? method.IsGenericMethodDefinition
-        ? ResolveGenericMethodDefinition(type, method.Definition)
-        : ResolveConstructedGenericMethod(type, method.Definition, method.TypeArguments)
-      : ResolveNonGenericMethod(type, method.Definition);
-    return result ?? throw new InvalidOperationException($"Cannot resolve method {method} in type {type}.");
+    BindingFlags bindingAttr = GetBindingAttr(method.Definition.Symbol);
+    Type[] parameterTypes = method.Definition.GetParameters().Map(p => p.ParameterType);
+
+    MethodBinder binder = new MethodBinder(parameterTypes, method.TypeArguments);
+    return type.GetMethod(method.Name, bindingAttr, binder, method.CallingConvention, parameterTypes, null)
+      ?? throw new InvalidOperationException($"Cannot resolve method {method} in type {type}.");
   }
 
-  public static ConstructorInfo ResolveConstructor(Type type, SymbolConstructorInfo constructor)
+  public static ConstructorInfo ResolveConstructor(Type type, IRuntimeConstructor constructor)
   {
     BindingFlags bindingAttr = GetBindingAttr(constructor.Symbol);
-    ParameterInfo[] parameters = constructor.GetParameters();
-    Type[] parameterTypes = parameters.Map(p => p.ParameterType);
 
-    ConstructorBinder binder = new ConstructorBinder(parameters);
-    return type.GetConstructor(bindingAttr, binder, constructor.CallingConvention, parameterTypes, null)
+    ConstructorBinder binder = new ConstructorBinder(constructor.ParameterTypes);
+    return type.GetConstructor(bindingAttr, binder, constructor.CallingConvention, constructor.ParameterTypes, null)
       ?? throw new InvalidOperationException($"Cannot resolve constructor {constructor} in type {type}.");
   }
 
-  public static FieldInfo ResolveField(Type type, SymbolFieldInfo field)
+  public static FieldInfo ResolveField(Type type, IRuntimeField field)
   {
     BindingFlags bindingAttr = GetBindingAttr(field.Symbol);
 
     return type.GetField(field.Name, bindingAttr)
       ?? throw new InvalidOperationException($"Cannot resolve field {field} in type {type}.");
-  }
-
-  private static MethodInfo? ResolveNonGenericMethod(Type type, SymbolMethodInfo method)
-  {
-    BindingFlags bindingAttr = GetBindingAttr(method.Symbol);
-    ParameterInfo[] parameters = method.GetParameters();
-    Type[] parameterTypes = parameters.Map(p => p.ParameterType);
-
-    NonGenericMethodBinder binder = new NonGenericMethodBinder(parameters);
-    return type.GetMethod(method.Name, bindingAttr, binder, method.CallingConvention, parameterTypes, null);
-  }
-
-  private static MethodInfo? ResolveGenericMethodDefinition(Type type, SymbolMethodInfo method)
-  {
-    BindingFlags bindingAttr = GetBindingAttr(method.Symbol);
-    ParameterInfo[] parameters = method.GetParameters();
-    Type[] parameterTypes = parameters.Map(p => p.ParameterType);
-
-    GenericMethodDefinitionBinder binder = new GenericMethodDefinitionBinder(parameters);
-    return type.GetMethod(method.Name, bindingAttr, binder, method.CallingConvention, parameterTypes, null);
-  }
-
-  private static MethodInfo? ResolveConstructedGenericMethod(Type type, SymbolMethodInfo methodDefinition, Type[] genericArguments)
-  {
-    BindingFlags bindingAttr = GetBindingAttr(methodDefinition.Symbol);
-    ParameterInfo[] parameters = methodDefinition.GetParameters();
-    Type[] parameterTypes = parameters.Map(p => p.ParameterType);
-
-    ConstructedGenericMethodBinder binder = new ConstructedGenericMethodBinder(parameters, genericArguments);
-    return type.GetMethod(methodDefinition.Name, bindingAttr, binder, methodDefinition.CallingConvention, parameterTypes, null);
   }
 
   private static BindingFlags GetBindingAttr(ISymbol symbol)

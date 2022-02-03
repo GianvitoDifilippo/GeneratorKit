@@ -8,18 +8,18 @@ namespace GeneratorKit.Reflection;
 internal class ProxyTypeBuilderInstantiation : Type
 {
   private readonly Type _proxyTypeDefinition;
-  private readonly SymbolType[] _genericArguments;
+  private readonly Type[] _genericArguments;
   private readonly int[] _positions;
   private Type? _underlyingSystemType;
 
-  private ProxyTypeBuilderInstantiation(Type proxyTypeDefinition, SymbolType[] genericArguments, int[] positions)
+  private ProxyTypeBuilderInstantiation(Type proxyTypeDefinition, Type[] genericArguments, int[] positions)
   {
     _proxyTypeDefinition = proxyTypeDefinition;
     _genericArguments = genericArguments;
     _positions = positions;
   }
 
-  public override bool ContainsGenericParameters => _genericArguments.Any(x => x.IsGenericParameter); // TODO: Deep search
+  public override bool ContainsGenericParameters => _genericArguments.Any(t => t.IsGenericParameter); // TODO: Deep search
 
   public override string? FullName => null;
 
@@ -53,7 +53,7 @@ internal class ProxyTypeBuilderInstantiation : Type
     Type?[] genericArguments = new Type[length];
     for (int i = 0; i < length; i++)
     {
-      SymbolType genericArgument = _genericArguments[i];
+      Type genericArgument = _genericArguments[i];
       genericArguments[i] = genericArgument.IsGenericParameter ? null : genericArgument.UnderlyingSystemType;
     }
     for (int i = 0; i < typeArguments.Length; i++)
@@ -98,27 +98,27 @@ internal class ProxyTypeBuilderInstantiation : Type
     return true;
   }
 
-  public static Type Create(Type proxyTypeDefinition, SymbolType sourceType, SymbolType signatureType)
+  public static Type Create(IRuntimeType type, IRuntimeType signatureType, Type proxyTypeDefinition)
   {
     if (!proxyTypeDefinition.IsGenericType)
       return proxyTypeDefinition;
-    
-    Type[] genericParameters = sourceType.GetGenericArguments();
-    SymbolType[] genericArguments = signatureType.GetGenericArguments();
-    if (genericParameters.Length == genericArguments.Length)
+
+    Type[] typeArguments = type.TypeArguments;
+    Type[] signatureArguments = signatureType.TypeArguments;
+    if (typeArguments.Length == signatureArguments.Length)
       return proxyTypeDefinition;
 
-    int[] positions = CreatePositions(genericParameters.Length);
+    int[] positions = CreatePositions(typeArguments.Length);
     
-    for (int i = 0; i < genericArguments.Length; i++)
+    for (int i = 0; i < signatureArguments.Length; i++)
     {
-      Type genericArgument = genericArguments[i];
+      Type genericArgument = signatureArguments[i];
       if (genericArgument.IsGenericParameter)
       {
         positions[genericArgument.GenericParameterPosition] = i;
       }
     }
-    return new ProxyTypeBuilderInstantiation(proxyTypeDefinition, genericArguments, positions!);
+    return new ProxyTypeBuilderInstantiation(proxyTypeDefinition, signatureArguments, positions!);
   }
 
   private Type GetUnderlyingSystemType()
@@ -128,7 +128,7 @@ internal class ProxyTypeBuilderInstantiation : Type
     Type[] genericParameters = _proxyTypeDefinition.GetGenericArguments();
     for (int i = 0; i < length; i++)
     {
-      SymbolType genericArgument = _genericArguments[i];
+      Type genericArgument = _genericArguments[i];
       typeArguments[i] = genericArgument.IsGenericParameter
         ? genericParameters[_positions[genericArgument.GenericParameterPosition]]
         : genericArgument.UnderlyingSystemType;

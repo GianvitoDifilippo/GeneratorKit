@@ -7,8 +7,8 @@ internal partial class DelegatorBinder
 {
   private class IndexerBinder : DelegatorBinder
   {
-    public IndexerBinder(ParameterInfo[] indexParameters)
-      : base(indexParameters)
+    public IndexerBinder(Type[] parameterTypes)
+      : base(parameterTypes)
     {
     }
 

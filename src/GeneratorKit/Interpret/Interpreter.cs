@@ -83,7 +83,7 @@ internal class Interpreter : IInterpreter
 
   public InterpreterFrame GetClassFrame(IRuntimeType type)
   {
-    Debug.Assert(type.IsSource);
+    Debug.Assert(type.Definition.Symbol.IsSource());
     Debug.Assert(!type.ContainsGenericParameters);
 
     if (_classFrames.TryGetValue(type, out InterpreterFrame? classFrame))
@@ -91,14 +91,15 @@ internal class Interpreter : IInterpreter
 
     InterpreterFrame? parentFrame = null;
     IRuntimeType? baseType = type.BaseType;
-    if (baseType is not null && baseType.IsSource)
+    if (baseType is not null && baseType.Definition.Symbol.IsSource())
     {
       parentFrame = GetClassFrame(baseType);
     }
 
     classFrame = InterpreterFrame.NewClassFrame(parentFrame, _frameProvider.GetValues(), type.TypeArguments);
+    _classFrames.Add(type, classFrame);
 
-    INamedTypeSymbol symbol = type.Definition.Symbol;
+    INamedTypeSymbol symbol = (INamedTypeSymbol)type.Definition.Symbol;
     IEnumerable<ISymbol> fields = symbol.GetMembers().Where(m => m.Kind is SymbolKind.Field && m.IsStatic);
     foreach (IFieldSymbol field in fields)
     {
@@ -123,14 +124,12 @@ internal class Interpreter : IInterpreter
       new InterpreterVisitor(_runtime, methodFrame).Visit(operation, default);
     }
 
-    _classFrames.Add(type, classFrame);
-
     return classFrame;
   }
 
   public InterpreterFrame GetInstanceFrame(InterpreterFrame classFrame, IRuntimeType type, object instance)
   {
-    Debug.Assert(type.IsSource);
+    Debug.Assert(type.Definition.Symbol.IsSource());
     
     InterpreterFrame instanceFrame = InterpreterFrame.NewInstanceFrame(classFrame, _frameProvider.GetValues(), instance);
 
@@ -152,7 +151,7 @@ internal class Interpreter : IInterpreter
 
   private InterpreterFrame GetMethodFrame(InterpreterFrame parent, IRuntimeMethod method, object?[] arguments)
   {
-    Debug.Assert(method.IsSource);
+    Debug.Assert(method.Definition.Symbol.IsSource());
     Debug.Assert(!method.IsOpenGeneric);
 
     ImmutableArray<IParameterSymbol> parameters = method.Definition.Symbol.Parameters;
@@ -172,7 +171,7 @@ internal class Interpreter : IInterpreter
 
   private InterpreterFrame GetConstructorFrame(InterpreterFrame classFrame, IRuntimeConstructor constructor, object?[] arguments)
   {
-    Debug.Assert(constructor.IsSource);
+    Debug.Assert(constructor.Symbol.IsSource());
 
     ImmutableArray<IParameterSymbol> parameters = constructor.Symbol.Parameters;
     int length = parameters.Length;

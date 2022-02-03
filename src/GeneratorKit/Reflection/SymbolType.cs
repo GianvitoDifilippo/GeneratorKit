@@ -367,9 +367,19 @@ internal abstract class SymbolType : SymbolTypeBase
   }
 
 
-  // GeneratorRuntimeType overrides
+  // RuntimeTypeBase overrides
 
-  protected override bool IsSource => Symbol.IsSource();
+  protected override Type RuntimeType => _runtimeType ??= _runtime.GetRuntimeType(this);
+
+  protected override IRuntimeType? RuntimeBaseType => BaseTypeCore;
+
+  protected override IRuntimeType RuntimeDeclaringType => DeclaringTypeCore ?? throw new InvalidOperationException(); // TODO: Message
+
+  protected override SymbolType RuntimeDefinition => IsGenericType ? GetGenericTypeDefinition() : this;
+
+  protected override IRuntimeType RuntimeElementType => HasElementType ? GetElementTypeCore()! : throw new InvalidOperationException(); // TODO: Message
+
+  protected override IEnumerable<IRuntimeType> RuntimeInterfaces => GetInterfacesCore();
 
 
   // System.Object overrides
@@ -464,8 +474,6 @@ internal abstract class SymbolType : SymbolTypeBase
 
 
   // Other members
-
-  public Type RuntimeType => _runtimeType ??= _runtime.GetRuntimeType(this);
 
   public SymbolType MakeGenericType(params SymbolType[] typeArguments)
   {
@@ -595,7 +603,7 @@ internal abstract class SymbolType : SymbolTypeBase
   }
 }
 
-internal abstract class SymbolTypeBase : GeneratorRuntimeType
+internal abstract class SymbolTypeBase : RuntimeTypeBase
 {
   // System.Type overrides
 

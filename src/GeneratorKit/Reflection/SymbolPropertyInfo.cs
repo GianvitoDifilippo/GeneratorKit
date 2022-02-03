@@ -1,5 +1,6 @@
 ﻿using GeneratorKit.Comparers;
 using GeneratorKit.Reflection.Binders;
+using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -210,11 +211,11 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase, IRuntimePrope
 
   IPropertySymbol IRuntimeProperty.Symbol => Symbol;
 
-  bool IRuntimeProperty.IsSource => Symbol.IsSource();
-
   bool IRuntimeProperty.IsStatic => Symbol.IsStatic;
 
   IRuntimeType IRuntimeProperty.DeclaringType => DeclaringTypeCore;
+
+  Type[] IRuntimeProperty.ParameterTypes => Symbol.IsIndexer ? GetIndexParametersCore().Map(p => p.ParameterType) : Type.EmptyTypes;
 
 
   // New members

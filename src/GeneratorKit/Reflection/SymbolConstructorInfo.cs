@@ -1,5 +1,6 @@
 ﻿using GeneratorKit.Comparers;
 using GeneratorKit.Reflection.Binders;
+using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -91,7 +92,7 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase, IRuntim
   {
     List<CustomAttributeData> result = Symbol
       .GetAttributes()
-      .Select(x => (CustomAttributeData)CompilationCustomAttributeData.FromAttributeData(_runtime, x))
+      .Select(attribute => (CustomAttributeData)CompilationCustomAttributeData.FromAttributeData(_runtime, attribute))
       .ToList();
     return new ReadOnlyCollection<CustomAttributeData>(result);
   }
@@ -136,7 +137,7 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase, IRuntim
 
   protected override SymbolArgumentParameter[] GetParametersCore()
   {
-    return Symbol.Parameters.Select(x => new SymbolArgumentParameter(_runtime, x)).ToArray();
+    return Symbol.Parameters.Select(parameter => new SymbolArgumentParameter(_runtime, parameter)).ToArray();
   }
 
 
@@ -182,7 +183,7 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase, IRuntim
 
   IRuntimeType IRuntimeConstructor.DeclaringType => DeclaringTypeCore;
 
-  bool IRuntimeConstructor.IsSource => Symbol.IsSource();
+  Type[] IRuntimeConstructor.ParameterTypes => GetParametersCore().Map(p => p.ParameterType);
 
 
   // New members

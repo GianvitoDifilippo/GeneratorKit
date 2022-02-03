@@ -7,8 +7,8 @@ internal abstract partial class DelegatorBinder
 {
   private class ConstructorBinder : DelegatorBinder
   {
-    public ConstructorBinder(ParameterInfo[] parameters)
-      : base(parameters)
+    public ConstructorBinder(Type[] parameterTypes)
+      : base(parameterTypes)
     {
     }
 

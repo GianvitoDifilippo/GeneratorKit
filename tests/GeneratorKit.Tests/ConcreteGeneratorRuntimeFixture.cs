@@ -66,7 +66,7 @@ namespace " + Namespace + @"
   {
     _activatorMock
       .Setup(x => x.CreateInstance(It.IsAny<IRuntimeType>(), Array.Empty<object?>()))
-      .Returns<IRuntimeType, object?[]>((t, args) => (T)System.Activator.CreateInstance(t.UnderlyingSystemType)!);
+      .Returns<IRuntimeType, object?[]>((t, args) => (T)System.Activator.CreateInstance(t.RuntimeType.UnderlyingSystemType)!);
   }
 
   internal ConcreteGeneratorRuntime CreateSut(IProxyManager proxyManager)
