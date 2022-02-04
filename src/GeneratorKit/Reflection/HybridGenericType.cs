@@ -230,7 +230,7 @@ internal class HybridGenericType : HybridGenericTypeBase
 
   protected override IRuntimeType? RuntimeBaseType => BaseTypeCore;
 
-  protected override IRuntimeType RuntimeDeclaringType => throw new InvalidOperationException(); // TODO: Message
+  protected override IRuntimeType? RuntimeDeclaringType => _definition.DeclaringType;
 
   protected override SymbolType RuntimeDefinition => _definition;
 

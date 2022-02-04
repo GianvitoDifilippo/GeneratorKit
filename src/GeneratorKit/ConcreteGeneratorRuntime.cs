@@ -76,7 +76,7 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
     return _interpreter.Interpret(method, frame, arguments);
   }
 
-  public override object? InvokeGetter(IRuntimeProperty property, object? instance, object?[] arguments)
+  public override object? GetProperty(IRuntimeProperty property, object? instance, object?[] arguments)
   {
     if (!property.Symbol.IsSource())
       return property.UnderlyingSystemProperty.GetValue(instance, arguments);
@@ -106,7 +106,7 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
     return _interpreter.Interpret(getter, frame, arguments);
   }
 
-  public override void InvokeSetter(IRuntimeProperty property, object? instance, object?[] arguments, object? value)
+  public override void SetProperty(IRuntimeProperty property, object? instance, object?[] arguments, object? value)
   {
     if (!property.Symbol.IsSource())
     {
@@ -150,6 +150,57 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
 
     IRuntimeMethod setter = property.Setter ?? throw new InvalidOperationException($"Property {property} does not have a setter.");
     _interpreter.Interpret(setter, frame, setterArguments);
+  }
+  
+  public override object? GetField(IRuntimeField field, object? instance)
+  {
+    if (!field.Symbol.IsSource())
+      return field.UnderlyingSystemField.GetValue(instance);
+
+    InterpreterFrame frame;
+    if (field.IsStatic)
+    {
+      Debug.Assert(instance is null);
+
+      frame = _interpreter.GetClassFrame(field.DeclaringType);
+    }
+    else
+    {
+      Debug.Assert(instance is not null);
+      if (instance is not IProxied proxied || proxied.Delegate is not OperationDelegate @delegate)
+        throw new ArgumentException("The instance must be provided by the runtime.", nameof(instance));
+
+      frame = @delegate.InstanceFrame;
+    }
+
+    return frame.Get(field.Symbol);
+  }
+
+  public override void SetField(IRuntimeField field, object? instance, object? value)
+  {
+    if (!field.Symbol.IsSource())
+    {
+      field.UnderlyingSystemField.SetValue(instance, value);
+      return;
+    }
+
+    InterpreterFrame frame;
+    if (field.IsStatic)
+    {
+      Debug.Assert(instance is null);
+
+      frame = _interpreter.GetClassFrame(field.DeclaringType);
+    }
+    else
+    {
+      Debug.Assert(instance is not null);
+      if (instance is not IProxied proxied || proxied.Delegate is not OperationDelegate @delegate)
+        throw new ArgumentException("The instance must be provided by the runtime.", nameof(instance));
+
+      frame = @delegate.InstanceFrame;
+    }
+
+    frame.Assign(field.Symbol, value);
   }
 
   public override Type GetRuntimeType(IRuntimeType type)
@@ -205,7 +256,7 @@ internal class ConcreteGeneratorRuntime : GeneratorRuntime
 
   private Type GetRuntimeTypeParameter(IRuntimeType type)
   {
-    return type.DeclaringType.TypeParameters[type.GenericParameterPosition];
+    return type.DeclaringType!.TypeParameters[type.GenericParameterPosition];
   }
 
   private static Type GetReferencedType(IRuntimeType type)

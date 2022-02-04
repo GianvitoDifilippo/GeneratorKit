@@ -93,7 +93,7 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase, IRuntimePrope
   {
     if (Symbol.IsSource())
     {
-      return _runtime.InvokeGetter(this, obj, index);
+      return _runtime.GetProperty(this, obj, index);
     }
     else
     {
@@ -110,7 +110,7 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase, IRuntimePrope
   {
     if (Symbol.IsSource())
     {
-      _runtime.InvokeSetter(this, obj, index, value);
+      _runtime.SetProperty(this, obj, index, value);
     }
     else
     {

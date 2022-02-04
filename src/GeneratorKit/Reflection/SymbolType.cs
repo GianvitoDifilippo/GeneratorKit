@@ -373,7 +373,7 @@ internal abstract class SymbolType : SymbolTypeBase
 
   protected override IRuntimeType? RuntimeBaseType => BaseTypeCore;
 
-  protected override IRuntimeType RuntimeDeclaringType => DeclaringTypeCore ?? throw new InvalidOperationException(); // TODO: Message
+  protected override IRuntimeType? RuntimeDeclaringType => DeclaringTypeCore;
 
   protected override SymbolType RuntimeDefinition => IsGenericType ? GetGenericTypeDefinition() : this;
 

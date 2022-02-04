@@ -73,7 +73,6 @@ public static class ProxyTypes
   }
 
   public abstract class GenericClassWithMembers<T>
-    where T : class
   {
     public GenericClassWithMembers(int value1)
     {
@@ -83,15 +82,17 @@ public static class ProxyTypes
     public GenericClassWithMembers(T value2)
     {
       Value2 = value2;
+      Field = value2;
     }
 
     public int Value1 { get; }
     public T? Value2 { get; }
+
+    public T Field;
   }
 
   [ProxyClass(typeof(GenericClassWithMembers<>))]
   public class GenericClassWithMembersProxy<T> : GenericClassWithMembers<T>, IProxied
-    where T : class
   {
     public GenericClassWithMembersProxy(int value1) : base(value1) { }
 

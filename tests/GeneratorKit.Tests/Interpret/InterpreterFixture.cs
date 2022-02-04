@@ -75,6 +75,8 @@ namespace " + Namespace + @"
 
   public class NonGenericClass_Interpret
   {
+    private int _field = 4;
+
     public void SimpleAssignment()
     {
       int v1;
@@ -124,6 +126,166 @@ namespace " + Namespace + @"
       }
       return total;
     }
+
+    public int While()
+    {
+      int total = 2;
+      while (total < 12)
+      {
+        total *= 2;
+      }
+      return total;
+    }
+
+    public int DoWhile()
+    {
+      int total = 2;
+      do
+      {
+        total *= 2;
+      }
+      while (total > 2 && total < 24);
+      return total;
+    }
+
+    public int For_WithBreak()
+    {
+      int total = 0;
+      for (int i = 0; i < 5; i++)
+      {
+        if (i == 4) break;
+        total += i;
+      }
+      return total;
+    }
+
+    public int ForEach_WithBreak(System.Collections.Generic.IEnumerable<int> enumerable)
+    {
+      int total = 1;
+      foreach (int integer in enumerable)
+      {
+        if (integer == 2)
+        {
+          total = 91;
+          break;
+        }
+        total *= integer;
+      }
+      return total;
+    }
+
+    public int While_WithBreak()
+    {
+      int total = 2;
+      while (total < 12)
+      {
+        if (total == 4) break;
+        total *= 2;
+      }
+      return total;
+    }
+
+    public int DoWhile_WithBreak()
+    {
+      int total = 2;
+      do
+      {
+        if (total == 8) break;
+        total *= 2;
+      }
+      while (total > 2 && total < 24);
+      return total;
+    }
+
+    public int For_WithContinue()
+    {
+      int total = 0;
+      for (int i = 0; i < 5; i++)
+      {
+        if (i == 4)
+        {
+          total++;
+          continue;
+        }
+        total += i;
+      }
+      return total;
+    }
+
+    public int ForEach_WithContinue(System.Collections.Generic.IEnumerable<int> enumerable)
+    {
+      int total = 1;
+      foreach (int integer in enumerable)
+      {
+        if (integer == 2)
+        {
+          total++;
+          continue;
+        }
+        total *= integer;
+      }
+      return total;
+    }
+
+    public int While_WithContinue()
+    {
+      int total = 2;
+      while (total < 12)
+      {
+        if (total == 4)
+        {
+          total++;
+          continue;
+        }
+        total *= 2;
+      }
+      return total;
+    }
+
+    public int DoWhile_WithContinue()
+    {
+      int total = 2;
+      do
+      {
+        if (total == 8)
+        {
+          total++;
+          continue;
+        }
+        total *= 2;
+      }
+      while (total > 2 && total < 24);
+      return total;
+    }
+
+    public void StringInterpolation()
+    {
+      string str1 = $""{new System.DateTime(2022, 02, 01, 19, 44, 12):HH:mm:ss}"";
+      string str2 = $""|{""Left"",-7}|{""Right"",7}|"";
+      string str3 = $""{System.Math.PI,20}"";
+      string str4 = $""{System.Math.PI,20:F3}"";
+      string str5 = $""'str2' is {(str2.Length > str3.Length ? ""longer"" : ""shorter"")} than 'str3'"";
+    }
+
+    public void ObjectInitializer()
+    {
+      OtherClass obj = new OtherClass
+      {
+        Prop1 = 3,
+        Prop2 = ""prop""
+      };
+      var prop1 = obj.Prop1;
+      var prop2 = obj.Prop2;
+    }
+
+    public void FieldReference_Source()
+    {
+      OtherClass obj = new OtherClass();
+      _field = 5;
+      int f1 = _field;
+      obj.Field = 12;
+      int f2 = obj.Field;
+    }
   }
 
   public class GenericClass_Interpret<T>
@@ -165,6 +327,12 @@ namespace " + Namespace + @"
       int value2 = obj.Arg2;
     }
 
+    public T FieldReference_Ref(T arg1)
+    {
+      GenericClassWithMembersProxy<T> obj = new GenericClassWithMembersProxy<T>(arg1);
+      return obj.Field;
+    }
+
 
     private int NonGenericMethod_GenericType()
     {
@@ -184,6 +352,13 @@ namespace " + Namespace + @"
     private int InstanceProperty => typeof(T).Name.Length;
 
     private static int StaticProperty => typeof(T).Name.Length;
+  }
+
+  public class OtherClass
+  {
+    public int Prop1 { get; set; }
+    public string Prop2 { get; set; }
+    public int Field = 50;
   }
 
   public class OtherGenericClass<T1, T2>
@@ -244,8 +419,7 @@ namespace " + Namespace + @"
     FakeDependencyFactory dependencyFactory = new FakeDependencyFactory(frameProvider);
     ConcreteGeneratorRuntime concreteRuntime = new ConcreteGeneratorRuntime(_compilation, proxyManager, dependencyFactory, CancellationToken.None);
     runtime = concreteRuntime;
-    OperationManager operationManager = new OperationManager(runtime);
-    return new Interpreter(concreteRuntime, operationManager, frameProvider);
+    return dependencyFactory.Interpreter;
   }
 
   internal SymbolType GetSourceType(GeneratorRuntime runtime, SourceType sourceType)
@@ -311,6 +485,19 @@ namespace " + Namespace + @"
     NameOf,
     For,
     ForEach,
+    ObjectInitializer,
+    While,
+    DoWhile,
+    For_WithBreak,
+    ForEach_WithBreak,
+    While_WithBreak,
+    DoWhile_WithBreak,
+    For_WithContinue,
+    ForEach_WithContinue,
+    While_WithContinue,
+    DoWhile_WithContinue,
+    StringInterpolation,
+    FieldReference_Source,
 
     Invocation_NonGenericMethod_GenericType = 4096,
     Invocation_GenericMethod_GenericType1,
@@ -318,6 +505,7 @@ namespace " + Namespace + @"
     Invocation_StaticMethod,
     Property_InstanceProperty,
     Property_StaticProperty,
-    GenericObjectCreation
+    GenericObjectCreation,
+    FieldReference_Ref,
   }
 }

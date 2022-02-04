@@ -1,9 +1,9 @@
 ﻿using GeneratorKit.Comparers;
 using GeneratorKit.Reflection;
+using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace GeneratorKit.TestHelpers;
@@ -44,6 +44,8 @@ internal class FakeGeneratorRuntime : GeneratorRuntime
   public override T CreateInstance<T>(Type type, params object?[] arguments) => throw new NotImplementedException();
   public override object InvokeConstructor(IRuntimeConstructor constructor, object?[] arguments) => throw new NotImplementedException();
   public override object? InvokeMethod(IRuntimeMethod method, object? instance, object?[] arguments) => throw new NotImplementedException();
-  public override object? InvokeGetter(IRuntimeProperty property, object? instance, object?[] arguments) => throw new NotImplementedException();
-  public override void InvokeSetter(IRuntimeProperty property, object? instance, object?[] arguments, object? value) => throw new NotImplementedException();
+  public override object? GetProperty(IRuntimeProperty property, object? instance, object?[] arguments) => throw new NotImplementedException();
+  public override void SetProperty(IRuntimeProperty property, object? instance, object?[] arguments, object? value) => throw new NotImplementedException();
+  public override object? GetField(IRuntimeField field, object? instance) => throw new NotImplementedException();
+  public override void SetField(IRuntimeField field, object? instance, object? value) => throw new NotImplementedException();
 }

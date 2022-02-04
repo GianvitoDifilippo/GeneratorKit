@@ -10,7 +10,6 @@ namespace GeneratorKit.Interpret;
 internal class InterpreterRuntimeProperty : IRuntimeProperty
 {
   private readonly GeneratorRuntime _runtime;
-  private readonly IPropertySymbol _symbol;
   private readonly InterpreterFrame _frame;
   private InterpreterRuntimeMethod? _getter;
   private InterpreterRuntimeMethod? _setter;
@@ -22,7 +21,7 @@ internal class InterpreterRuntimeProperty : IRuntimeProperty
   public InterpreterRuntimeProperty(GeneratorRuntime runtime, IPropertySymbol symbol, InterpreterFrame frame)
   {
     _runtime = runtime;
-    _symbol = symbol;
+    Symbol = symbol;
     _frame = frame;
   }
 
@@ -30,11 +29,11 @@ internal class InterpreterRuntimeProperty : IRuntimeProperty
 
   public IRuntimeMethod? Setter => _setter ??= GetSetter();
 
-  public IPropertySymbol Symbol => _symbol;
+  public IPropertySymbol Symbol { get; }
 
-  public bool IsStatic => _symbol.IsStatic;
+  public bool IsStatic => Symbol.IsStatic;
 
-  public IRuntimeType DeclaringType => _declaringType ??= new InterpreterRuntimeType(_runtime, _symbol.ContainingType, _frame);
+  public IRuntimeType DeclaringType => _declaringType ??= new InterpreterRuntimeType(_runtime, Symbol.ContainingType, _frame);
 
   public PropertyInfo UnderlyingSystemProperty => _underlyingSystemProperty ??= DelegatorBinder.ResolveProperty(DeclaringType.RuntimeType.UnderlyingSystemType, this);
 
@@ -50,14 +49,14 @@ internal class InterpreterRuntimeProperty : IRuntimeProperty
 
   private InterpreterRuntimeMethod? GetGetter()
   {
-    return _symbol.GetMethod is IMethodSymbol getMethod
+    return Symbol.GetMethod is IMethodSymbol getMethod
       ? new InterpreterRuntimeMethod(_runtime, getMethod, _frame)
       : null;
   }
 
   private InterpreterRuntimeMethod? GetSetter()
   {
-    return _symbol.SetMethod is IMethodSymbol setMethod
+    return Symbol.SetMethod is IMethodSymbol setMethod
       ? new InterpreterRuntimeMethod(_runtime, setMethod, _frame)
       : null;
   }

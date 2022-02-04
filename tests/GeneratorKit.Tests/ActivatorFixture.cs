@@ -124,10 +124,11 @@ namespace " + Namespace + @"
     _runtime.AddType(_nonGenericClassSourceSymbol, typeof(NonGenericClassProxy));
     _runtime.AddType(_nonGenericClassWithMembersSourceSymbol, typeof(NonGenericClassWithMembersProxy));
     _runtime.AddType(_genericClassSourceSymbol, typeof(GenericClassProxy<>));
+    _runtime.AddType(_genericClassSourceSymbol.Construct(stringSymbol), typeof(GenericClassProxy<string>));
     _runtime.AddType(_genericClassWithMembersSourceSymbol, typeof(GenericClassWithMembersProxy<>));
+    _runtime.AddType(_genericClassWithMembersSourceSymbol.Construct(stringSymbol), typeof(GenericClassWithMembersProxy<string>));
     _runtime.AddType(_nonGenericClassGenericBaseSourceSymbol, typeof(GenericClassWithMembersProxy<string>));
     _runtime.AddType(_interfaceSourceSymbol, typeof(InterfaceProxy));
-    _runtime.AddType(stringSymbol, typeof(string));
 
     INamedTypeSymbol GetTypeSymbolFromCompilation(string name)
     {

@@ -68,10 +68,10 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.NameOf);
 
     // Act
-    object? actual = _sut.Interpret(method, instanceFrame, arguments);
+    object? result = _sut.Interpret(method, instanceFrame, arguments);
 
     // Assert
-    actual.Should().Be(expected);
+    result.Should().Be(expected);
   }
 
   [Theory]
@@ -85,10 +85,10 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.IfElse);
 
     // Act
-    object? actual = _sut.Interpret(method, instanceFrame, arguments);
+    object? result = _sut.Interpret(method, instanceFrame, arguments);
 
     // Assert
-    actual.Should().Be(expected);
+    result.Should().Be(expected);
   }
 
   [Fact]
@@ -100,14 +100,14 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.For);
 
     // Act
-    object? actual = _sut.Interpret(method, instanceFrame, arguments);
+    object? result = _sut.Interpret(method, instanceFrame, arguments);
 
     // Assert
-    actual.Should().Be(10);
+    result.Should().Be(10);
   }
 
   [Fact]
-  public void Interpret_ShouldInterpret_Foreach()
+  public void Interpret_ShouldInterpret_ForEach()
   {
     // Arrange
     object?[] arguments = new object?[] { new int[] { 1, 2, 3 } };
@@ -115,10 +115,216 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.ForEach);
 
     // Act
-    object? actual = _sut.Interpret(method, instanceFrame, arguments);
+    object? result = _sut.Interpret(method, instanceFrame, arguments);
 
     // Assert
-    actual.Should().Be(6);
+    result.Should().Be(6);
+  }
+
+  [Fact]
+  public void Interpret_ShouldInterpret_While()
+  {
+    // Arrange
+    object?[] arguments = Array.Empty<object?>();
+    SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.While);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.While);
+
+    // Act
+    object? result = _sut.Interpret(method, instanceFrame, arguments);
+
+    // Assert
+    result.Should().Be(16);
+  }
+
+  [Fact]
+  public void Interpret_ShouldInterpret_DoWhile()
+  {
+    // Arrange
+    object?[] arguments = Array.Empty<object?>();
+    SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.DoWhile);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.DoWhile);
+
+    // Act
+    object? result = _sut.Interpret(method, instanceFrame, arguments);
+
+    // Assert
+    result.Should().Be(32);
+  }
+
+  [Fact]
+  public void Interpret_ShouldInterpret_For_WithBreak()
+  {
+    // Arrange
+    object?[] arguments = Array.Empty<object?>();
+    SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.For_WithBreak);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.For_WithBreak);
+
+    // Act
+    object? result = _sut.Interpret(method, instanceFrame, arguments);
+
+    // Assert
+    result.Should().Be(6);
+  }
+
+  [Fact]
+  public void Interpret_ShouldInterpret_ForEach_WithBreak()
+  {
+    // Arrange
+    object?[] arguments = new object?[] { new int[] { 1, 2, 3 } };
+    SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.ForEach_WithBreak);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.ForEach_WithBreak);
+
+    // Act
+    object? result = _sut.Interpret(method, instanceFrame, arguments);
+
+    // Assert
+    result.Should().Be(91);
+  }
+
+  [Fact]
+  public void Interpret_ShouldInterpret_While_WithBreak()
+  {
+    // Arrange
+    object?[] arguments = Array.Empty<object?>();
+    SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.While_WithBreak);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.While_WithBreak);
+
+    // Act
+    object? result = _sut.Interpret(method, instanceFrame, arguments);
+
+    // Assert
+    result.Should().Be(4);
+  }
+
+  [Fact]
+  public void Interpret_ShouldInterpret_DoWhile_WithBreak()
+  {
+    // Arrange
+    object?[] arguments = Array.Empty<object?>();
+    SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.DoWhile_WithBreak);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.DoWhile_WithBreak);
+
+    // Act
+    object? result = _sut.Interpret(method, instanceFrame, arguments);
+
+    // Assert
+    result.Should().Be(8);
+  }
+
+  [Fact]
+  public void Interpret_ShouldInterpret_For_WithContinue()
+  {
+    // Arrange
+    object?[] arguments = Array.Empty<object?>();
+    SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.For_WithContinue);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.For_WithContinue);
+
+    // Act
+    object? result = _sut.Interpret(method, instanceFrame, arguments);
+
+    // Assert
+    result.Should().Be(7);
+  }
+
+  [Fact]
+  public void Interpret_ShouldInterpret_ForEach_WithContinue()
+  {
+    // Arrange
+    object?[] arguments = new object?[] { new int[] { 1, 2, 3 } };
+    SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.ForEach_WithContinue);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.ForEach_WithContinue);
+
+    // Act
+    object? result = _sut.Interpret(method, instanceFrame, arguments);
+
+    // Assert
+    result.Should().Be(6);
+  }
+
+  [Fact]
+  public void Interpret_ShouldInterpret_While_WithContinue()
+  {
+    // Arrange
+    object?[] arguments = Array.Empty<object?>();
+    SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.While_WithContinue);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.While_WithContinue);
+
+    // Act
+    object? result = _sut.Interpret(method, instanceFrame, arguments);
+
+    // Assert
+    result.Should().Be(20);
+  }
+
+  [Fact]
+  public void Interpret_ShouldInterpret_DoWhile_WithContinue()
+  {
+    // Arrange
+    object?[] arguments = Array.Empty<object?>();
+    SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.DoWhile_WithContinue);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.DoWhile_WithContinue);
+
+    // Act
+    object? result = _sut.Interpret(method, instanceFrame, arguments);
+
+    // Assert
+    result.Should().Be(36);
+  }
+
+  [Fact]
+  public void Interpret_ShouldInterpret_StringInterpolation()
+  {
+    // Arrange
+    System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("en-US");
+    object?[] arguments = Array.Empty<object?>();
+    SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.StringInterpolation);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.StringInterpolation);
+
+    // Act
+    _sut.Interpret(method, instanceFrame, arguments);
+
+    // Assert
+    _frameProvider[2].Should().HaveCount(5);
+    _frameProvider[2].Should().Contain("str1", "19:44:12");
+    _frameProvider[2].Should().Contain("str2", "|Left   |  Right|");
+    _frameProvider[2].Should().Contain("str3", "   3.141592653589793");
+    _frameProvider[2].Should().Contain("str4", "               3.142");
+    _frameProvider[2].Should().Contain("str5", "'str2' is shorter than 'str3'");
+  }
+
+  [Fact]
+  public void Interpret_ShouldInterpret_FieldReference_Source()
+  {
+    // Arrange
+    object?[] arguments = Array.Empty<object?>();
+    SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.FieldReference_Source);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.FieldReference_Source);
+
+    // Act
+    _sut.Interpret(method, instanceFrame, arguments);
+
+    // Assert
+    _frameProvider[2].Should().HaveCount(3);
+    _frameProvider[2].Should().Contain("f1", 5);
+    _frameProvider[2].Should().Contain("f2", 12);
+  }
+
+  [Fact]
+  public void Interpret_ShouldInterpret_ObjectCreation()
+  {
+    // Arrange
+    object?[] arguments = Array.Empty<object?>();
+    SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.ObjectInitializer);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.ObjectInitializer);
+
+    // Act
+    _sut.Interpret(method, instanceFrame, arguments);
+
+    // Assert
+    _frameProvider[2].Should().HaveCount(3);
+    _frameProvider[2].Should().ContainKey("obj");
+    _frameProvider[2].Should().Contain("prop1", 3);
+    _frameProvider[2].Should().Contain("prop2", "prop");
   }
 
   [Theory]
@@ -132,10 +338,10 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.Invocation_NonGenericMethod_GenericType, typeArgument);
 
     // Act
-    object? actual = _sut.Interpret(method, instanceFrame, arguments);
+    object? result = _sut.Interpret(method, instanceFrame, arguments);
 
     // Assert
-    actual.Should().Be(expected);
+    result.Should().Be(expected);
   }
 
   [Fact]
@@ -148,10 +354,10 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.Invocation_GenericMethod_GenericType1, typeof(int));
 
     // Act
-    object? actual = _sut.Interpret(method, instanceFrame, arguments);
+    object? result = _sut.Interpret(method, instanceFrame, arguments);
 
     // Assert
-    actual.Should().Be(expected);
+    result.Should().Be(expected);
   }
 
   [Fact]
@@ -164,10 +370,10 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.Invocation_GenericMethod_GenericType2, typeof(int));
 
     // Act
-    object? actual = _sut.Interpret(method, instanceFrame, arguments);
+    object? result = _sut.Interpret(method, instanceFrame, arguments);
 
     // Assert
-    actual.Should().Be(expected);
+    result.Should().Be(expected);
   }
 
   [Fact]
@@ -180,10 +386,10 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.Invocation_StaticMethod, typeof(int));
 
     // Act
-    object? actual = _sut.Interpret(method, instanceFrame, arguments);
+    object? result = _sut.Interpret(method, instanceFrame, arguments);
 
     // Assert
-    actual.Should().Be(expected);
+    result.Should().Be(expected);
   }
 
   [Fact]
@@ -196,10 +402,10 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.Property_InstanceProperty, typeof(int));
 
     // Act
-    object? actual = _sut.Interpret(method, instanceFrame, arguments);
+    object? result = _sut.Interpret(method, instanceFrame, arguments);
 
     // Assert
-    actual.Should().Be(expected);
+    result.Should().Be(expected);
   }
 
   [Fact]
@@ -212,10 +418,10 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.Property_StaticProperty, typeof(int));
 
     // Act
-    object? actual = _sut.Interpret(method, instanceFrame, arguments);
+    object? result = _sut.Interpret(method, instanceFrame, arguments);
 
     // Assert
-    actual.Should().Be(expected);
+    result.Should().Be(expected);
   }
 
   [Fact]
@@ -233,6 +439,22 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     // Assert
     _frameProvider[2].Should().Contain("value1", arg1);
     _frameProvider[2].Should().Contain("value2", 4);
+  }
+
+  [Fact]
+  public void Interpret_ShouldInterpret_FieldReference_Ref()
+  {
+    // Arrange
+    const string arg1 = "argument1";
+    object?[] arguments = new object?[] { arg1 };
+    SymbolMethodInfo method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.FieldReference_Ref);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.FieldReference_Ref, typeof(string));
+
+    // Act
+    object? result = _sut.Interpret(method, instanceFrame, arguments);
+
+    // Assert
+    result.Should().Be(arg1);
   }
 
   [Fact]

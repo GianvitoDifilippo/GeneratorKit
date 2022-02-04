@@ -289,33 +289,18 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
 
   public override object? VisitFieldReference(IFieldReferenceOperation operation, Optional<object?> argument)
   {
-    IFieldSymbol symbol = operation.Field;
-    InterpreterFrame frame = Frame;
-    
-    if (frame.IsDefined(symbol))
-    {
-      if (argument.HasValue)
-      {
-        frame.Assign(symbol, argument.Value);
-        return null;
-      }
-      else
-      {
-        return frame.Get(symbol);
-      }
-    }
-
     object? instance = operation.Field.IsStatic ? null : operation.Instance!.Accept(this, default);
-    SymbolFieldInfo field = _runtime.CreateFieldInfoDelegator(operation.Field);
+    IFieldSymbol targetField = operation.Field;
+    InterpreterRuntimeField field = new InterpreterRuntimeField(_runtime, targetField, Frame);
 
     if (argument.HasValue)
     {
-      field.SetValue(instance, argument.Value);
+      _runtime.SetField(field, instance, argument.Value);
       return null;
     }
     else
     {
-      return field.GetValue(instance);
+      return _runtime.GetField(field, instance);
     }
   }
 
@@ -577,12 +562,12 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
 
     if (argument.HasValue)
     {
-      _runtime.InvokeSetter(property, instance, arguments, argument.Value);
+      _runtime.SetProperty(property, instance, arguments, argument.Value);
       return null;
     }
     else
     {
-      return _runtime.InvokeGetter(property, instance, arguments);
+      return _runtime.GetProperty(property, instance, arguments);
     }
   }
 

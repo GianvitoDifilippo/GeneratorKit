@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text;
 using System;
+using GeneratorKit.Reflection;
 
 namespace GeneratorKit.Utils;
 
@@ -21,13 +22,13 @@ internal sealed class TypeNameBuilder // Based on System.Reflection.Emit.TypeNam
     _stack = new List<int>();
   }
 
-  public static string? ToString(Type type, Format format)
+  public static string? ToString(IRuntimeType type, Format format)
   {
     if (format is Format.FullName or Format.AssemblyQualifiedName)
     {
       if (type.HasElementType)
       {
-        Type elementType = type.GetElementType();
+        IRuntimeType elementType = type.ElementType;
         if (!elementType.IsGenericTypeDefinition && elementType.ContainsGenericParameters)
           return null;
       }
@@ -303,6 +304,65 @@ internal sealed class TypeNameBuilder // Based on System.Reflection.Emit.TypeNam
 
     if (format == Format.AssemblyQualifiedName)
       AddAssemblySpec(type.Module.Assembly.FullName!);
+  }
+
+  private void AddElementType(IRuntimeType type)
+  {
+    if (!type.HasElementType)
+      return;
+
+    AddElementType(type.ElementType!);
+
+    if (type.IsPointer)
+      Append('*');
+    else if (type.IsByRef)
+      Append('&');
+    else if (type.IsArray)
+      AddArray(type.ArrayRank);
+  }
+
+  private void AddAssemblyQualifiedName(IRuntimeType type, Format format)
+  {
+    IRuntimeType rootType = type;
+
+    while (rootType.HasElementType)
+      rootType = rootType.ElementType!;
+
+    var nestings = new List<IRuntimeType>();
+    for (IRuntimeType? t = rootType; t != null; t = t.IsGenericParameter ? null : t.DeclaringType)
+      nestings.Add(t);
+
+    for (int i = nestings.Count - 1; i >= 0; i--)
+    {
+      IRuntimeType enclosingType = nestings[i];
+      string name = enclosingType.Name;
+
+      if (i == nestings.Count - 1 && enclosingType.Namespace != null && enclosingType.Namespace.Length != 0)
+        name = enclosingType.Namespace + "." + name;
+
+      AddName(name);
+    }
+
+    if (rootType.IsGenericType && (!rootType.IsGenericTypeDefinition || format == Format.ToString))
+    {
+      Type[] genericArguments = rootType.TypeArguments;
+
+      OpenGenericArguments();
+      for (int i = 0; i < genericArguments.Length; i++)
+      {
+        Format genericArgumentsFormat = format == Format.FullName ? Format.AssemblyQualifiedName : format;
+
+        OpenGenericArgument();
+        AddAssemblyQualifiedName(genericArguments[i], genericArgumentsFormat);
+        CloseGenericArgument();
+      }
+      CloseGenericArguments();
+    }
+
+    AddElementType(type);
+
+    if (format == Format.AssemblyQualifiedName)
+      AddAssemblySpec(type.Definition.Assembly.FullName!);
   }
 
   internal enum Format

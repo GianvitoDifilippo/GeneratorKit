@@ -18,12 +18,14 @@ internal abstract class GeneratorRuntime : IGeneratorRuntime
   public abstract SymbolAssembly CompilationAssembly { get; }
 
   public abstract T CreateInstance<T>(Type type, params object?[] arguments);
-
   public abstract Type GetRuntimeType(IRuntimeType type);
+  
   public abstract object InvokeConstructor(IRuntimeConstructor constructor, object?[] arguments);
   public abstract object? InvokeMethod(IRuntimeMethod method, object? instance, object?[] arguments);
-  public abstract object? InvokeGetter(IRuntimeProperty property, object? instance, object?[] arguments);
-  public abstract void InvokeSetter(IRuntimeProperty property, object? instance, object?[] arguments, object? value);
+  public abstract object? GetProperty(IRuntimeProperty property, object? instance, object?[] arguments);
+  public abstract void SetProperty(IRuntimeProperty property, object? instance, object?[] arguments, object? value);
+  public abstract object? GetField(IRuntimeField field, object? instance);
+  public abstract void SetField(IRuntimeField field, object? instance, object? value);
 
   public SymbolAssembly CreateAssemblyDelegator(IAssemblySymbol symbol)
   {

@@ -9,6 +9,8 @@ namespace GeneratorKit.Interpret;
 
 internal class InterpreterRuntimeType : IRuntimeType
 {
+  protected static readonly SymbolDisplayFormat s_namespaceFormat = new SymbolDisplayFormat(typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces);
+
   private readonly GeneratorRuntime _runtime;
   private readonly INamedTypeSymbol _symbol;
   private readonly InterpreterFrame _frame;
@@ -30,7 +32,9 @@ internal class InterpreterRuntimeType : IRuntimeType
 
   public IRuntimeType ElementType => throw new InvalidOperationException(); // TODO: Message
 
-  public IRuntimeType DeclaringType => throw new InvalidOperationException(); // TODO: Message
+  public IRuntimeType? DeclaringType => _symbol.ContainingType is { } containingType
+    ? new InterpreterRuntimeType(_runtime, containingType, _frame)
+    : null;
 
   public IEnumerable<IRuntimeType> Interfaces => _symbol.AllInterfaces.Select(i => new InterpreterRuntimeType(_runtime, i, _frame));
 
@@ -42,7 +46,7 @@ internal class InterpreterRuntimeType : IRuntimeType
 
   public Type[] TypeParameters => _typeParameters ??= _symbol.TypeParameters.Map(_runtime.CreateTypeDelegator);
 
-  public string AssemblyQualifiedName => throw new NotImplementedException();
+  public string? AssemblyQualifiedName => TypeNameBuilder.ToString(this, TypeNameBuilder.Format.AssemblyQualifiedName);
 
   public bool HasElementType => false;
 
@@ -64,5 +68,13 @@ internal class InterpreterRuntimeType : IRuntimeType
 
   public int GenericParameterPosition => throw new InvalidOperationException(); // TODO: Message
 
-  public string? FullName => throw new NotImplementedException();
+  public string? FullName => TypeNameBuilder.ToString(this, TypeNameBuilder.Format.FullName);
+
+  public string Name => _symbol.MetadataName;
+
+  public string Namespace => _symbol.ContainingNamespace.ToDisplayString(s_namespaceFormat);
+
+  public bool IsGenericType => _symbol.IsGenericType;
+
+  public bool IsGenericTypeDefinition => false;
 }
