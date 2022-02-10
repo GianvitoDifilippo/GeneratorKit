@@ -98,7 +98,7 @@ internal class ProxyTypeBuilderInstantiation : Type
     return true;
   }
 
-  public static Type Create(IRuntimeType type, IRuntimeType signatureType, Type proxyTypeDefinition)
+  public static Type Create(SymbolType type, SymbolType signatureType, Type proxyTypeDefinition)
   {
     if (!proxyTypeDefinition.IsGenericType)
       return proxyTypeDefinition;

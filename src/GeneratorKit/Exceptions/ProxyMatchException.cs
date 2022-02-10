@@ -5,11 +5,14 @@ namespace GeneratorKit.Exceptions;
 
 public class ProxyMatchException : Exception
 {
-  private ProxyMatchException(string message)
+  private ProxyMatchException(Type type, string message)
     : base(message)
   {
+    Type = type;
   }
 
-  internal static ProxyMatchException AmbiguousMatch(IRuntimeType type) => new ProxyMatchException($"'{type.FullName}' can be assigned to more than one proxy type.");
-  internal static ProxyMatchException NotFound(IRuntimeType type) => new ProxyMatchException($"No proxy type found for '{type.FullName}'.");
+  public Type Type { get; }
+
+  internal static ProxyMatchException AmbiguousMatch(SymbolType type) => new ProxyMatchException(type, $"'{type.FullName}' can be assigned to more than one proxy type.");
+  internal static ProxyMatchException NotFound(SymbolType type) => new ProxyMatchException(type, $"No proxy type found for '{type.FullName}'.");
 }

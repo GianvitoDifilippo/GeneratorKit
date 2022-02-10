@@ -442,7 +442,7 @@ namespace " + Namespace + @"
     SymbolType type = GetType(runtime, operationType);
     SymbolMethodInfo? method = type.GetMethod(operationType.ToString());
     Assert.NotNull(method);
-    return runtime.CreateMethodInfoDelegator(method!.Symbol);
+    return runtime.CreateMethodInfoDelegator(method!.OriginalSymbol);
   }
 
   internal InterpreterFrame GetInstanceFrame(GeneratorRuntime runtime, Interpreter sut, InterpretedOperationType operationType, params Type[] genericArguments)

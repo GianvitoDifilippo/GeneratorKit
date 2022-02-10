@@ -22,12 +22,7 @@ public abstract class RuntimeSourceGenerator : ISourceGenerator
 
   public void Execute(GeneratorExecutionContext context)
   {
-    string assemblyName = context.Compilation.AssemblyName is string name
-      ? $"{name}.GeneratorProxies"
-      : "GeneratorProxies";
-
     ProxyManager proxyManager = new ProxyManager();
-    DependencyFactory dependendcyFactory = new DependencyFactory();
     ConcreteGeneratorRuntime runtime = new ConcreteGeneratorRuntime(context.Compilation, proxyManager, dependendcyFactory, context.CancellationToken);
 
     try

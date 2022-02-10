@@ -184,6 +184,10 @@ public class SymbolMethodInfoTests : IClassFixture<SymbolMethodInfoFixture>
   [InlineData(MethodCategory.ConstructedGenericMethodInGenericClass)]
   [InlineData(MethodCategory.GenericMethodDefinitionInGenericClassDefinition)]
   [InlineData(MethodCategory.ConstructedGenericMethodInGenericClassDefinition)]
+  [InlineData(MethodCategory.GenericOverriddenMethodDefinitionInGenericClassDefinition)]
+  [InlineData(MethodCategory.GenericConstructedOverriddenMethodInGenericClassDefinition)]
+  [InlineData(MethodCategory.GenericOverriddenMethodDefinitionInGenericConstructedClass)]
+  [InlineData(MethodCategory.GenericConstructedOverriddenMethodInGenericConstructedClass)]
   public void GetGenericMethodDefinition_ShouldBeCorrect_WhenMethodIsGeneric(MethodCategory category)
   {
     // Arrange
@@ -216,7 +220,11 @@ public class SymbolMethodInfoTests : IClassFixture<SymbolMethodInfoFixture>
     MethodCategory.GenericMethodDefinitionInGenericClass,
     MethodCategory.ConstructedGenericMethodInGenericClass,
     MethodCategory.GenericMethodDefinitionInGenericClassDefinition,
-    MethodCategory.ConstructedGenericMethodInGenericClassDefinition)]
+    MethodCategory.ConstructedGenericMethodInGenericClassDefinition,
+    MethodCategory.GenericOverriddenMethodDefinitionInGenericClassDefinition,
+    MethodCategory.GenericConstructedOverriddenMethodInGenericClassDefinition,
+    MethodCategory.GenericOverriddenMethodDefinitionInGenericConstructedClass,
+    MethodCategory.GenericConstructedOverriddenMethodInGenericConstructedClass)]
   public void GetGenericMethodDefinition_ShouldThrow_WhenMethodIsNotGeneric(MethodCategory category)
   {
     // Arrange
@@ -562,6 +570,8 @@ public class SymbolMethodInfoTests : IClassFixture<SymbolMethodInfoFixture>
   [Theory]
   [InlineData(MethodCategory.GenericMethodDefinitionInGenericClass)]
   [InlineData(MethodCategory.GenericMethodDefinitionInGenericClassDefinition)]
+  [InlineData(MethodCategory.GenericOverriddenMethodDefinitionInGenericClassDefinition)]
+  [InlineData(MethodCategory.GenericOverriddenMethodDefinitionInGenericConstructedClass)]
   public void MakeGenericMethod_ShouldBeCorrect_WhenMethodIsGenericDefinition_OneArgument(MethodCategory category)
   {
     // Arrange
@@ -585,7 +595,9 @@ public class SymbolMethodInfoTests : IClassFixture<SymbolMethodInfoFixture>
     MethodCategory.GenericMethodOverridden,
     MethodCategory.GenericMethodOverriddenReflectedFromDerived,
     MethodCategory.GenericMethodDefinitionInGenericClass,
-    MethodCategory.GenericMethodDefinitionInGenericClassDefinition)]
+    MethodCategory.GenericMethodDefinitionInGenericClassDefinition,
+    MethodCategory.GenericOverriddenMethodDefinitionInGenericClassDefinition,
+    MethodCategory.GenericOverriddenMethodDefinitionInGenericConstructedClass)]
   public void MakeGenericMethod_ShouldThrow_WhenMethodIsNotGenericDefinition(MethodCategory category)
   {
     // Arrange

@@ -16,25 +16,27 @@ internal class ProxyManager : IProxyManager, IProxyTypeSetup
     _proxyTypes = new Dictionary<Type, Type>(TypeEqualityComparer.Default);
   }
 
-  public Type GetProxyType(IRuntimeType type)
+  public Type GetProxyType(SymbolType type)
   {
-    IRuntimeType baseType = type.BaseType!;
-    IRuntimeType? signatureType = null;
+    SymbolType baseType = type.BaseType!;
+    SymbolType? signatureType = null;
 
-    bool found = _proxyTypes.TryGetValue(baseType.Definition, out Type? proxyTypeDefinition);
+    SymbolType baseTypeDefinition = baseType.IsGenericType ? baseType.GetGenericTypeDefinition() : baseType;
+    bool found = _proxyTypes.TryGetValue(baseTypeDefinition, out Type? proxyTypeDefinition);
     if (found)
     {
       signatureType = baseType;
     }
     else
     {
-      if (!baseType.Definition.Equals(typeof(object)))
+      if (!baseTypeDefinition.Equals(typeof(object)))
         throw ProxyMatchException.NotFound(type);
     }
 
-    foreach (IRuntimeType interfaceType in type.Interfaces)
+    foreach (SymbolType interfaceType in type.GetInterfaces())
     {
-      if (_proxyTypes.TryGetValue(interfaceType.Definition, out Type? proxyTypeFromInterface))
+      SymbolType interfaceTypeDefinition = interfaceType.IsGenericType ? interfaceType.GetGenericTypeDefinition() : interfaceType;
+      if (_proxyTypes.TryGetValue(interfaceTypeDefinition, out Type? proxyTypeFromInterface))
       {
         if (found)
           throw ProxyMatchException.AmbiguousMatch(type);

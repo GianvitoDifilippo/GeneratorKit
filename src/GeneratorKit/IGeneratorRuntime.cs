@@ -12,7 +12,6 @@ public interface IGeneratorRuntime
 
   Assembly CreateAssemblyDelegator(IAssemblySymbol symbol);
   ConstructorInfo CreateConstructorInfoDelegator(IMethodSymbol symbol);
-  EventInfo CreateEventInfoDelegator(IEventSymbol symbol);
   FieldInfo CreateFieldInfoDelegator(IFieldSymbol symbol);
   MethodInfo CreateMethodInfoDelegator(IMethodSymbol symbol);
   Module CreateModuleDelegator(IModuleSymbol symbol);

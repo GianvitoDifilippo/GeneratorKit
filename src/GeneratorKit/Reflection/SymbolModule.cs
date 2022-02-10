@@ -13,11 +13,11 @@ namespace GeneratorKit.Reflection;
 
 internal sealed class SymbolModule : SymbolModuleBase
 {
-  private readonly GeneratorRuntime _runtime;
+  private readonly IGeneratorContext _context;
 
-  public SymbolModule(GeneratorRuntime runtime, IModuleSymbol symbol)
+  public SymbolModule(IGeneratorContext context, IModuleSymbol symbol)
   {
-    _runtime = runtime;
+    _context = context;
     Symbol = symbol;
   }
 
@@ -52,8 +52,9 @@ internal sealed class SymbolModule : SymbolModuleBase
   {
     List<CustomAttributeData> result = Symbol
       .GetAttributes()
-      .Select(x => (CustomAttributeData)CompilationCustomAttributeData.FromAttributeData(_runtime, x))
+      .Select(data => CompilationCustomAttributeData.FromAttributeData(_context, data) as CustomAttributeData)
       .ToList();
+
     return new ReadOnlyCollection<CustomAttributeData>(result);
   }
 
@@ -135,7 +136,7 @@ internal sealed class SymbolModule : SymbolModuleBase
 
   // SymbolModuleBase overrides
 
-  protected override SymbolAssembly AssemblyCore => _runtime.CreateAssemblyDelegator(Symbol.ContainingAssembly);
+  protected override SymbolAssembly AssemblyCore => _context.CreateAssemblyDelegator(Symbol.ContainingAssembly);
 
   protected override SymbolType? GetTypeCore(string className)
   {
@@ -149,7 +150,7 @@ internal sealed class SymbolModule : SymbolModuleBase
 
   protected override SymbolType? GetTypeCore(string className, bool throwOnError, bool ignoreCase)
   {
-    GetTypeVisitor visitor = new GetTypeVisitor(_runtime, className, ignoreCase);
+    GetTypeVisitor visitor = new GetTypeVisitor(_context, className, ignoreCase);
     SymbolType? type = visitor.VisitNamespace(Symbol.GlobalNamespace);
     return type is not null
       ? type
@@ -159,7 +160,7 @@ internal sealed class SymbolModule : SymbolModuleBase
   protected override SymbolType[] GetTypesCore()
   {
     HashSet<SymbolType> types = new HashSet<SymbolType>(TypeEqualityComparer.Default);
-    GetAllTypesVisitor visitor = new GetAllTypesVisitor(_runtime, types);
+    GetAllTypesVisitor visitor = new GetAllTypesVisitor(_context, types);
     visitor.VisitNamespace(Symbol.GlobalNamespace);
     return types.ToArray();
   }
@@ -202,9 +203,6 @@ internal sealed class SymbolModule : SymbolModuleBase
 
 internal abstract class SymbolModuleBase : Module
 {
-  private protected SymbolModuleBase() { }
-
-
   // System.Reflection.Module overrides
 
   public sealed override Assembly Assembly => AssemblyCore;

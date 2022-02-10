@@ -1,5 +1,4 @@
-﻿using GeneratorKit.Utils;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -10,9 +9,14 @@ namespace GeneratorKit.Reflection;
 
 internal sealed class SymbolArgumentParameter : SymbolParameterInfo
 {
-  public SymbolArgumentParameter(GeneratorRuntime runtime, IParameterSymbol symbol)
-    : base(runtime)
+  private readonly IRuntime _runtime;
+  private readonly MemberInfo _member;
+
+  public SymbolArgumentParameter(IRuntime runtime, IGeneratorContext context, MemberInfo member, IParameterSymbol symbol)
+    : base(context)
   {
+    _runtime = runtime;
+    _member = member;
     Symbol = symbol;
   }
 
@@ -47,31 +51,36 @@ internal sealed class SymbolArgumentParameter : SymbolParameterInfo
   {
     List<CustomAttributeData> result = Symbol
       .GetAttributes()
-      .Select(x => (CustomAttributeData)CompilationCustomAttributeData.FromAttributeData(_runtime, x))
+      .Select(data => CompilationCustomAttributeData.FromAttributeData(Context, data) as CustomAttributeData)
       .ToList();
+
     if (Symbol.IsParams)
     {
       INamedTypeSymbol paramArrayAttributeSymbol = _runtime.Compilation.GetTypeByMetadataName("System.ParamArrayAttribute")!;
-      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, paramArrayAttributeSymbol));
+      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(Context, paramArrayAttributeSymbol));
     }
+
     if (Symbol.IsOptional)
     {
       INamedTypeSymbol optionalAttributeSymbol = _runtime.Compilation.GetTypeByMetadataName("System.Runtime.InteropServices.OptionalAttribute")!;
-      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, optionalAttributeSymbol));
+      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(Context, optionalAttributeSymbol));
     }
+
     if (Symbol.RefKind is RefKind.In)
     {
       INamedTypeSymbol inAttributeSymbol = _runtime.Compilation.GetTypeByMetadataName("System.Runtime.InteropServices.InAttribute")!;
-      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, inAttributeSymbol));
+      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(Context, inAttributeSymbol));
 
       INamedTypeSymbol isReadOnlyAttributeSymbol = _runtime.Compilation.GetTypeByMetadataName("System.Runtime.CompilerServices.IsReadOnlyAttribute")!;
-      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, isReadOnlyAttributeSymbol));
+      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(Context, isReadOnlyAttributeSymbol));
     }
+
     if (Symbol.RefKind is RefKind.Out)
     {
       INamedTypeSymbol outAttributeSymbol = _runtime.Compilation.GetTypeByMetadataName("System.Runtime.InteropServices.OutAttribute")!;
-      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, outAttributeSymbol));
+      result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(Context, outAttributeSymbol));
     }
+
     return new ReadOnlyCollection<CustomAttributeData>(result);
   }
 
@@ -79,33 +88,26 @@ internal sealed class SymbolArgumentParameter : SymbolParameterInfo
 
   public override bool HasDefaultValue => Symbol.HasExplicitDefaultValue;
 
-  public override MemberInfo Member => Symbol.ContainingSymbol switch
-  {
-    IPropertySymbol propertySymbol => _runtime.CreatePropertyInfoDelegator(propertySymbol),
-    IMethodSymbol methodSymbol     => methodSymbol.MethodKind is MethodKind.Constructor or MethodKind.StaticConstructor
-                                        ? _runtime.CreateConstructorInfoDelegator(methodSymbol)
-                                        : _runtime.CreateMethodInfoDelegator(methodSymbol),
-    _                              => throw Errors.Unreacheable
-  };
+  public override MemberInfo Member => _member;
 
   public override string Name => Symbol.Name;
+
+  public override Type ParameterType
+  {
+    get
+    {
+      Type type = Context.GetContextType(Symbol.Type);
+      return Symbol.RefKind is not RefKind.None
+        ? type.MakeByRefType()
+        : type;
+    }
+  }
 
   public override int Position => Symbol.Ordinal;
 
   public override object? RawDefaultValue => Symbol.HasExplicitDefaultValue ? Symbol.ExplicitDefaultValue : DBNull.Value;
 
   // SymbolParameterInfoBase overrides
-
-  protected override SymbolType ParameterTypeCore
-  {
-    get
-    {
-      SymbolType type = _runtime.CreateTypeDelegator(Symbol.Type);
-      return Symbol.RefKind is not RefKind.None
-        ? type.MakeByRefType()
-        : type;
-    }
-  }
 
   protected override SymbolType[] GetOptionalCustomModifiersCore()
   {

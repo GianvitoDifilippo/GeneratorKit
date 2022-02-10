@@ -1,23 +1,22 @@
 ﻿using GeneratorKit.Comparers;
 using System;
-using System.Diagnostics;
 using System.Reflection;
 
 namespace GeneratorKit.Reflection;
 
 internal abstract class SymbolParameterInfo : SymbolParameterInfoBase
 {
-  protected readonly GeneratorRuntime _runtime;
-
-  public SymbolParameterInfo(GeneratorRuntime runtime)
+  public SymbolParameterInfo(IGeneratorContext runtime)
   {
-    _runtime = runtime;
+    Context = runtime;
   }
+
+  protected IGeneratorContext Context { get; }
 
 
   // System.Object overrides
 
-  public override bool Equals(object? obj)
+  public sealed override bool Equals(object? obj)
   {
     if (obj is not ParameterInfo parameterInfo)
       return false;
@@ -25,15 +24,13 @@ internal abstract class SymbolParameterInfo : SymbolParameterInfoBase
     return ParameterInfoEqualityComparer.Default.Equals(this, parameterInfo);
   }
 
-  public override int GetHashCode()
+  public sealed override int GetHashCode()
   {
     return ParameterInfoEqualityComparer.Default.GetHashCode(this);
   }
 
 
   // New members
-
-  public new SymbolType ParameterType => ParameterTypeCore;
 
   public new SymbolType[] GetOptionalCustomModifiers() => GetOptionalCustomModifiersCore();
 
@@ -42,12 +39,7 @@ internal abstract class SymbolParameterInfo : SymbolParameterInfoBase
 
 internal abstract class SymbolParameterInfoBase : ParameterInfo
 {
-  private protected SymbolParameterInfoBase() { }
-
-
   // System.Reflection.ParameterInfo overrides
-
-  public sealed override Type ParameterType => ParameterTypeCore;
 
   public sealed override Type[] GetOptionalCustomModifiers() => GetOptionalCustomModifiersCore();
 
@@ -55,9 +47,6 @@ internal abstract class SymbolParameterInfoBase : ParameterInfo
 
 
   // Abstract members
-
-  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  protected abstract SymbolType ParameterTypeCore { get; }
 
   protected abstract SymbolType[] GetOptionalCustomModifiersCore();
 

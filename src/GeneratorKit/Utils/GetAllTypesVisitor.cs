@@ -6,12 +6,12 @@ namespace GeneratorKit.Utils;
 
 internal class GetAllTypesVisitor : SymbolVisitor
 {
-  private readonly GeneratorRuntime _runtime;
+  private readonly IGeneratorContext _context;
   private readonly ICollection<SymbolType> _types;
 
-  public GetAllTypesVisitor(GeneratorRuntime runtime, ICollection<SymbolType> types)
+  public GetAllTypesVisitor(IGeneratorContext context, ICollection<SymbolType> types)
   {
-    _runtime = runtime;
+    _context = context;
     _types = types;
   }
 
@@ -25,6 +25,6 @@ internal class GetAllTypesVisitor : SymbolVisitor
 
   public override void VisitNamedType(INamedTypeSymbol symbol)
   {
-    _types.Add(_runtime.CreateTypeDelegator(symbol));
+    _types.Add(_context.CreateTypeDelegator(symbol));
   }
 }

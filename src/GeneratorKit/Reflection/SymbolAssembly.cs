@@ -17,12 +17,12 @@ namespace GeneratorKit.Reflection;
 
 internal sealed class SymbolAssembly : SymbolAssemblyBase
 {
-  private readonly GeneratorRuntime _runtime;
+  private readonly IGeneratorContext _context;
   private readonly IMethodSymbol? _entryPoint;
 
-  public SymbolAssembly(GeneratorRuntime runtime, IAssemblySymbol symbol, IMethodSymbol? entryPoint)
+  public SymbolAssembly(IGeneratorContext context, IAssemblySymbol symbol, IMethodSymbol? entryPoint)
   {
-    _runtime = runtime;
+    _context = context;
     Symbol = symbol;
     _entryPoint = entryPoint;
   }
@@ -64,8 +64,9 @@ internal sealed class SymbolAssembly : SymbolAssemblyBase
   {
     List<CustomAttributeData> result = Symbol
       .GetAttributes()
-      .Select(x => (CustomAttributeData)CompilationCustomAttributeData.FromAttributeData(_runtime, x))
+      .Select(data => CompilationCustomAttributeData.FromAttributeData(_context, data) as CustomAttributeData)
       .ToList();
+
     return new ReadOnlyCollection<CustomAttributeData>(result);
   }
 
@@ -138,10 +139,10 @@ internal sealed class SymbolAssembly : SymbolAssemblyBase
   // SymbolAssemblyBase overrides
 
   protected override SymbolMethodInfo? EntryPointCore => _entryPoint is not null
-    ? _runtime.CreateMethodInfoDelegator(_entryPoint)
+    ? _context.CreateMethodInfoDelegator(_entryPoint)
     : null;
 
-  protected override SymbolModule ManifestModuleCore => _runtime.CreateModuleDelegator(Symbol.Modules.First());
+  protected override SymbolModule ManifestModuleCore => _context.CreateModuleDelegator(Symbol.Modules.First());
 
   protected override SymbolType[] GetExportedTypesCore()
   {
@@ -150,7 +151,7 @@ internal sealed class SymbolAssembly : SymbolAssemblyBase
 
   protected override SymbolModule[] GetLoadedModulesCore(bool getResourceModules)
   {
-    return Symbol.Modules.Select(x => _runtime.CreateModuleDelegator(x)).ToArray();
+    return Symbol.Modules.Select(x => _context.CreateModuleDelegator(x)).ToArray();
   }
 
   protected override SymbolModule? GetModuleCore(string name)
@@ -161,7 +162,7 @@ internal sealed class SymbolAssembly : SymbolAssemblyBase
   protected override SymbolModule[] GetModulesCore(bool getResourceModules)
   {
     if (getResourceModules) throw new NotSupportedException();
-    return Symbol.Modules.Select(x => _runtime.CreateModuleDelegator(x)).ToArray();
+    return Symbol.Modules.Select(x => _context.CreateModuleDelegator(x)).ToArray();
   }
 
   public override AssemblyName[] GetReferencedAssemblies()
@@ -181,7 +182,7 @@ internal sealed class SymbolAssembly : SymbolAssemblyBase
 
   protected override SymbolType? GetTypeCore(string name, bool throwOnError, bool ignoreCase)
   {
-    GetTypeVisitor visitor = new GetTypeVisitor(_runtime, name, ignoreCase);
+    GetTypeVisitor visitor = new GetTypeVisitor(_context, name, ignoreCase);
     SymbolType? type = visitor.VisitNamespace(Symbol.GlobalNamespace);
     return type is not null
       ? type
@@ -228,9 +229,6 @@ internal sealed class SymbolAssembly : SymbolAssemblyBase
 
 internal abstract class SymbolAssemblyBase : Assembly
 {
-  private protected SymbolAssemblyBase() { }
-
-
   // System.Reflection.Assembly overrides
 
   public sealed override MethodInfo? EntryPoint => EntryPointCore;

@@ -6,14 +6,14 @@ namespace GeneratorKit.Utils;
 
 internal class GetTypeVisitor : SymbolVisitor<SymbolType?>
 {
-  private readonly GeneratorRuntime _runtime;
+  private readonly IGeneratorContext _context;
   private readonly string[] _segments;
   private readonly StringComparison _comparison;
   private int _index;
 
-  public GetTypeVisitor(GeneratorRuntime runtime, string name, bool ignoreCase)
+  public GetTypeVisitor(IGeneratorContext context, string name, bool ignoreCase)
   {
-    _runtime = runtime;
+    _context = context;
     _segments = name.Split('.');
     _comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
     _index = -1;
@@ -43,7 +43,7 @@ internal class GetTypeVisitor : SymbolVisitor<SymbolType?>
       return null;
 
     return symbol.MetadataName.Equals(_segments[_index], _comparison)
-      ? _runtime.CreateTypeDelegator(symbol)
+      ? _context.CreateTypeDelegator(symbol)
       : null;
   }
 }

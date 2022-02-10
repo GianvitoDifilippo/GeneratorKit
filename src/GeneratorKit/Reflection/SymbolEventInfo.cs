@@ -8,29 +8,27 @@ namespace GeneratorKit.Reflection;
 
 internal sealed class SymbolEventInfo : SymbolEventInfoBase
 {
-  private readonly GeneratorRuntime _runtime;
+  private readonly IRuntime _runtime;
+  private readonly IGeneratorContext _context;
   private readonly SymbolType? _reflectedType;
 
-  public SymbolEventInfo(GeneratorRuntime runtime, IEventSymbol symbol)
+  public SymbolEventInfo(IRuntime runtime, IGeneratorContext context, IEventSymbol symbol, SymbolType? reflectedType)
   {
+    Debug.Assert(false, "Events are not supported");
     _runtime = runtime;
-    Symbol = symbol;
-  }
-
-  public SymbolEventInfo(GeneratorRuntime runtime, IEventSymbol symbol, SymbolType reflectedType)
-    : this(runtime, symbol)
-  {
+    _context = context;
+    OriginalSymbol = symbol;
     _reflectedType = reflectedType;
   }
 
-  public IEventSymbol Symbol { get; }
+  public IEventSymbol OriginalSymbol { get; }
 
 
   // System.Reflection.EventInfo overrides
 
   public override EventAttributes Attributes => throw new NotImplementedException();
 
-  public override string Name => Symbol.Name;
+  public override string Name => OriginalSymbol.Name;
 
   protected override SymbolMethodInfo? GetAddMethodCore(bool nonPublic)
   {
@@ -55,7 +53,7 @@ internal sealed class SymbolEventInfo : SymbolEventInfoBase
 
   // SymbolEventInfoBase overrides
 
-  protected override SymbolType DeclaringTypeCore => _runtime.CreateTypeDelegator(Symbol.ContainingType);
+  protected override SymbolType DeclaringTypeCore => _context.CreateTypeDelegator(OriginalSymbol.ContainingType);
 
   protected override SymbolType EventHandlerTypeCore => throw new NotImplementedException();
 
@@ -92,9 +90,6 @@ internal sealed class SymbolEventInfo : SymbolEventInfoBase
 
 internal abstract class SymbolEventInfoBase : EventInfo
 {
-  private protected SymbolEventInfoBase() { }
-
-
   // System.Reflection.EventInfo overrides
 
   public sealed override Type DeclaringType => DeclaringTypeCore;

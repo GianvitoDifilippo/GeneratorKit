@@ -9,13 +9,13 @@ namespace GeneratorKit.Reflection;
 
 internal class SymbolReturnParameter : SymbolParameterInfo
 {
-  public SymbolReturnParameter(GeneratorRuntime runtime, IMethodSymbol symbol)
-    : base(runtime)
-  {
-    Symbol = symbol;
-  }
+  private readonly SymbolMethodInfo _method;
 
-  public IMethodSymbol Symbol { get; }
+  public SymbolReturnParameter(IGeneratorContext context, SymbolMethodInfo method)
+    : base(context)
+  {
+    _method = method;
+  }
 
 
   // System.Reflection.ParameterInfo overrides
@@ -26,20 +26,33 @@ internal class SymbolReturnParameter : SymbolParameterInfo
 
   public override bool HasDefaultValue => true;
 
-  public override MemberInfo Member => _runtime.CreateMethodInfoDelegator(Symbol);
+  public override MemberInfo Member => _method;
 
   public override string? Name => null;
 
   public override object? RawDefaultValue => null;
 
+  public override Type ParameterType
+  {
+    get
+    {
+      IMethodSymbol symbol = _method.OriginalSymbol;
+      Type type = Context.GetContextType(symbol.ReturnType);
+      return symbol.ReturnsByRef
+        ? type.MakeByRefType()
+        : type;
+    }
+  }
+
   public override int Position => -1;
 
   public override IList<CustomAttributeData> GetCustomAttributesData()
   {
-    List<CustomAttributeData> result = Symbol
+    List<CustomAttributeData> result = _method.OriginalSymbol
       .GetReturnTypeAttributes()
-      .Select(x => (CustomAttributeData)CompilationCustomAttributeData.FromAttributeData(_runtime, x))
+      .Select(data => CompilationCustomAttributeData.FromAttributeData(Context, data) as CustomAttributeData)
       .ToList();
+
     return new ReadOnlyCollection<CustomAttributeData>(result);
   }
 
@@ -58,18 +71,8 @@ internal class SymbolReturnParameter : SymbolParameterInfo
     throw new NotImplementedException();
   }
 
-  // SymbolReturnParameterInfoBase overrides
 
-  protected override SymbolType ParameterTypeCore
-  {
-    get
-    {
-      SymbolType type = _runtime.CreateTypeDelegator(Symbol.ReturnType);
-      return Symbol.ReturnsByRef
-        ? type.MakeByRefType()
-        : type;
-    }
-  }
+  // SymbolReturnParameterInfoBase overrides
 
   protected override SymbolType[] GetOptionalCustomModifiersCore()
   {

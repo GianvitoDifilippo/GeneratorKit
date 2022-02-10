@@ -5,16 +5,16 @@ namespace GeneratorKit.Utils;
 
 internal class DelegateHelper
 {
-  public static Type GetDelegateType(GeneratorRuntime runtime, IMethodSymbol method)
+  public static Type GetDelegateType(IGeneratorContext context, IMethodSymbol method)
   {
     return method.ReturnsVoid
-      ? GetActionType(runtime, method)
-      : GetFuncType(runtime, method);
+      ? GetActionType(context, method)
+      : GetFuncType(context, method);
   }
 
-  private static Type GetActionType(GeneratorRuntime runtime, IMethodSymbol method)
+  private static Type GetActionType(IGeneratorContext context, IMethodSymbol method)
   {
-    Type[] types = method.Parameters.Map(p => runtime.CreateTypeDelegator(p.Type).UnderlyingSystemType);
+    Type[] types = method.Parameters.Map(p => context.GetContextType(p.Type).UnderlyingSystemType);
     return types.Length switch
     {
       0 => typeof(Action),
@@ -38,13 +38,13 @@ internal class DelegateHelper
     };
   }
 
-  private static Type GetFuncType(GeneratorRuntime runtime, IMethodSymbol method)
+  private static Type GetFuncType(IGeneratorContext context, IMethodSymbol method)
   {
     Type[] types = new Type[method.Parameters.Length + 1];
-    types[0] = runtime.CreateTypeDelegator(method.ReturnType).UnderlyingSystemType;
+    types[0] = context.GetContextType(method.ReturnType).UnderlyingSystemType;
     for (int i = 0; i < method.Parameters.Length; i++)
     {
-      types[i + 1] = runtime.CreateTypeDelegator(method.Parameters[i].Type).UnderlyingSystemType;
+      types[i + 1] = context.GetContextType(method.Parameters[i].Type).UnderlyingSystemType;
     }
     return types.Length switch
     {

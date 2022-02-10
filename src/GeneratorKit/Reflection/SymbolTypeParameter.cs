@@ -9,22 +9,25 @@ namespace GeneratorKit.Reflection;
 
 internal sealed class SymbolTypeParameter : SymbolType
 {
-  public SymbolTypeParameter(GeneratorRuntime runtime, ITypeParameterSymbol symbol)
-    : base(runtime)
+  public SymbolTypeParameter(IRuntime runtime, IGeneratorContext context, ITypeParameterSymbol symbol)
+    : base(runtime, context)
   {
     Symbol = symbol;
   }
 
   public new ITypeParameterSymbol Symbol { get; }
 
+  public override INamedTypeSymbol OriginalSymbol => throw new InvalidOperationException();
+
   protected override ITypeSymbol SymbolCore => Symbol;
+
 
   // System.Type overrides
 
-  protected override SymbolType? BaseTypeCore => _runtime.CreateTypeDelegator(BaseTypeSymbol);
+  protected override SymbolType? BaseTypeCore => Context.CreateTypeDelegator(BaseTypeSymbol);
 
   public override MethodBase? DeclaringMethod => Symbol.DeclaringMethod is not null
-    ? _runtime.CreateMethodInfoDelegator(Symbol.DeclaringMethod)
+    ? Context.CreateMethodInfoDelegator(Symbol.DeclaringMethod)
     : null;
 
   public override GenericParameterAttributes GenericParameterAttributes
@@ -56,7 +59,7 @@ internal sealed class SymbolTypeParameter : SymbolType
 
   public override bool IsGenericParameter => true;
 
-  public override bool IsEnum => !Symbol.IsValueType && Symbol.ConstraintTypes.Contains(_runtime.Compilation.GetSpecialType(SpecialType.System_Enum));
+  public override bool IsEnum => !Symbol.IsValueType && Symbol.ConstraintTypes.Contains(Runtime.Compilation.GetSpecialType(SpecialType.System_Enum));
 
   public override bool IsSerializable => IsEnum;
 
@@ -82,6 +85,20 @@ internal sealed class SymbolTypeParameter : SymbolType
   public override Array GetEnumValues()
   {
     throw new InvalidOperationException();
+  }
+
+  public override Type[] GetGenericArguments()
+  {
+    return Array.Empty<SymbolType>();
+  }
+
+  public override Type[] GetGenericParameterConstraints()
+  {
+    IEnumerable<ITypeSymbol> constraintTypes = Symbol.ConstraintTypes;
+    if (Symbol.HasValueTypeConstraint)
+      constraintTypes = constraintTypes.Concat(new[] { Runtime.Compilation.GetSpecialType(SpecialType.System_ValueType) });
+
+    return constraintTypes.Select(Context.GetContextType).ToArray();
   }
 
   protected override bool HasElementTypeImpl()
@@ -115,16 +132,11 @@ internal sealed class SymbolTypeParameter : SymbolType
   }
 
 
-  // RuntimeTypeBase overrides
-
-  protected override Type[] RuntimeTypeParameters => throw new InvalidOperationException(); // TODO: Message
-
-
   // SymbolTypeBase overrides
 
-  protected override SymbolAssembly AssemblyCore => _runtime.CreateAssemblyDelegator(Symbol.ContainingAssembly);
+  protected override SymbolAssembly AssemblyCore => Context.CreateAssemblyDelegator(Symbol.ContainingAssembly);
 
-  protected override SymbolModule ModuleCore => _runtime.CreateModuleDelegator(Symbol.ContainingModule);
+  protected override SymbolModule ModuleCore => Context.CreateModuleDelegator(Symbol.ContainingModule);
 
   public override string Namespace => Symbol.ContainingNamespace.ToDisplayString(s_namespaceFormat);
 
@@ -138,22 +150,6 @@ internal sealed class SymbolTypeParameter : SymbolType
     throw new InvalidOperationException();
   }
 
-  protected override SymbolType[] GetGenericArgumentsCore()
-  {
-    return Array.Empty<SymbolType>();
-  }
-
-  protected override SymbolType[] GetGenericParameterConstraintsCore()
-  {
-    IEnumerable<ITypeSymbol> constraintTypes = Symbol.ConstraintTypes;
-    if (Symbol.HasValueTypeConstraint)
-      constraintTypes = constraintTypes.Concat(new[] { _runtime.Compilation.GetSpecialType(SpecialType.System_ValueType) });
-
-    return constraintTypes
-      .Select(x => _runtime.CreateTypeDelegator(x))
-      .ToArray();
-  }
-
   protected override SymbolType GetGenericTypeDefinitionCore()
   {
     throw new InvalidOperationException("This operation is only valid on generic types.");
@@ -161,7 +157,7 @@ internal sealed class SymbolTypeParameter : SymbolType
 
   protected override SymbolType[] GetInterfacesCore()
   {
-    return GetInterfaceSymbols().Select(x => _runtime.CreateTypeDelegator(x)).ToArray();
+    return GetInterfaceSymbols().Select(x => Context.CreateTypeDelegator(x)).ToArray();
 
     IEnumerable<ITypeSymbol> GetInterfaceSymbols()
     {
@@ -181,7 +177,7 @@ internal sealed class SymbolTypeParameter : SymbolType
 
   protected override SymbolType MakeArrayTypeCore()
   {
-    return _runtime.CreateTypeDelegator(_runtime.Compilation.CreateArrayTypeSymbol(Symbol));
+    return Context.CreateTypeDelegator(Runtime.Compilation.CreateArrayTypeSymbol(Symbol));
   }
 
   protected override SymbolType MakeArrayTypeCore(int rank)
@@ -189,27 +185,22 @@ internal sealed class SymbolTypeParameter : SymbolType
     if (rank == 1)
       throw new NotSupportedException("MDArrays of rank 1 are currently not supported.");
 
-    return _runtime.CreateTypeDelegator(_runtime.Compilation.CreateArrayTypeSymbol(Symbol, rank));
+    return Context.CreateTypeDelegator(Runtime.Compilation.CreateArrayTypeSymbol(Symbol, rank));
   }
 
   protected override SymbolType MakeByRefTypeCore()
   {
-    return new SymbolByRefType(_runtime, this);
+    return new SymbolByRefType(Runtime, Context, this);
   }
 
-  protected override HybridGenericType MakeGenericTypeCore(Type[] typeArguments)
-  {
-    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
-  }
-
-  protected override SymbolType MakeGenericTypeCore(SymbolType[] typeArguments)
+  protected override SymbolType MakeGenericTypeCore(Type[] typeArguments)
   {
     throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
   }
 
   private ITypeSymbol BaseTypeSymbol => Symbol.HasValueTypeConstraint
-    ? _runtime.Compilation.GetSpecialType(SpecialType.System_ValueType)
+    ? Runtime.Compilation.GetSpecialType(SpecialType.System_ValueType)
     : Symbol.ConstraintTypes.Length != 0
       ? Symbol.ConstraintTypes[0]
-      : _runtime.Compilation.GetSpecialType(SpecialType.System_Object);
+      : Runtime.Compilation.GetSpecialType(SpecialType.System_Object);
 }

@@ -8,11 +8,13 @@ internal class SymbolByRefType : SymbolType
 {
   private readonly SymbolType _elementType;
 
-  public SymbolByRefType(GeneratorRuntime runtime, SymbolType elementType)
-    : base(runtime)
+  public SymbolByRefType(IRuntime runtime, IGeneratorContext context, SymbolType elementType)
+    : base(runtime, context)
   {
     _elementType = elementType;
   }
+
+  public override INamedTypeSymbol OriginalSymbol => throw new InvalidOperationException();
 
   protected override ITypeSymbol SymbolCore => _elementType.Symbol;
 
@@ -41,6 +43,16 @@ internal class SymbolByRefType : SymbolType
     throw new ArgumentException("Must be an array type.");
   }
 
+  public override Type[] GetGenericArguments()
+  {
+    return _elementType.GetGenericArguments();
+  }
+
+  public override Type[] GetGenericParameterConstraints()
+  {
+    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
+  }
+
   protected override bool HasElementTypeImpl()
   {
     return true;
@@ -67,11 +79,6 @@ internal class SymbolByRefType : SymbolType
   }
 
 
-  // RuntimeTypeBase overrides
-
-  protected override Type[] RuntimeTypeParameters => throw new InvalidOperationException(); // TODO: Message
-
-
   // SymbolTypeBase overrides
 
   protected override SymbolAssembly AssemblyCore => _elementType.Assembly;
@@ -88,16 +95,6 @@ internal class SymbolByRefType : SymbolType
   protected override SymbolType GetEnumUnderlyingTypeCore()
   {
     throw new InvalidOperationException();
-  }
-
-  protected override SymbolType[] GetGenericArgumentsCore()
-  {
-    return _elementType.GetGenericArguments();
-  }
-
-  protected override SymbolType[] GetGenericParameterConstraintsCore()
-  {
-    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
   }
 
   protected override SymbolType GetGenericTypeDefinitionCore()
@@ -125,12 +122,7 @@ internal class SymbolByRefType : SymbolType
     throw new TypeLoadException();
   }
 
-  protected override HybridGenericType MakeGenericTypeCore(Type[] typeArguments)
-  {
-    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
-  }
-
-  protected override SymbolType MakeGenericTypeCore(SymbolType[] typeArguments)
+  protected override SymbolType MakeGenericTypeCore(Type[] typeArguments)
   {
     throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
   }

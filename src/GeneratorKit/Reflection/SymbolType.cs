@@ -16,16 +16,20 @@ internal abstract class SymbolType : SymbolTypeBase
   private const BindingFlags s_defaultLookup = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public;
   protected static readonly SymbolDisplayFormat s_namespaceFormat = new SymbolDisplayFormat(typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces);
 
-  protected readonly GeneratorRuntime _runtime;
   private Type? _runtimeType;
 
-  protected SymbolType(GeneratorRuntime runtime)
+  protected SymbolType(IRuntime runtime, IGeneratorContext context)
   {
-    _runtime = runtime;
+    Runtime = runtime;
+    Context = context;
   }
 
   public ITypeSymbol Symbol => SymbolCore;
+  public Type RuntimeType => _runtimeType ??= Runtime.GetRuntimeType(this);
+  public abstract INamedTypeSymbol OriginalSymbol { get; }
 
+  protected IRuntime Runtime { get; }
+  protected IGeneratorContext Context { get; }
   protected abstract ITypeSymbol SymbolCore { get; }
 
 
@@ -119,10 +123,7 @@ internal abstract class SymbolType : SymbolTypeBase
     {
       result = result.Concat(GetConstructorsEnumerable(bindingAttr));
     }
-    if ((type & MemberTypes.Event) != 0)
-    {
-      result = result.Concat(GetEventsEnumerable(bindingAttr).Where(x => x.Name == name));
-    }
+    // TODO: Add events
     if ((type & MemberTypes.Field) != 0)
     {
       result = result.Concat(GetFieldsEnumerable(bindingAttr).Where(x => x.Name == name));
@@ -290,12 +291,8 @@ internal abstract class SymbolType : SymbolTypeBase
   // SymbolTypeBase overrides
 
   protected sealed override SymbolType? DeclaringTypeCore => Symbol.ContainingType is { } containingType
-    ? _runtime.CreateTypeDelegator(containingType)
+    ? Context.CreateTypeDelegator(containingType)
     : null;
-
-  protected sealed override SymbolType[] GenericTypeArgumentsCore => IsGenericType && !IsGenericTypeDefinition
-    ? GetGenericArgumentsCore()
-    : Array.Empty<SymbolType>();
 
   protected sealed override SymbolType? ReflectedTypeCore => DeclaringTypeCore;
 
@@ -311,17 +308,20 @@ internal abstract class SymbolType : SymbolTypeBase
 
   protected sealed override SymbolEventInfo GetEventCore(string name, BindingFlags bindingAttr)
   {
-    return GetEventsEnumerable(bindingAttr).FirstOrDefault(x => x.Name == name);
+    throw new NotSupportedException();
+    // return GetEventsEnumerable(bindingAttr).FirstOrDefault(x => x.Name == name);
   }
 
   protected sealed override SymbolEventInfo[] GetEventsCore()
   {
-    return GetEventsEnumerable(s_defaultLookup).ToArray();
+    throw new NotSupportedException();
+    // return GetEventsEnumerable(s_defaultLookup).ToArray();
   }
 
   protected sealed override SymbolEventInfo[] GetEventsCore(BindingFlags bindingAttr)
   {
-    return GetEventsEnumerable(bindingAttr).ToArray();
+    throw new NotSupportedException();
+    // return GetEventsEnumerable(bindingAttr).ToArray();
   }
 
   protected sealed override SymbolFieldInfo GetFieldCore(string name, BindingFlags bindingAttr)
@@ -367,21 +367,6 @@ internal abstract class SymbolType : SymbolTypeBase
   }
 
 
-  // RuntimeTypeBase overrides
-
-  protected override Type RuntimeType => _runtimeType ??= _runtime.GetRuntimeType(this);
-
-  protected override IRuntimeType? RuntimeBaseType => BaseTypeCore;
-
-  protected override IRuntimeType? RuntimeDeclaringType => DeclaringTypeCore;
-
-  protected override SymbolType RuntimeDefinition => IsGenericType ? GetGenericTypeDefinition() : this;
-
-  protected override IRuntimeType RuntimeElementType => HasElementType ? GetElementTypeCore()! : throw new InvalidOperationException(); // TODO: Message
-
-  protected override IEnumerable<IRuntimeType> RuntimeInterfaces => GetInterfacesCore();
-
-
   // System.Object overrides
 
   public sealed override int GetHashCode()
@@ -405,9 +390,6 @@ internal abstract class SymbolType : SymbolTypeBase
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   public new SymbolType? DeclaringType => DeclaringTypeCore;
-
-  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  public new SymbolType[] GenericTypeArguments => GenericTypeArgumentsCore;
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   public new SymbolModule Module => ModuleCore;
@@ -436,17 +418,13 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public new SymbolFieldInfo[] GetFields(BindingFlags bindingAttr) => GetFieldsCore(bindingAttr);
 
-  public new SymbolType[] GetGenericArguments() => GetGenericArgumentsCore();
-
-  public new SymbolType[] GetGenericParameterConstraints() => GetGenericParameterConstraintsCore();
-
   public new SymbolType GetGenericTypeDefinition() => GetGenericTypeDefinitionCore();
 
   public new SymbolType GetInterface(string name) => GetInterfaceCore(name, false);
 
   public new SymbolType GetInterface(string name, bool ignoreCase) => GetInterfaceCore(name, ignoreCase);
 
-  public new SymbolType[] GetInterfaces() => GetInterfacesCore();
+  public new SymbolType[] GetInterfaces() => GetInterfacesCore(); // TODO: IEnumerable
 
   public new SymbolMethodInfo? GetMethod(string name) => (SymbolMethodInfo?)base.GetMethod(name);
 
@@ -468,142 +446,76 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public new SymbolType MakeByRefType() => MakeByRefTypeCore();
 
-  public new HybridGenericType MakeGenericType(params Type[] typeArguments) => MakeGenericTypeCore(typeArguments);
+  public new SymbolType MakeGenericType(Type[] typeArguments) => MakeGenericTypeCore(typeArguments);
 
   public new SymbolType MakePointerType() => MakePointerTypeCore();
 
 
   // Other members
 
-  public SymbolType MakeGenericType(params SymbolType[] typeArguments)
-  {
-    return MakeGenericTypeCore(typeArguments);
-  }
-
   private IEnumerable<SymbolConstructorInfo> GetConstructorsEnumerable(BindingFlags bindingAttr)
   {
-    return GetMembersSymbols(bindingAttr, true)
+    return Symbol.GetMembers(bindingAttr, true)
       .Where(x => x is IMethodSymbol methodSymbol && methodSymbol.MethodKind is MethodKind.Constructor or MethodKind.StaticConstructor)
-      .Select(x => _runtime.CreateConstructorInfoDelegator((IMethodSymbol)x));
+      .Select(x => Context.CreateConstructorInfoDelegator((IMethodSymbol)x));
   }
 
   private IEnumerable<SymbolEventInfo> GetEventsEnumerable(BindingFlags bindingAttr)
   {
-    return GetMembersSymbols(bindingAttr, true)
-      .Where(x => x.Kind is SymbolKind.Event)
-      .Select(x => new SymbolEventInfo(_runtime, (IEventSymbol)x, this));
+    return Symbol.GetMembers(bindingAttr, true)
+      .Where(member => member.Kind is SymbolKind.Event)
+      .Select(member => new SymbolEventInfo(Runtime, Context, (IEventSymbol)member, this));
   }
 
   private IEnumerable<SymbolFieldInfo> GetFieldsEnumerable(BindingFlags bindingAttr)
   {
-    return GetMembersSymbols(bindingAttr, true)
-      .Where(x => x.Kind is SymbolKind.Field)
-      .Select(x => new SymbolFieldInfo(_runtime, (IFieldSymbol)x, this));
+    return Symbol.GetMembers(bindingAttr, true)
+      .Where(member => member.Kind is SymbolKind.Field)
+      .Select(member => new SymbolFieldInfo(Runtime, Context, (IFieldSymbol)member, this));
   }
 
   private IEnumerable<SymbolMethodInfo> GetMethodsEnumerable(BindingFlags bindingAttr)
   {
-    return GetMembersSymbols(bindingAttr, true)
-      .Where(x => x is IMethodSymbol methodSymbol && methodSymbol.MethodKind is not MethodKind.Constructor and not MethodKind.StaticConstructor)
-      .Select(x => new SymbolMethodInfo(_runtime, (IMethodSymbol)x, this));
+    return Symbol.GetMembers(bindingAttr, true)
+      .Where(member => member is IMethodSymbol methodSymbol && methodSymbol.MethodKind is not MethodKind.Constructor and not MethodKind.StaticConstructor)
+      .Select(member => new SymbolMethodInfo(Runtime, Context, (IMethodSymbol)member, this));
   }
 
   private IEnumerable<SymbolType> GetNestedTypesEnumerable(BindingFlags bindingAttr)
   {
-    return GetMembersSymbols(bindingAttr, true)
-      .Where(x => x.Kind is SymbolKind.NamedType)
-      .Select(x => _runtime.CreateTypeDelegator((ITypeSymbol)x));
+    return Symbol.GetMembers(bindingAttr, true)
+      .Where(member => member.Kind is SymbolKind.NamedType)
+      .Select(member => Context.CreateTypeDelegator((ITypeSymbol)member));
   }
 
   private IEnumerable<SymbolPropertyInfo> GetPropertiesEnumerable(BindingFlags bindingAttr)
   {
-    return GetMembersSymbols(bindingAttr, true)
-      .Where(x => x.Kind is SymbolKind.Property)
-      .Select(x => new SymbolPropertyInfo(_runtime, (IPropertySymbol)x, this));
+    return Symbol.GetMembers(bindingAttr, true)
+      .Where(member => member.Kind is SymbolKind.Property)
+      .Select(member => new SymbolPropertyInfo(Runtime, Context, (IPropertySymbol)member, this));
   }
 
   private IEnumerable<MemberInfo> GetMembersEnumerable(BindingFlags bindingAttr)
   {
-    return GetMembersSymbols(bindingAttr, true)
-      .Where(x => x is IFieldSymbol or IPropertySymbol or IEventSymbol or IMethodSymbol or INamedTypeSymbol)
+    return Symbol.GetMembers(bindingAttr, true)
+      .Where(member => member.Kind is SymbolKind.Field or SymbolKind.Property or SymbolKind.Method or SymbolKind.NamedType) // TODO: Add events when supported
       .Select<ISymbol, MemberInfo>(x => x switch
       {
-        IFieldSymbol fieldSymbol         => new SymbolFieldInfo(_runtime, fieldSymbol, this),
-        IPropertySymbol propertySymbol   => new SymbolPropertyInfo(_runtime, propertySymbol, this),
-        IEventSymbol eventSymbol         => new SymbolEventInfo(_runtime, eventSymbol, this),
+        IFieldSymbol fieldSymbol         => new SymbolFieldInfo(Runtime, Context, fieldSymbol, this),
+        IPropertySymbol propertySymbol   => new SymbolPropertyInfo(Runtime, Context,  propertySymbol, this),
+        IEventSymbol eventSymbol         => new SymbolEventInfo(Runtime, Context,  eventSymbol, this),
         IMethodSymbol methodSymbol       => methodSymbol.MethodKind is MethodKind.Constructor or MethodKind.StaticConstructor
-                                            ? _runtime.CreateConstructorInfoDelegator(methodSymbol)
-                                            : new SymbolMethodInfo(_runtime, methodSymbol, this),
-        INamedTypeSymbol namedTypeSymbol => _runtime.CreateTypeDelegator(namedTypeSymbol),
+                                            ? Context.CreateConstructorInfoDelegator(methodSymbol)
+                                            : new SymbolMethodInfo(Runtime, Context,  methodSymbol, this),
+        INamedTypeSymbol namedTypeSymbol => Context.CreateTypeDelegator(namedTypeSymbol),
         _                                => throw Errors.Unreacheable
       });
   }
 
-  private IEnumerable<ISymbol> GetMembersSymbols(BindingFlags bindingAttr, bool isReflectedType)
-  {
-    bool hasPublicFlag = bindingAttr.HasFlag(BindingFlags.Public);
-    bool hasNonPublicFlag = bindingAttr.HasFlag(BindingFlags.NonPublic);
-    bool hasInstanceFlag = bindingAttr.HasFlag(BindingFlags.Instance);
-    bool hasStaticFlag = bindingAttr.HasFlag(BindingFlags.Static);
-    bool hasFlattenHierarchyFlag = bindingAttr.HasFlag(BindingFlags.FlattenHierarchy);
-    bool hasDeclaredOnlyFlag = bindingAttr.HasFlag(BindingFlags.DeclaredOnly);
-
-    foreach (ISymbol member in Symbol.GetMembers())
-    {
-      bool isPublic = member.DeclaredAccessibility is Accessibility.Public;
-      bool isInstance = !member.IsStatic;
-      bool isNestedType = member.Kind is SymbolKind.NamedType;
-      bool isConstructor = member.Kind is SymbolKind.Method && ((IMethodSymbol)member).MethodKind is MethodKind.Constructor or MethodKind.StaticConstructor;
-
-      if (!isReflectedType && (isConstructor || isNestedType))
-      {
-        continue;
-      }
-
-      if (isPublic && hasPublicFlag)
-      {
-        if (isInstance && hasInstanceFlag || isNestedType)
-        {
-          yield return member;
-        }
-        else if (!isInstance && hasStaticFlag)
-        {
-          if (isReflectedType || (hasFlattenHierarchyFlag && member.DeclaredAccessibility is not Accessibility.Private))
-          {
-            yield return member;
-          }
-        }
-      }
-      else if (!isPublic && hasNonPublicFlag)
-      {
-        if (isInstance && hasInstanceFlag || isNestedType)
-        {
-          if (isReflectedType || member.DeclaredAccessibility is not Accessibility.Private)
-          {
-            yield return member;
-          }
-        }
-        else if (!isInstance && hasStaticFlag)
-        {
-          if (isReflectedType || (hasFlattenHierarchyFlag && member.DeclaredAccessibility is not Accessibility.Private))
-          {
-            yield return member;
-          }
-        }
-      }
-    }
-
-    if (!hasDeclaredOnlyFlag && BaseType is SymbolNamedType baseType)
-    {
-      foreach (ISymbol baseMember in baseType.GetMembersSymbols(bindingAttr, false))
-      {
-        yield return baseMember;
-      }
-    }
-  }
+  
 }
 
-internal abstract class SymbolTypeBase : RuntimeTypeBase
+internal abstract class SymbolTypeBase : Type
 {
   // System.Type overrides
 
@@ -612,8 +524,6 @@ internal abstract class SymbolTypeBase : RuntimeTypeBase
   public sealed override Type? BaseType => BaseTypeCore;
 
   public sealed override Type? DeclaringType => DeclaringTypeCore;
-
-  public sealed override Type[] GenericTypeArguments => GenericTypeArgumentsCore;
 
   public sealed override Module Module => ModuleCore;
 
@@ -637,10 +547,6 @@ internal abstract class SymbolTypeBase : RuntimeTypeBase
 
   public sealed override FieldInfo[] GetFields(BindingFlags bindingAttr) => GetFieldsCore(bindingAttr);
 
-  public sealed override Type[] GetGenericArguments() => GetGenericArgumentsCore();
-
-  public sealed override Type[] GetGenericParameterConstraints() => GetGenericParameterConstraintsCore();
-
   public sealed override Type GetGenericTypeDefinition() => GetGenericTypeDefinitionCore();
 
   public sealed override Type GetInterface(string name, bool ignoreCase) => GetInterfaceCore(name, ignoreCase);
@@ -661,12 +567,7 @@ internal abstract class SymbolTypeBase : RuntimeTypeBase
 
   public sealed override Type MakeByRefType() => MakeByRefTypeCore();
 
-  public sealed override Type MakeGenericType(params Type[] typeArguments)
-  {
-    return typeArguments is SymbolType[] symbolTypeArguments
-      ? MakeGenericTypeCore(symbolTypeArguments)
-      : MakeGenericTypeCore(typeArguments);
-  }
+  public sealed override Type MakeGenericType(params Type[] typeArguments) => MakeGenericTypeCore(typeArguments);
 
   public sealed override Type MakePointerType() => MakePointerTypeCore();
 
@@ -681,9 +582,6 @@ internal abstract class SymbolTypeBase : RuntimeTypeBase
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   protected abstract SymbolType? DeclaringTypeCore { get; }
-
-  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  protected abstract SymbolType[] GenericTypeArgumentsCore { get; }
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   protected abstract SymbolModule ModuleCore { get; }
@@ -709,10 +607,6 @@ internal abstract class SymbolTypeBase : RuntimeTypeBase
 
   protected abstract SymbolFieldInfo[] GetFieldsCore(BindingFlags bindingAttr);
 
-  protected abstract SymbolType[] GetGenericArgumentsCore();
-
-  protected abstract SymbolType[] GetGenericParameterConstraintsCore();
-
   protected abstract SymbolType GetGenericTypeDefinitionCore();
 
   protected abstract SymbolType GetInterfaceCore(string name, bool ignoreCase);
@@ -733,9 +627,7 @@ internal abstract class SymbolTypeBase : RuntimeTypeBase
 
   protected abstract SymbolType MakeByRefTypeCore();
 
-  protected abstract HybridGenericType MakeGenericTypeCore(Type[] typeArguments);
-
-  protected abstract SymbolType MakeGenericTypeCore(SymbolType[] typeArguments);
+  protected abstract SymbolType MakeGenericTypeCore(Type[] typeArguments);
 
   protected abstract SymbolType MakePointerTypeCore();
 }

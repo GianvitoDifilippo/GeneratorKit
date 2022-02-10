@@ -1,33 +1,36 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using GeneratorKit.Utils;
+using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Reflection;
 
 namespace GeneratorKit.Reflection;
 
 internal sealed class SymbolArrayType : SymbolType
 {
-  private readonly SymbolType _elementType;
+  private SymbolType? _elementType;
 
-  public SymbolArrayType(GeneratorRuntime runtime, IArrayTypeSymbol symbol)
-    : base(runtime)
+  public SymbolArrayType(IRuntime runtime, IGeneratorContext context, IArrayTypeSymbol symbol)
+    : base(runtime, context)
   {
     Symbol = symbol;
-    _elementType = runtime.CreateTypeDelegator(Symbol.ElementType);
   }
 
   public new IArrayTypeSymbol Symbol { get; }
 
+  public override INamedTypeSymbol OriginalSymbol => throw new InvalidOperationException();
+
   protected override ITypeSymbol SymbolCore => Symbol;
+
+  private SymbolType ElementType => _elementType ??= Context.CreateTypeDelegator(Symbol.ElementType);
 
 
   // System.Type overrides
 
   public override MethodBase? DeclaringMethod => throw new InvalidOperationException($"Method may only be called on a Type for which Type.IsGenericParameter is true.");
 
-  public override string Namespace => _elementType.Namespace;
+  public override string Namespace => ElementType.Namespace;
 
   public override GenericParameterAttributes GenericParameterAttributes => throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
 
@@ -45,7 +48,7 @@ internal sealed class SymbolArrayType : SymbolType
 
   public override MemberTypes MemberType => MemberTypes.TypeInfo;
 
-  public override string Name => WithArraySuffix(_elementType.Name);
+  public override string Name => WithArraySuffix(ElementType.Name);
 
   public override int GetArrayRank()
   {
@@ -54,10 +57,10 @@ internal sealed class SymbolArrayType : SymbolType
 
   public override IList<CustomAttributeData> GetCustomAttributesData()
   {
-    INamedTypeSymbol serializableAttributeSymbol = _runtime.Compilation.GetTypeByMetadataName("System.SerializableAttribute")!;
+    INamedTypeSymbol serializableAttributeSymbol = Runtime.Compilation.GetTypeByMetadataName("System.SerializableAttribute")!;
     List<CustomAttributeData> result = new List<CustomAttributeData>
     {
-      CompilationCustomAttributeData.FromParameterlessAttribute(_runtime, serializableAttributeSymbol)
+      CompilationCustomAttributeData.FromParameterlessAttribute(Context, serializableAttributeSymbol)
     };
 
     return new ReadOnlyCollection<CustomAttributeData>(result);
@@ -71,6 +74,16 @@ internal sealed class SymbolArrayType : SymbolType
   public override Array GetEnumValues()
   {
     throw new InvalidOperationException();
+  }
+
+  public override Type[] GetGenericArguments()
+  {
+    return ElementType.GetGenericArguments();
+  }
+
+  public override Type[] GetGenericParameterConstraints()
+  {
+    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
   }
 
   protected override bool HasElementTypeImpl()
@@ -104,22 +117,17 @@ internal sealed class SymbolArrayType : SymbolType
   }
 
 
-  // RuntimeTypeBase overrides
-
-  protected override Type[] RuntimeTypeParameters => throw new InvalidOperationException(); // TODO: Message
-
-
   // SymbolTypeBase overrides
 
-  protected override SymbolAssembly AssemblyCore => _elementType.Assembly;
+  protected override SymbolAssembly AssemblyCore => ElementType.Assembly;
 
-  protected override SymbolType? BaseTypeCore => _runtime.CreateTypeDelegator(Symbol.BaseType!);
+  protected override SymbolType? BaseTypeCore => Context.CreateTypeDelegator(Runtime.Compilation.GetSpecialType(SpecialType.System_Array));
 
-  protected override SymbolModule ModuleCore => _elementType.Module;
+  protected override SymbolModule ModuleCore => ElementType.Module;
 
   protected override SymbolType GetElementTypeCore()
   {
-    return _elementType;
+    return ElementType;
   }
 
   protected override SymbolType GetEnumUnderlyingTypeCore()
@@ -127,29 +135,19 @@ internal sealed class SymbolArrayType : SymbolType
     throw new InvalidOperationException();
   }
 
-  protected override SymbolType[] GetGenericArgumentsCore()
-  {
-    return _elementType.GetGenericArguments();
-  }
-
   protected override SymbolType GetGenericTypeDefinitionCore()
   {
     throw new InvalidOperationException("This operation is only valid on generic types.");
   }
 
-  protected override SymbolType[] GetGenericParameterConstraintsCore()
-  {
-    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
-  }
-
   protected override SymbolType[] GetInterfacesCore()
   {
-    return Symbol.AllInterfaces.Select(x => _runtime.CreateTypeDelegator(x)).ToArray();
+    return Symbol.AllInterfaces.Map(x => Context.CreateTypeDelegator(x));
   }
 
   protected override SymbolType MakeArrayTypeCore()
   {
-    return _runtime.CreateTypeDelegator(_runtime.Compilation.CreateArrayTypeSymbol(Symbol));
+    return Context.CreateTypeDelegator(Runtime.Compilation.CreateArrayTypeSymbol(Symbol));
   }
 
   protected override SymbolType MakeArrayTypeCore(int rank)
@@ -157,20 +155,15 @@ internal sealed class SymbolArrayType : SymbolType
     if (rank == 1)
       throw new NotSupportedException("MDArrays of rank 1 are currently not supported.");
 
-    return _runtime.CreateTypeDelegator(_runtime.Compilation.CreateArrayTypeSymbol(Symbol, rank));
+    return Context.CreateTypeDelegator(Runtime.Compilation.CreateArrayTypeSymbol(Symbol, rank));
   }
 
   protected override SymbolType MakeByRefTypeCore()
   {
-    return new SymbolByRefType(_runtime, this);
+    return new SymbolByRefType(Runtime, Context, this);
   }
 
-  protected override HybridGenericType MakeGenericTypeCore(Type[] typeArguments)
-  {
-    throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
-  }
-
-  protected override SymbolType MakeGenericTypeCore(SymbolType[] typeArguments)
+  protected override SymbolType MakeGenericTypeCore(Type[] typeArguments)
   {
     throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
   }

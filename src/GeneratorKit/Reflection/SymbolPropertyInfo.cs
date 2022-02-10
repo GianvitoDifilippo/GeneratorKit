@@ -13,42 +13,52 @@ using System.Text;
 
 namespace GeneratorKit.Reflection;
 
-internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase, IRuntimeProperty
+internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
 {
-  private readonly GeneratorRuntime _runtime;
+  private readonly IRuntime _runtime;
+  private readonly IGeneratorContext _context;
   private readonly SymbolType? _reflectedType;
   private PropertyInfo? _underlyingSystemProperty;
 
-  public SymbolPropertyInfo(GeneratorRuntime runtime, IPropertySymbol symbol)
+  public SymbolPropertyInfo(IRuntime runtime, IGeneratorContext context, IPropertySymbol symbol, SymbolType? reflectedType)
   {
     _runtime = runtime;
-    Symbol = symbol;
-  }
-
-  public SymbolPropertyInfo(GeneratorRuntime runtime, IPropertySymbol symbol, SymbolType reflectedType)
-    : this(runtime, symbol)
-  {
+    _context = context;
+    OriginalSymbol = symbol;
     _reflectedType = reflectedType;
   }
 
-  public IPropertySymbol Symbol { get; }
+  public IPropertySymbol OriginalSymbol { get; }
 
-  public PropertyInfo UnderlyingSystemProperty => _underlyingSystemProperty ??= DelegatorBinder.ResolveProperty(ReflectedType.UnderlyingSystemType, this);
+  public bool IsIndexer => OriginalSymbol.IsIndexer;
+
+  public Type[] ParameterTypes => OriginalSymbol.Parameters.Map(parameter => _context.GetContextType(parameter.Type));
+
+  public PropertyInfo UnderlyingSystemProperty
+  {
+    get
+    {
+      Debug.Assert(!OriginalSymbol.IsSource());
+      return _underlyingSystemProperty ??= DelegatorBinder.ResolveProperty(ReflectedType.UnderlyingSystemType, this);
+    }
+  }
 
 
   // System.Reflection.PropertyInfo overrides
 
   public override PropertyAttributes Attributes => PropertyAttributes.None;
 
-  public override bool CanRead => !Symbol.IsWriteOnly;
+  public override bool CanRead => !OriginalSymbol.IsWriteOnly;
 
-  public override bool CanWrite => !Symbol.IsReadOnly;
+  public override bool CanWrite => !OriginalSymbol.IsReadOnly;
 
   public override MemberTypes MemberType => MemberTypes.Property;
 
   public override int MetadataToken => throw new NotSupportedException();
 
-  public override string Name => Symbol.Name is "this[]" ? "Item" : Symbol.Name;
+  public override string Name => OriginalSymbol.Name is "this[]" ? "Item" : OriginalSymbol.Name;
+
+  public override Type PropertyType => _context.GetContextType(OriginalSymbol.Type);
 
   public override object GetConstantValue()
   {
@@ -67,10 +77,11 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase, IRuntimePrope
 
   public override IList<CustomAttributeData> GetCustomAttributesData()
   {
-    List<CustomAttributeData> result = Symbol
+    List<CustomAttributeData> result = OriginalSymbol
       .GetAttributes()
-      .Select(x => (CustomAttributeData)CompilationCustomAttributeData.FromAttributeData(_runtime, x))
+      .Select(data => CompilationCustomAttributeData.FromAttributeData(_context, data) as CustomAttributeData)
       .ToList();
+
     return new ReadOnlyCollection<CustomAttributeData>(result);
   }
 
@@ -91,7 +102,7 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase, IRuntimePrope
 
   public override object? GetValue(object obj, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
   {
-    if (Symbol.IsSource())
+    if (OriginalSymbol.IsSource())
     {
       return _runtime.GetProperty(this, obj, index);
     }
@@ -108,7 +119,7 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase, IRuntimePrope
 
   public override void SetValue(object obj, object value, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
   {
-    if (Symbol.IsSource())
+    if (OriginalSymbol.IsSource())
     {
       _runtime.SetProperty(this, obj, index, value);
     }
@@ -121,18 +132,16 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase, IRuntimePrope
 
   // SymbolPropertyInfoBase overrides
 
-  protected override SymbolType DeclaringTypeCore => _runtime.CreateTypeDelegator(Symbol.ContainingType);
+  protected override SymbolType DeclaringTypeCore => _context.CreateTypeDelegator(OriginalSymbol.ContainingType);
 
-  protected override SymbolModule ModuleCore => _runtime.CreateModuleDelegator(Symbol.ContainingModule);
-
-  protected override SymbolType PropertyTypeCore => _runtime.CreateTypeDelegator(Symbol.Type);
+  protected override SymbolModule ModuleCore => _context.CreateModuleDelegator(OriginalSymbol.ContainingModule);
 
   protected override SymbolType ReflectedTypeCore => _reflectedType ?? DeclaringTypeCore;
 
   protected override SymbolMethodInfo[] GetAccessorsCore(bool nonPublic)
   {
-    bool includeGetMethod = CanRead && (Symbol.GetMethod!.DeclaredAccessibility == Accessibility.Public || nonPublic);
-    bool includeSetMethod = CanWrite && (Symbol.SetMethod!.DeclaredAccessibility == Accessibility.Public || nonPublic);
+    bool includeGetMethod = CanRead && (OriginalSymbol.GetMethod!.DeclaredAccessibility == Accessibility.Public || nonPublic);
+    bool includeSetMethod = CanWrite && (OriginalSymbol.SetMethod!.DeclaredAccessibility == Accessibility.Public || nonPublic);
 
     return includeGetMethod
       ? includeSetMethod
@@ -145,24 +154,24 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase, IRuntimePrope
 
   protected override SymbolMethodInfo? GetGetMethodCore(bool nonPublic)
   {
-    return CanRead && (Symbol.GetMethod!.DeclaredAccessibility == Accessibility.Public || nonPublic)
+    return CanRead && (OriginalSymbol.GetMethod!.DeclaredAccessibility == Accessibility.Public || nonPublic)
       ? _reflectedType is not null
-        ? new SymbolMethodInfo(_runtime, Symbol.GetMethod, _reflectedType)
-        : _runtime.CreateMethodInfoDelegator(Symbol.GetMethod)
+        ? new SymbolMethodInfo(_runtime, _context, OriginalSymbol.GetMethod, _reflectedType)
+        : _context.CreateMethodInfoDelegator(OriginalSymbol.GetMethod)
       : null;
   }
 
   protected override SymbolArgumentParameter[] GetIndexParametersCore()
   {
-    return Symbol.Parameters.Select(x => new SymbolArgumentParameter(_runtime, x)).ToArray();
+    return OriginalSymbol.Parameters.Map(parameter => new SymbolArgumentParameter(_runtime, _context, this, parameter));
   }
 
   protected override SymbolMethodInfo? GetSetMethodCore(bool nonPublic)
   {
-    return CanWrite && (Symbol.SetMethod!.DeclaredAccessibility == Accessibility.Public || nonPublic)
+    return CanWrite && (OriginalSymbol.SetMethod!.DeclaredAccessibility == Accessibility.Public || nonPublic)
       ? _reflectedType is not null
-        ? new SymbolMethodInfo(_runtime, Symbol.SetMethod, _reflectedType)
-        : _runtime.CreateMethodInfoDelegator(Symbol.SetMethod)
+        ? new SymbolMethodInfo(_runtime, _context, OriginalSymbol.SetMethod, _reflectedType)
+        : _context.CreateMethodInfoDelegator(OriginalSymbol.SetMethod)
       : null;
   }
 
@@ -203,25 +212,7 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase, IRuntimePrope
   }
 
 
-  // IRuntimeProperty members
-
-  IRuntimeMethod? IRuntimeProperty.Getter => GetMethod;
-
-  IRuntimeMethod? IRuntimeProperty.Setter => SetMethod;
-
-  IPropertySymbol IRuntimeProperty.Symbol => Symbol;
-
-  bool IRuntimeProperty.IsStatic => Symbol.IsStatic;
-
-  IRuntimeType IRuntimeProperty.DeclaringType => DeclaringTypeCore;
-
-  Type[] IRuntimeProperty.ParameterTypes => Symbol.IsIndexer ? GetIndexParametersCore().Map(p => p.ParameterType) : Type.EmptyTypes;
-
-
   // New members
-
-  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  public new SymbolType PropertyType => PropertyTypeCore;
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   public new SymbolType DeclaringType => DeclaringTypeCore;
@@ -249,12 +240,7 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase, IRuntimePrope
 
 internal abstract class SymbolPropertyInfoBase : PropertyInfo
 {
-  private protected SymbolPropertyInfoBase() { }
-
-
   // System.Reflection.PropertyInfo overrides
-
-  public sealed override Type PropertyType => PropertyTypeCore;
 
   public sealed override Type DeclaringType => DeclaringTypeCore;
 
@@ -272,9 +258,6 @@ internal abstract class SymbolPropertyInfoBase : PropertyInfo
 
 
   // Abstract members
-
-  [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  protected abstract SymbolType PropertyTypeCore { get; }
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   protected abstract SymbolType DeclaringTypeCore { get; }

@@ -5,5 +5,5 @@ namespace GeneratorKit.Proxy;
 
 internal interface IProxyManager
 {
-  Type GetProxyType(IRuntimeType type);
+  Type GetProxyType(SymbolType type);
 }

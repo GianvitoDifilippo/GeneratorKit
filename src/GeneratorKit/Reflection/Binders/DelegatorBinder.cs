@@ -1,5 +1,4 @@
 ﻿using GeneratorKit.Comparers;
-using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Globalization;
@@ -40,16 +39,17 @@ internal abstract partial class DelegatorBinder : Binder
     return true;
   }
 
-  public static PropertyInfo ResolveProperty(Type type, IRuntimeProperty property)
+  public static PropertyInfo ResolveProperty(Type type, SymbolPropertyInfo property)
   {
-    BindingFlags bindingAttr = GetBindingAttr(property.Symbol);
+    BindingFlags bindingAttr = GetBindingAttr(property.OriginalSymbol);
 
     PropertyInfo? result;
-    if (property.ParameterTypes.Length != 0)
+    if (property.IsIndexer)
     {
-      IndexerBinder binder = new IndexerBinder(property.ParameterTypes);
+      Type[] parameterTypes = property.ParameterTypes;
+      IndexerBinder binder = new IndexerBinder(parameterTypes);
 
-      result = type.GetProperty(property.Name, bindingAttr, binder, property.PropertyType, property.ParameterTypes, null);
+      result = type.GetProperty(property.Name, bindingAttr, binder, property.PropertyType, parameterTypes, null);
     }
     else
     {
@@ -59,28 +59,28 @@ internal abstract partial class DelegatorBinder : Binder
     return result ?? throw new InvalidOperationException($"Cannot resolve property {property} in type {type}.");
   }
 
-  public static MethodInfo ResolveMethod(Type type, IRuntimeMethod method)
+  public static MethodInfo ResolveMethod(Type type, SymbolMethodInfo method)
   {
-    BindingFlags bindingAttr = GetBindingAttr(method.Definition.Symbol);
-    Type[] parameterTypes = method.Definition.GetParameters().Map(p => p.ParameterType);
+    BindingFlags bindingAttr = GetBindingAttr(method.OriginalSymbol);
+    Type[] parameterTypes = method.ParameterTypes;
 
-    MethodBinder binder = new MethodBinder(parameterTypes, method.TypeArguments);
+    MethodBinder binder = new MethodBinder(parameterTypes, method.GetGenericArguments());
     return type.GetMethod(method.Name, bindingAttr, binder, method.CallingConvention, parameterTypes, null)
       ?? throw new InvalidOperationException($"Cannot resolve method {method} in type {type}.");
   }
 
-  public static ConstructorInfo ResolveConstructor(Type type, IRuntimeConstructor constructor)
+  public static ConstructorInfo ResolveConstructor(Type type, SymbolConstructorInfo constructor)
   {
-    BindingFlags bindingAttr = GetBindingAttr(constructor.Symbol);
+    BindingFlags bindingAttr = GetBindingAttr(constructor.OriginalSymbol);
 
     ConstructorBinder binder = new ConstructorBinder(constructor.ParameterTypes);
     return type.GetConstructor(bindingAttr, binder, constructor.CallingConvention, constructor.ParameterTypes, null)
       ?? throw new InvalidOperationException($"Cannot resolve constructor {constructor} in type {type}.");
   }
 
-  public static FieldInfo ResolveField(Type type, IRuntimeField field)
+  public static FieldInfo ResolveField(Type type, SymbolFieldInfo field)
   {
-    BindingFlags bindingAttr = GetBindingAttr(field.Symbol);
+    BindingFlags bindingAttr = GetBindingAttr(field.OriginalSymbol);
 
     return type.GetField(field.Name, bindingAttr)
       ?? throw new InvalidOperationException($"Cannot resolve field {field} in type {type}.");

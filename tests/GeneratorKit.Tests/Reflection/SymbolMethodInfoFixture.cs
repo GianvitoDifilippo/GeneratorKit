@@ -75,6 +75,15 @@ namespace " + Namespace + @"
   {
     public void GenericMethodInGenericClass<T1>(T arg) => throw null;
     public void NonGenericMethodInGenericClass(T arg) => throw null;
+
+    public virtual void GenericOverriddenMethodInGenericClass<T1>(T arg) => throw null;
+    public virtual void NonGenericOverriddenMethodInGenericClass(T arg) => throw null;
+  }
+
+  public class GenericDerivedClass<TT> : GenericClass<TT>
+  {
+    public override void GenericOverriddenMethodInGenericClass<T1>(TT arg) => throw null;
+    public override void NonGenericOverriddenMethodInGenericClass(TT arg) => throw null;
   }
 }
 
@@ -84,9 +93,11 @@ namespace " + Namespace + @"
   private readonly Type _baseType;
   private readonly Type _derivedType;
   private readonly Type _genericType;
+  private readonly Type _genericDerivedType;
   private readonly INamedTypeSymbol _baseSymbol;
   private readonly INamedTypeSymbol _derivedSymbol;
   private readonly INamedTypeSymbol _genericSymbol;
+  private readonly INamedTypeSymbol _genericDerivedSymbol;
   private readonly INamedTypeSymbol _intSymbol;
   private readonly INamedTypeSymbol _stringSymbol;
 
@@ -100,10 +111,12 @@ namespace " + Namespace + @"
     _baseType = output.Assembly!.GetType(Namespace + ".BaseClass")!;
     _derivedType = output.Assembly!.GetType(Namespace + ".DerivedClass")!;
     _genericType = output.Assembly!.GetType(Namespace + ".GenericClass`1")!;
+    _genericDerivedType = output.Assembly!.GetType(Namespace + ".GenericDerivedClass`1")!;
 
     _baseSymbol = output.Compilation.GetTypeByMetadataName(Namespace + ".BaseClass")!;
     _derivedSymbol = output.Compilation.GetTypeByMetadataName(Namespace + ".DerivedClass")!;
     _genericSymbol = output.Compilation.GetTypeByMetadataName(Namespace + ".GenericClass`1")!;
+    _genericDerivedSymbol = output.Compilation.GetTypeByMetadataName(Namespace + ".GenericDerivedClass`1")!;
 
     _intSymbol = output.Compilation.GetSpecialType(SpecialType.System_Int32);
     _stringSymbol = output.Compilation.GetSpecialType(SpecialType.System_String);
@@ -255,6 +268,24 @@ namespace " + Namespace + @"
       MethodCategory.NonGenericMethodInGenericClassDefinition
         => GetMethodFromType(_genericType, "NonGenericMethodInGenericClass"),
 
+      MethodCategory.GenericOverriddenMethodDefinitionInGenericClassDefinition
+        => GetMethodFromType(_genericDerivedType, "GenericOverriddenMethodInGenericClass"),
+
+      MethodCategory.GenericConstructedOverriddenMethodInGenericClassDefinition
+        => GetMethodFromType(_genericDerivedType, "GenericOverriddenMethodInGenericClass").MakeGenericMethod(typeof(int)),
+
+      MethodCategory.GenericOverriddenMethodDefinitionInGenericConstructedClass
+        => GetMethodFromType(_genericDerivedType.MakeGenericType(typeof(string)), "GenericOverriddenMethodInGenericClass"),
+
+      MethodCategory.GenericConstructedOverriddenMethodInGenericConstructedClass
+        => GetMethodFromType(_genericDerivedType.MakeGenericType(typeof(string)), "GenericOverriddenMethodInGenericClass").MakeGenericMethod(typeof(int)),
+      
+      MethodCategory.NonGenericOverriddenMethodInGenericClassDefinition
+        => GetMethodFromType(_genericDerivedType, "NonGenericOverriddenMethodInGenericClass"),
+
+      MethodCategory.NonGenericOverriddenMethodInGenericConstructedClass
+        => GetMethodFromType(_genericDerivedType.MakeGenericType(typeof(string)), "NonGenericOverriddenMethodInGenericClass"),
+
       _ => throw new InvalidOperationException()
     };
 
@@ -381,6 +412,20 @@ namespace " + Namespace + @"
       MethodCategory.NonGenericMethodInGenericClassDefinition
         => GetMethodFromType(_genericSymbol, "NonGenericMethodInGenericClass"),
 
+      MethodCategory.GenericOverriddenMethodDefinitionInGenericClassDefinition or
+      MethodCategory.GenericConstructedOverriddenMethodInGenericClassDefinition
+        => GetMethodFromType(_genericDerivedSymbol, "GenericOverriddenMethodInGenericClass"),
+
+      MethodCategory.GenericOverriddenMethodDefinitionInGenericConstructedClass or
+      MethodCategory.GenericConstructedOverriddenMethodInGenericConstructedClass
+        => GetMethodFromType(_genericDerivedSymbol.Construct(StringSymbolType.Symbol), "GenericOverriddenMethodInGenericClass"),
+
+      MethodCategory.NonGenericOverriddenMethodInGenericClassDefinition
+        => GetMethodFromType(_genericDerivedSymbol, "NonGenericOverriddenMethodInGenericClass"),
+
+      MethodCategory.NonGenericOverriddenMethodInGenericConstructedClass
+        => GetMethodFromType(_genericDerivedSymbol.Construct(StringSymbolType.Symbol), "NonGenericOverriddenMethodInGenericClass"),
+
       _ => throw new InvalidOperationException()
     };
 
@@ -414,7 +459,9 @@ namespace " + Namespace + @"
         MethodCategory.ConstructedGenericOverload1 or
         MethodCategory.ConstructedGenericOverload2 or
         MethodCategory.ConstructedGenericMethodInGenericClass or
-        MethodCategory.ConstructedGenericMethodInGenericClassDefinition;
+        MethodCategory.ConstructedGenericMethodInGenericClassDefinition or
+        MethodCategory.GenericConstructedOverriddenMethodInGenericClassDefinition or
+        MethodCategory.GenericConstructedOverriddenMethodInGenericConstructedClass;
     }
 
     static bool NeedsTwoGenericArguments(MethodCategory category)
@@ -491,5 +538,11 @@ public enum MethodCategory
   NonGenericMethodInGenericClass,
   GenericMethodDefinitionInGenericClassDefinition,
   ConstructedGenericMethodInGenericClassDefinition,
-  NonGenericMethodInGenericClassDefinition
+  NonGenericMethodInGenericClassDefinition,
+  GenericOverriddenMethodDefinitionInGenericClassDefinition,
+  GenericConstructedOverriddenMethodInGenericClassDefinition,
+  GenericOverriddenMethodDefinitionInGenericConstructedClass,
+  GenericConstructedOverriddenMethodInGenericConstructedClass,
+  NonGenericOverriddenMethodInGenericClassDefinition,
+  NonGenericOverriddenMethodInGenericConstructedClass,
 }
