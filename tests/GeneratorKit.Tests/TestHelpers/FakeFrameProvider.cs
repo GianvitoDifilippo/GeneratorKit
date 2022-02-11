@@ -1,6 +1,6 @@
 ﻿#pragma warning disable RS1024 // Compare symbols correctly
 
-using GeneratorKit.Interpret;
+using GeneratorKit.Interpret.Frame;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System.Collections;

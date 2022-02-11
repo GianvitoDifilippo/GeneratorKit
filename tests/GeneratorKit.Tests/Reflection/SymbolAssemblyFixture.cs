@@ -1,4 +1,5 @@
-﻿using GeneratorKit.TestHelpers;
+﻿using GeneratorKit.Reflection.Context;
+using GeneratorKit.TestHelpers;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Reflection;
@@ -50,16 +51,17 @@ namespace " + Namespace + @"
     CompilationOutput output = CompilationOutput.Create(s_source, AssemblyName, OutputKind.ConsoleApplication);
     Assert.True(output.IsValid, $"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
 
-    FakeGeneratorRuntime runtime = new FakeGeneratorRuntime(output.Compilation);
+    FakeReflectionRuntime runtime = new FakeReflectionRuntime(output.Compilation);
+    DefaultGeneratorContext context = new DefaultGeneratorContext(runtime);
     Symbol = output.Compilation.Assembly;
     EntryPoint = output.Compilation.GetEntryPoint(CancellationToken.None)!;
-    _delegator = new SymbolAssembly(runtime, output.Compilation.Assembly, EntryPoint);
+    _delegator = new SymbolAssembly(context, output.Compilation.Assembly, EntryPoint);
     _reference = output.Assembly!;
 
     INamedTypeSymbol attributeType = output.Compilation.GetTypeByMetadataName("System.Runtime.CompilerServices.InternalsVisibleToAttribute")!;
     CustomAttributeTypedArgument attributeArgument = new CustomAttributeTypedArgument("OtherAssembly");
     CustomAttributeData = CompilationCustomAttributeData.FromSymbol(
-      runtime,
+      context,
       attributeType.Constructors[0],
       new[] { attributeArgument },
       Array.Empty<CustomAttributeNamedArgument>());

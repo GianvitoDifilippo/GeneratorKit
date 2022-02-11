@@ -1,6 +1,7 @@
 ﻿using GeneratorKit.Interpret;
 using GeneratorKit.Proxy;
 using GeneratorKit.Reflection;
+using GeneratorKit.Reflection.Context;
 using GeneratorKit.TestHelpers;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
@@ -11,7 +12,7 @@ using Xunit;
 
 namespace GeneratorKit;
 
-public class ConcreteGeneratorRuntimeFixture
+public class GeneratorRuntimeFixture
 {
   public const string AssemblyName = "GeneratorKit.Reflection.Tests";
   public const string Namespace = AssemblyName;
@@ -39,11 +40,10 @@ namespace " + Namespace + @"
 ";
 
   private readonly Compilation _compilation;
-  private readonly Mock<IDependencyFactory> _dependencyFactoryMock;
   private readonly Mock<IActivator> _activatorMock;
   private readonly Mock<IInterpreter> _interpreterMock;
 
-  public ConcreteGeneratorRuntimeFixture()
+  public GeneratorRuntimeFixture()
   {
     CompilationOutput output = CompilationOutput.Create(s_source, AssemblyName, referencedAssemblies: new[] { typeof(ProxyTypes).Assembly });
     Assert.True(output.IsValid, $"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
@@ -52,29 +52,29 @@ namespace " + Namespace + @"
 
     _activatorMock = new Mock<IActivator>(MockBehavior.Strict);
     _interpreterMock = new Mock<IInterpreter>(MockBehavior.Strict);
-    _dependencyFactoryMock = new Mock<IDependencyFactory>(MockBehavior.Strict);
 
     IActivator activator = _activatorMock.Object;
     IInterpreter interpreter = _interpreterMock.Object;
-    _dependencyFactoryMock
-      .Setup(x => x.GetDependencies(It.IsAny<GeneratorRuntime>(), out activator, out interpreter));
   }
 
-  internal SymbolType GetSpecialType(ConcreteGeneratorRuntime sut, SpecialType specialType) => new SymbolNamedType(sut, _compilation.GetSpecialType(specialType));
+  internal SymbolType GetSpecialType(GeneratorRuntime runtime, SpecialType specialType)
+  {
+    return new SymbolNamedType(runtime, new DefaultGeneratorContext(runtime), _compilation.GetSpecialType(specialType));
+  }
 
   public void MockActivator<T>()
   {
     _activatorMock
-      .Setup(x => x.CreateInstance(It.IsAny<IRuntimeType>(), Array.Empty<object?>()))
-      .Returns<IRuntimeType, object?[]>((t, args) => (T)System.Activator.CreateInstance(t.RuntimeType.UnderlyingSystemType)!);
+      .Setup(x => x.CreateInstance(It.IsAny<SymbolType>(), Array.Empty<object?>()))
+      .Returns<SymbolType, object?[]>((t, args) => (T)System.Activator.CreateInstance(t.UnderlyingSystemType)!);
   }
 
-  internal ConcreteGeneratorRuntime CreateSut(IProxyManager proxyManager)
+  internal GeneratorRuntime CreateSut(IProxyManager proxyManager)
   {
-    return new ConcreteGeneratorRuntime(_compilation, proxyManager, _dependencyFactoryMock.Object, CancellationToken.None);
+    return new GeneratorRuntime(_compilation, new MockDependencyFactory(_activatorMock.Object, proxyManager, _interpreterMock.Object), CancellationToken.None);
   }
 
-  internal SymbolType GetSourceType(SourceType sourceType, ConcreteGeneratorRuntime runtime)
+  internal SymbolType GetSourceType(SourceType sourceType, GeneratorRuntime runtime)
   {
     INamedTypeSymbol symbol = sourceType switch
     {
@@ -88,7 +88,7 @@ namespace " + Namespace + @"
       _                                      => throw Errors.Unreacheable
     };
 
-    return new SymbolNamedType(runtime, symbol);
+    return new SymbolNamedType(runtime, new DefaultGeneratorContext(runtime), symbol);
 
     INamedTypeSymbol GetTypeSymbolFromCompilation(string name)
     {
@@ -107,5 +107,27 @@ namespace " + Namespace + @"
     GenericClassMoreParameters1,
     GenericClassMoreParameters2,
     Interface
+  }
+
+  private class MockDependencyFactory : IDependencyFactory
+  {
+    private readonly IActivator _activator;
+    private readonly IProxyManager _proxyManager;
+    private readonly IInterpreter _interpreter;
+
+    public MockDependencyFactory(IActivator activator, IProxyManager proxyManager, IInterpreter interpreter)
+    {
+      _activator = activator;
+      _proxyManager = proxyManager;
+      _interpreter = interpreter;
+    }
+
+    public void CreateDependencies(IReflectionRuntime runtime, out IGeneratorContext context, out IActivator activator, out IProxyManager proxyManager, out IInterpreter interpreter)
+    {
+      context = new DefaultGeneratorContext(runtime);
+      activator = _activator;
+      proxyManager = _proxyManager;
+      interpreter = _interpreter;
+    }
   }
 }

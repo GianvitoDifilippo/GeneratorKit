@@ -1,4 +1,5 @@
-﻿using GeneratorKit.TestHelpers;
+﻿using GeneratorKit.Reflection.Context;
+using GeneratorKit.TestHelpers;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
@@ -292,7 +293,7 @@ namespace " + Namespace + @"
 
 ";
 
-  private readonly FakeGeneratorRuntime _runtime;
+  private readonly FakeReflectionRuntime _runtime;
   private readonly Compilation _compilation;
   private readonly Assembly _assembly;
   private readonly IReadOnlyDictionary<TypeCategory, DataPair> _data;
@@ -302,7 +303,7 @@ namespace " + Namespace + @"
     CompilationOutput output = CompilationOutput.Create(s_source, AssemblyName);
     Assert.True(output.IsValid, $"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
 
-    _runtime = new FakeGeneratorRuntime(output.Compilation);
+    _runtime = new FakeReflectionRuntime(output.Compilation);
     _compilation = output.Compilation;
     _assembly = output.Assembly!;
     _data = new Dictionary<TypeCategory, DataPair>(CreateData());
@@ -324,7 +325,7 @@ namespace " + Namespace + @"
     {
       SymbolType symbolType = GetSymbolType(category);
       Type type = GetType(category);
-      _runtime.AddType(symbolType.Symbol, type);
+      _runtime.AddType(symbolType, type);
       return KeyValuePair.Create(category, new DataPair(symbolType, type));
     });
   }
@@ -542,9 +543,9 @@ namespace " + Namespace + @"
 
     return symbol switch
     {
-      INamedTypeSymbol     => new SymbolNamedType(_runtime, (INamedTypeSymbol)symbol),
-      IArrayTypeSymbol     => new SymbolArrayType(_runtime, (IArrayTypeSymbol)symbol),
-      ITypeParameterSymbol => new SymbolTypeParameter(_runtime, (ITypeParameterSymbol)symbol),
+      INamedTypeSymbol     => new SymbolNamedType(_runtime, new DefaultGeneratorContext(_runtime), (INamedTypeSymbol)symbol),
+      IArrayTypeSymbol     => new SymbolArrayType(_runtime, new DefaultGeneratorContext(_runtime), (IArrayTypeSymbol)symbol),
+      ITypeParameterSymbol => new SymbolTypeParameter(_runtime, new DefaultGeneratorContext(_runtime), (ITypeParameterSymbol)symbol),
       _                    => throw new InvalidOperationException()
     };
 

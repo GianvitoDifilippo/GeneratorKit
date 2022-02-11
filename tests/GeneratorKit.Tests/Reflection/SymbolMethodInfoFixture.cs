@@ -1,4 +1,5 @@
-﻿using GeneratorKit.TestHelpers;
+﻿using GeneratorKit.Reflection.Context;
+using GeneratorKit.TestHelpers;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -89,7 +90,7 @@ namespace " + Namespace + @"
 
 ";
 
-  private readonly FakeGeneratorRuntime _runtime;
+  private readonly FakeReflectionRuntime _runtime;
   private readonly Type _baseType;
   private readonly Type _derivedType;
   private readonly Type _genericType;
@@ -106,7 +107,7 @@ namespace " + Namespace + @"
     CompilationOutput output = CompilationOutput.Create(s_source, AssemblyName);
     Assert.True(output.IsValid, $"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
 
-    _runtime = new FakeGeneratorRuntime(output.Compilation);
+    _runtime = new FakeReflectionRuntime(output.Compilation);
 
     _baseType = output.Assembly!.GetType(Namespace + ".BaseClass")!;
     _derivedType = output.Assembly!.GetType(Namespace + ".DerivedClass")!;
@@ -128,8 +129,9 @@ namespace " + Namespace + @"
     _runtime.AddType(_intSymbol, typeof(int));
     _runtime.AddType(_stringSymbol, typeof(string));
 
-    IntSymbolType = new SymbolNamedType(_runtime, _intSymbol);
-    StringSymbolType = new SymbolNamedType(_runtime, _stringSymbol);
+    DefaultGeneratorContext context = new DefaultGeneratorContext(_runtime);
+    IntSymbolType = new SymbolNamedType(_runtime, context, _intSymbol);
+    StringSymbolType = new SymbolNamedType(_runtime, context, _stringSymbol);
   }
 
   internal SymbolType IntSymbolType { get; }
@@ -429,9 +431,10 @@ namespace " + Namespace + @"
       _ => throw new InvalidOperationException()
     };
 
+    DefaultGeneratorContext context = new DefaultGeneratorContext(_runtime);
     SymbolMethodInfo result = NeedsReflectedType(category)
-      ? new SymbolMethodInfo(_runtime, symbol, _runtime.CreateTypeDelegator(_derivedSymbol))
-      : new SymbolMethodInfo(_runtime, symbol);
+      ? new SymbolMethodInfo(_runtime, context, symbol, new SymbolNamedType(_runtime, context, _derivedSymbol))
+      : new SymbolMethodInfo(_runtime, context, symbol, null);
 
     return NeedsTwoGenericArguments(category)
       ? result.MakeGenericMethod(IntSymbolType, StringSymbolType)

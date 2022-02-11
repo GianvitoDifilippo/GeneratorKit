@@ -1,15 +1,14 @@
-﻿using GeneratorKit.Reflection;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using System;
 
-namespace GeneratorKit;
+namespace GeneratorKit.Reflection.Context;
 
 internal class GenericMethodContext : GeneratorContext
 {
   private readonly GeneratorContext _parent;
   private readonly Type[] _typeArguments;
 
-  public GenericMethodContext(IRuntime runtime, GeneratorContext parent, Type[] typeArguments)
+  public GenericMethodContext(IReflectionRuntime runtime, GeneratorContext parent, Type[] typeArguments)
     : base(runtime)
   {
     _parent = parent;
@@ -23,7 +22,7 @@ internal class GenericMethodContext : GeneratorContext
       : CreateTypeDelegator(symbol);
   }
 
-  private Type GetContextType(ITypeParameterSymbol symbol)
+  public override Type GetContextType(ITypeParameterSymbol symbol)
   {
     return symbol.TypeParameterKind is TypeParameterKind.Method
       ? _typeArguments[symbol.Ordinal]
@@ -40,9 +39,9 @@ internal class GenericMethodContext : GeneratorContext
     throw new InvalidOperationException();
   }
 
-  public override SymbolMethodInfo GetGenericMethodDefinition(SymbolMethodInfo method, SymbolType? reflectedType)
+  public override SymbolMethodInfo GetGenericMethodDefinition(SymbolMethodInfo method)
   {
-    return _parent.CreateMethodInfoDelegator(method.OriginalSymbol.ConstructedFrom, reflectedType);
+    return _parent.CreateMethodInfoDelegator(method.OriginalSymbol.ConstructedFrom, null);
   }
 
   public override SymbolMethodInfo MakeGenericMethod(SymbolMethodInfo method, Type[] typeArguments, SymbolType? reflectedType)
@@ -51,7 +50,7 @@ internal class GenericMethodContext : GeneratorContext
     return context.CreateMethodInfoDelegator(method.OriginalSymbol.ConstructedFrom, reflectedType);
   }
 
-  public override SymbolType DeclaringType(SymbolMethodInfo method)
+  public override SymbolType GetDeclaringType(SymbolMethodInfo method)
   {
     return _parent.CreateTypeDelegator(method.OriginalSymbol.ContainingType);
   }

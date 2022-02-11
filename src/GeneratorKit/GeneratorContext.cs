@@ -6,19 +6,122 @@ namespace GeneratorKit;
 
 internal abstract class GeneratorContext : IGeneratorContext
 {
-  public GeneratorContext(IRuntime runtime)
+  public GeneratorContext(IReflectionRuntime runtime)
   {
     Runtime = runtime;
   }
 
-  protected IRuntime Runtime { get; }
+  protected IReflectionRuntime Runtime { get; }
 
   public abstract Type GetContextType(ITypeSymbol symbol);
+  public abstract Type GetContextType(ITypeParameterSymbol symbol);
   public abstract SymbolType GetGenericTypeDefinition(SymbolNamedType type);
   public abstract SymbolType MakeGenericType(SymbolNamedType type, Type[] typeArguments);
-  public abstract SymbolMethodInfo GetGenericMethodDefinition(SymbolMethodInfo method, SymbolType? reflectedType);
+  public abstract SymbolMethodInfo GetGenericMethodDefinition(SymbolMethodInfo method);
   public abstract SymbolMethodInfo MakeGenericMethod(SymbolMethodInfo method, Type[] typeArguments, SymbolType? reflectedType);
-  public abstract SymbolType DeclaringType(SymbolMethodInfo method);
+  public abstract SymbolType GetDeclaringType(SymbolMethodInfo method);
+
+  public virtual bool IsGenericTypeDefinition(INamedTypeSymbol symbol)
+  {
+    if (!symbol.IsGenericType)
+      return false;
+
+    foreach (ITypeSymbol typeArgument in symbol.TypeArguments)
+    {
+      if (typeArgument.Kind is not SymbolKind.TypeParameter)
+        return false;
+
+      if (!GetContextType((ITypeParameterSymbol)typeArgument).IsGenericParameter)
+        return false;
+    }
+
+    return true;
+  }
+
+  public virtual bool ContainsGenericParameters(INamedTypeSymbol symbol)
+  {
+    if (!symbol.IsGenericType)
+      return false;
+
+    foreach (ITypeSymbol typeArgument in symbol.TypeArguments)
+    {
+      switch (typeArgument.Kind)
+      {
+        case SymbolKind.TypeParameter:
+          if (GetContextType((ITypeParameterSymbol)typeArgument).ContainsGenericParameters)
+            return true;
+          break;
+        case SymbolKind.NamedType:
+          if (ContainsGenericParameters((INamedTypeSymbol)typeArgument))
+            return true;
+          break;
+        case SymbolKind.ArrayType:
+          if (ContainsGenericParameters((IArrayTypeSymbol)typeArgument))
+            return true;
+          break;
+      }
+    }
+
+    return false;
+  }
+
+  public virtual bool IsGenericMethodDefinition(IMethodSymbol symbol)
+  {
+    if (!symbol.IsGenericMethod)
+      return false;
+
+    foreach (ITypeSymbol typeArgument in symbol.TypeArguments)
+    {
+      if (typeArgument.Kind is not SymbolKind.TypeParameter)
+        return false;
+
+      if (!GetContextType((ITypeParameterSymbol)typeArgument).IsGenericParameter)
+        return false;
+    }
+
+    return true;
+  }
+
+  public virtual bool ContainsGenericParameters(IMethodSymbol symbol)
+  {
+    if (symbol.ContainingType is not null && ContainsGenericParameters(symbol.ContainingType))
+      return true;
+    if (!symbol.IsGenericMethod)
+      return false;
+
+    foreach (ITypeSymbol typeArgument in symbol.TypeArguments)
+    {
+      switch (typeArgument.Kind)
+      {
+        case SymbolKind.TypeParameter:
+          if (GetContextType((ITypeParameterSymbol)typeArgument).ContainsGenericParameters)
+            return true;
+          break;
+        case SymbolKind.NamedType:
+          if (ContainsGenericParameters((INamedTypeSymbol)typeArgument))
+            return true;
+          break;
+        case SymbolKind.ArrayType:
+          if (ContainsGenericParameters((IArrayTypeSymbol)typeArgument))
+            return true;
+          break;
+      }
+    }
+
+    return false;
+  }
+
+  public bool ContainsGenericParameters(IArrayTypeSymbol symbol)
+  {
+    ITypeSymbol elementType = symbol.ElementType;
+    return elementType.Kind switch
+    {
+      SymbolKind.NamedType     => ContainsGenericParameters((INamedTypeSymbol)elementType),
+      SymbolKind.ArrayType     => ContainsGenericParameters((IArrayTypeSymbol)elementType),
+      SymbolKind.TypeParameter => true,
+      _                        => throw new NotSupportedException()
+    };
+  }
 
   public virtual SymbolAssembly CreateAssemblyDelegator(IAssemblySymbol symbol)
   {

@@ -18,17 +18,18 @@ internal abstract class SymbolType : SymbolTypeBase
 
   private Type? _runtimeType;
 
-  protected SymbolType(IRuntime runtime, IGeneratorContext context)
+  protected SymbolType(IReflectionRuntime runtime, IGeneratorContext context)
   {
     Runtime = runtime;
     Context = context;
   }
 
   public ITypeSymbol Symbol => SymbolCore;
+  public bool IsSource => Symbol.IsSource();
   public Type RuntimeType => _runtimeType ??= Runtime.GetRuntimeType(this);
   public abstract INamedTypeSymbol OriginalSymbol { get; }
 
-  protected IRuntime Runtime { get; }
+  protected IReflectionRuntime Runtime { get; }
   protected IGeneratorContext Context { get; }
   protected abstract ITypeSymbol SymbolCore { get; }
 
@@ -446,7 +447,7 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public new SymbolType MakeByRefType() => MakeByRefTypeCore();
 
-  public new SymbolType MakeGenericType(Type[] typeArguments) => MakeGenericTypeCore(typeArguments);
+  public new SymbolType MakeGenericType(params Type[] typeArguments) => MakeGenericTypeCore(typeArguments);
 
   public new SymbolType MakePointerType() => MakePointerTypeCore();
 

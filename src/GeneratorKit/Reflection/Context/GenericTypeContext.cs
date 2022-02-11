@@ -1,15 +1,14 @@
-﻿using GeneratorKit.Reflection;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using System;
 
-namespace GeneratorKit;
+namespace GeneratorKit.Reflection.Context;
 
 internal class GenericTypeContext : GeneratorContext
 {
   private readonly DefaultGeneratorContext _parent;
   private readonly Type[] _typeArguments;
 
-  public GenericTypeContext(IRuntime runtime, DefaultGeneratorContext parent, Type[] typeArguments)
+  public GenericTypeContext(IReflectionRuntime runtime, DefaultGeneratorContext parent, Type[] typeArguments)
     : base(runtime)
   {
     _parent = parent;
@@ -23,7 +22,7 @@ internal class GenericTypeContext : GeneratorContext
       : CreateTypeDelegator(symbol);
   }
 
-  private Type GetContextType(ITypeParameterSymbol symbol) // TODO: Make abstract on superclass and call it directly from GenericMethodContext
+  public override Type GetContextType(ITypeParameterSymbol symbol)
   {
     return symbol.TypeParameterKind is TypeParameterKind.Type
       ? _typeArguments[symbol.Ordinal]
@@ -41,9 +40,9 @@ internal class GenericTypeContext : GeneratorContext
     return context.CreateTypeDelegator(type.OriginalSymbol.ConstructedFrom);
   }
 
-  public override SymbolMethodInfo GetGenericMethodDefinition(SymbolMethodInfo method, SymbolType? reflectedType)
+  public override SymbolMethodInfo GetGenericMethodDefinition(SymbolMethodInfo method)
   {
-    return CreateMethodInfoDelegator(method.OriginalSymbol.ConstructedFrom, reflectedType);
+    return CreateMethodInfoDelegator(method.OriginalSymbol.ConstructedFrom, null);
   }
 
   public override SymbolMethodInfo MakeGenericMethod(SymbolMethodInfo method, Type[] typeArguments, SymbolType? reflectedType)
@@ -52,8 +51,18 @@ internal class GenericTypeContext : GeneratorContext
     return context.CreateMethodInfoDelegator(method.OriginalSymbol.ConstructedFrom, reflectedType);
   }
 
-  public override SymbolType DeclaringType(SymbolMethodInfo method)
+  public override SymbolType GetDeclaringType(SymbolMethodInfo method)
   {
     return CreateTypeDelegator(method.OriginalSymbol.ContainingType);
+  }
+
+  public override bool IsGenericMethodDefinition(IMethodSymbol symbol)
+  {
+    return _parent.IsGenericMethodDefinition(symbol);
+  }
+
+  public override bool ContainsGenericParameters(IMethodSymbol symbol)
+  {
+    return _parent.ContainsGenericParameters(symbol);
   }
 }

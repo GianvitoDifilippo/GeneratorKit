@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using GeneratorKit.Comparers;
+using GeneratorKit.Reflection.Binders;
 using GeneratorKit.TestHelpers;
 using System;
 using System.Collections.Generic;
@@ -348,7 +349,7 @@ public class SymbolPropertyInfoTests : IClassFixture<SymbolPropertyInfoFixture>
     PropertyInfo expected = reference;
 
     // Act
-    PropertyInfo actual = sut.UnderlyingSystemProperty;
+    PropertyInfo actual = DelegatorBinder.ResolveProperty(sut.ReflectedType.UnderlyingSystemType, sut);
 
     // Assert
     actual.Should().Equal(expected, PropertyInfoEqualityComparer.Default);

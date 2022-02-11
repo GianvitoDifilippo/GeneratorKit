@@ -9,10 +9,10 @@ namespace GeneratorKit.Reflection;
 
 internal sealed class SymbolArgumentParameter : SymbolParameterInfo
 {
-  private readonly IRuntime _runtime;
+  private readonly IReflectionRuntime _runtime;
   private readonly MemberInfo _member;
 
-  public SymbolArgumentParameter(IRuntime runtime, IGeneratorContext context, MemberInfo member, IParameterSymbol symbol)
+  public SymbolArgumentParameter(IReflectionRuntime runtime, IGeneratorContext context, MemberInfo member, IParameterSymbol symbol)
     : base(context)
   {
     _runtime = runtime;

@@ -103,8 +103,8 @@ internal class ProxyTypeBuilderInstantiation : Type
     if (!proxyTypeDefinition.IsGenericType)
       return proxyTypeDefinition;
 
-    Type[] typeArguments = type.TypeArguments;
-    Type[] signatureArguments = signatureType.TypeArguments;
+    Type[] typeArguments = type.GetGenericArguments();
+    Type[] signatureArguments = signatureType.GetGenericArguments();
     if (typeArguments.Length == signatureArguments.Length)
       return proxyTypeDefinition;
 

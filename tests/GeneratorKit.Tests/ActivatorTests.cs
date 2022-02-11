@@ -1,7 +1,9 @@
 ﻿using FluentAssertions;
 using GeneratorKit.Interpret;
+using GeneratorKit.Interpret.Frame;
 using GeneratorKit.Proxy;
 using GeneratorKit.Reflection;
+using Microsoft.CodeAnalysis;
 using Moq;
 using System;
 using Xunit;
@@ -21,7 +23,7 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     _interpreterMock = new Mock<IInterpreter>(MockBehavior.Strict);
 
     _interpreterMock
-      .Setup(x => x.Interpret(It.IsAny<IRuntimeConstructor>(), It.IsAny<InterpreterFrame>(), It.IsAny<object?[]>()));
+      .Setup(x => x.InterpretConstructor(It.IsAny<IMethodSymbol>(), It.IsAny<InterpreterFrame>(), It.IsAny<object?[]>()));
   }
 
   [Fact]
@@ -34,17 +36,17 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     SymbolType sourceType = _fixture.GetSourceType(SourceType.NonGenericClass);
     SymbolType type = sourceType;
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[0];
-    InterpreterFrame classFrame = GetClassFrame();
+    InterpreterFrame typeFrame = _fixture.GetTypeFrame();
 
     _interpreterMock
-      .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
+      .Setup(x => x.GetProxyArguments(constructor.OriginalSymbol, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
     _interpreterMock
-      .Setup(x => x.GetClassFrame(type))
-      .Returns(classFrame);
+      .Setup(x => x.GetTypeFrame(type))
+      .Returns(typeFrame);
     _interpreterMock
-      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
-      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
+      .Setup(x => x.GetInstanceFrame(typeFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, SymbolType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object);
 
@@ -67,17 +69,17 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     SymbolType sourceType = _fixture.GetSourceType(SourceType.NonGenericClassWithCtors);
     SymbolType type = sourceType;
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[0];
-    InterpreterFrame classFrame = GetClassFrame();
+    InterpreterFrame typeFrame = _fixture.GetTypeFrame();
 
     _interpreterMock
-      .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
+      .Setup(x => x.GetProxyArguments(constructor.OriginalSymbol, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
     _interpreterMock
-      .Setup(x => x.GetClassFrame(type))
-      .Returns(classFrame);
+      .Setup(x => x.GetTypeFrame(type))
+      .Returns(typeFrame);
     _interpreterMock
-      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
-      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
+      .Setup(x => x.GetInstanceFrame(typeFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, SymbolType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object);
 
@@ -102,17 +104,17 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     SymbolType sourceType = _fixture.GetSourceType(SourceType.NonGenericClassWithCtors);
     SymbolType type = sourceType;
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[1];
-    InterpreterFrame classFrame = GetClassFrame();
+    InterpreterFrame typeFrame = _fixture.GetTypeFrame();
 
     _interpreterMock
-      .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
+      .Setup(x => x.GetProxyArguments(constructor.OriginalSymbol, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
     _interpreterMock
-      .Setup(x => x.GetClassFrame(type))
-      .Returns(classFrame);
+      .Setup(x => x.GetTypeFrame(type))
+      .Returns(typeFrame);
     _interpreterMock
-      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
-      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
+      .Setup(x => x.GetInstanceFrame(typeFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, SymbolType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object);
 
@@ -137,17 +139,17 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     SymbolType sourceType = _fixture.GetSourceType(SourceType.NonGenericClassWithCtors);
     SymbolType type = sourceType;
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[2];
-    InterpreterFrame classFrame = GetClassFrame();
+    InterpreterFrame typeFrame = _fixture.GetTypeFrame();
 
     _interpreterMock
-      .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
+      .Setup(x => x.GetProxyArguments(constructor.OriginalSymbol, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
     _interpreterMock
-      .Setup(x => x.GetClassFrame(type))
-      .Returns(classFrame);
+      .Setup(x => x.GetTypeFrame(type))
+      .Returns(typeFrame);
     _interpreterMock
-      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
-      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
+      .Setup(x => x.GetInstanceFrame(typeFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, SymbolType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object);
 
@@ -170,19 +172,19 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     Type[] typeArguments = new[] { typeof(string) };
 
     SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClass);
-    HybridGenericType type = sourceType.MakeGenericType(typeArguments);
+    SymbolType type = sourceType.MakeGenericType(typeArguments);
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[0];
-    InterpreterFrame classFrame = GetClassFrame(typeArguments);
+    InterpreterFrame typeFrame = _fixture.GetTypeFrame(typeArguments);
 
     _interpreterMock
-      .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
+      .Setup(x => x.GetProxyArguments(constructor.OriginalSymbol, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
     _interpreterMock
-      .Setup(x => x.GetClassFrame(type))
-      .Returns(classFrame);
+      .Setup(x => x.GetTypeFrame(type))
+      .Returns(typeFrame);
     _interpreterMock
-      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
-      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
+      .Setup(x => x.GetInstanceFrame(typeFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, SymbolType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object);
 
@@ -204,19 +206,19 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     Type[] typeArguments = new[] { typeof(string) };
 
     SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClassWithCtors);
-    HybridGenericType type = sourceType.MakeGenericType(typeArguments);
+    SymbolType type = sourceType.MakeGenericType(typeArguments);
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[0];
-    InterpreterFrame classFrame = GetClassFrame(typeArguments);
+    InterpreterFrame typeFrame = _fixture.GetTypeFrame(typeArguments);
 
     _interpreterMock
-      .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
+      .Setup(x => x.GetProxyArguments(constructor.OriginalSymbol, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
     _interpreterMock
-      .Setup(x => x.GetClassFrame(type))
-      .Returns(classFrame);
+      .Setup(x => x.GetTypeFrame(type))
+      .Returns(typeFrame);
     _interpreterMock
-      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
-      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
+      .Setup(x => x.GetInstanceFrame(typeFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, SymbolType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object);
 
@@ -240,19 +242,19 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     Type[] typeArguments = new[] { typeof(string) };
 
     SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClassWithCtors);
-    HybridGenericType type = sourceType.MakeGenericType(typeArguments);
+    SymbolType type = sourceType.MakeGenericType(typeArguments);
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[1];
-    InterpreterFrame classFrame = GetClassFrame(typeArguments);
+    InterpreterFrame typeFrame = _fixture.GetTypeFrame(typeArguments);
 
     _interpreterMock
-      .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
+      .Setup(x => x.GetProxyArguments(constructor.OriginalSymbol, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
     _interpreterMock
-      .Setup(x => x.GetClassFrame(type))
-      .Returns(classFrame);
+      .Setup(x => x.GetTypeFrame(type))
+      .Returns(typeFrame);
     _interpreterMock
-      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
-      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
+      .Setup(x => x.GetInstanceFrame(typeFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, SymbolType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object);
 
@@ -276,19 +278,19 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     Type[] typeArguments = new[] { typeof(string) };
 
     SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClassWithCtors);
-    HybridGenericType type = sourceType.MakeGenericType(typeArguments);
+    SymbolType type = sourceType.MakeGenericType(typeArguments);
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[2];
-    InterpreterFrame classFrame = GetClassFrame(typeArguments);
+    InterpreterFrame typeFrame = _fixture.GetTypeFrame(typeArguments);
 
     _interpreterMock
-      .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
+      .Setup(x => x.GetProxyArguments(constructor.OriginalSymbol, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
     _interpreterMock
-      .Setup(x => x.GetClassFrame(type))
-      .Returns(classFrame);
+      .Setup(x => x.GetTypeFrame(type))
+      .Returns(typeFrame);
     _interpreterMock
-      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
-      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
+      .Setup(x => x.GetInstanceFrame(typeFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, SymbolType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object);
 
@@ -313,17 +315,17 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     SymbolType sourceType = _fixture.GetSourceType(SourceType.NonGenericClassGenericBaseSource);
     SymbolType type = sourceType;
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[0];
-    InterpreterFrame classFrame = GetClassFrame();
+    InterpreterFrame typeFrame = _fixture.GetTypeFrame();
 
     _interpreterMock
-      .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
+      .Setup(x => x.GetProxyArguments(constructor.OriginalSymbol, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
     _interpreterMock
-      .Setup(x => x.GetClassFrame(type))
-      .Returns(classFrame);
+      .Setup(x => x.GetTypeFrame(type))
+      .Returns(typeFrame);
     _interpreterMock
-      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
-      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
+      .Setup(x => x.GetInstanceFrame(typeFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, SymbolType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object);
 
@@ -348,17 +350,17 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     SymbolType sourceType = _fixture.GetSourceType(SourceType.NonGenericClassGenericBaseSource);
     SymbolType type = sourceType;
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[1];
-    InterpreterFrame classFrame = GetClassFrame();
+    InterpreterFrame typeFrame = _fixture.GetTypeFrame();
 
     _interpreterMock
-      .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
+      .Setup(x => x.GetProxyArguments(constructor.OriginalSymbol, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
     _interpreterMock
-      .Setup(x => x.GetClassFrame(type))
-      .Returns(classFrame);
+      .Setup(x => x.GetTypeFrame(type))
+      .Returns(typeFrame);
     _interpreterMock
-      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
-      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
+      .Setup(x => x.GetInstanceFrame(typeFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, SymbolType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object);
 
@@ -383,17 +385,17 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     SymbolType sourceType = _fixture.GetSourceType(SourceType.NonGenericClassGenericBaseSource);
     SymbolType type = sourceType;
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[2];
-    InterpreterFrame classFrame = GetClassFrame();
+    InterpreterFrame typeFrame = _fixture.GetTypeFrame();
 
     _interpreterMock
-      .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
+      .Setup(x => x.GetProxyArguments(constructor.OriginalSymbol, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
     _interpreterMock
-      .Setup(x => x.GetClassFrame(type))
-      .Returns(classFrame);
+      .Setup(x => x.GetTypeFrame(type))
+      .Returns(typeFrame);
     _interpreterMock
-      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
-      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
+      .Setup(x => x.GetInstanceFrame(typeFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, SymbolType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object);
 
@@ -418,17 +420,17 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     SymbolType sourceType = _fixture.GetSourceType(SourceType.Interface);
     SymbolType type = sourceType;
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[0];
-    InterpreterFrame classFrame = GetClassFrame();
+    InterpreterFrame typeFrame = _fixture.GetTypeFrame();
 
     _interpreterMock
-      .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
+      .Setup(x => x.GetProxyArguments(constructor.OriginalSymbol, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
     _interpreterMock
-      .Setup(x => x.GetClassFrame(type))
-      .Returns(classFrame);
+      .Setup(x => x.GetTypeFrame(type))
+      .Returns(typeFrame);
     _interpreterMock
-      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
-      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
+      .Setup(x => x.GetInstanceFrame(typeFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, SymbolType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object);
 
@@ -451,17 +453,17 @@ public class ActivatorTests : IClassFixture<ActivatorFixture>
     SymbolType sourceType = _fixture.GetSourceType(SourceType.Interface);
     SymbolType type = sourceType;
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[1];
-    InterpreterFrame classFrame = GetClassFrame();
+    InterpreterFrame typeFrame = _fixture.GetTypeFrame();
 
     _interpreterMock
-      .Setup(x => x.GetProxyArguments(constructor, It.IsAny<InterpreterFrame>(), arguments))
+      .Setup(x => x.GetProxyArguments(constructor.OriginalSymbol, It.IsAny<InterpreterFrame>(), arguments))
       .Returns(proxyArguments);
     _interpreterMock
-      .Setup(x => x.GetClassFrame(type))
-      .Returns(classFrame);
+      .Setup(x => x.GetTypeFrame(type))
+      .Returns(typeFrame);
     _interpreterMock
-      .Setup(x => x.GetInstanceFrame(classFrame, type, It.IsAny<object>()))
-      .Returns<InterpreterFrame, IRuntimeType, object>(GetInstanceFrame);
+      .Setup(x => x.GetInstanceFrame(typeFrame, type, It.IsAny<object>()))
+      .Returns<InterpreterFrame, SymbolType, object>(GetInstanceFrame);
 
     Activator sut = new Activator(_interpreterMock.Object);
 

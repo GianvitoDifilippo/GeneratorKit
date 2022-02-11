@@ -23,12 +23,13 @@ public abstract class RuntimeSourceGenerator : ISourceGenerator
   public void Execute(GeneratorExecutionContext context)
   {
     ProxyManager proxyManager = new ProxyManager();
-    ConcreteGeneratorRuntime runtime = new ConcreteGeneratorRuntime(context.Compilation, proxyManager, dependendcyFactory, context.CancellationToken);
+    DependencyFactory dependencyFactory = new DependencyFactory(context.Compilation, proxyManager, context.CancellationToken);
+    GeneratorRuntime generatorRuntime = new GeneratorRuntime(context.Compilation, dependencyFactory, context.CancellationToken);
 
     try
     {
       RegisterProxies(proxyManager);
-      Execute(context, runtime);
+      Execute(context, generatorRuntime);
     }
     catch (OperationCanceledException ex) when (ExceptionHandler is { } exceptionHandler)
     {

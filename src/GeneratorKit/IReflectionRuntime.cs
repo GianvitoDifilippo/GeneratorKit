@@ -1,9 +1,10 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using GeneratorKit.Reflection;
+using Microsoft.CodeAnalysis;
 using System;
 
-namespace GeneratorKit.Reflection;
+namespace GeneratorKit;
 
-internal interface IRuntime
+internal interface IReflectionRuntime
 {
   Compilation Compilation { get; }
   Type GetRuntimeType(SymbolType type);

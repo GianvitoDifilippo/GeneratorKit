@@ -1,5 +1,7 @@
-﻿using GeneratorKit.Proxy;
+﻿using GeneratorKit.Interpret.Frame;
+using GeneratorKit.Proxy;
 using GeneratorKit.Reflection;
+using GeneratorKit.Reflection.Context;
 using GeneratorKit.TestHelpers;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
@@ -416,9 +418,8 @@ namespace " + Namespace + @"
     proxyManager.RegisterProxyType(typeof(NonGenericClassProxy));
     proxyManager.RegisterProxyType(typeof(NonGenericClassWithMembersProxy));
 
-    FakeDependencyFactory dependencyFactory = new FakeDependencyFactory(frameProvider);
-    ConcreteGeneratorRuntime concreteRuntime = new ConcreteGeneratorRuntime(_compilation, proxyManager, dependencyFactory, CancellationToken.None);
-    runtime = concreteRuntime;
+    FakeDependencyFactory dependencyFactory = new FakeDependencyFactory(frameProvider, _compilation);
+    runtime = new GeneratorRuntime(_compilation, dependencyFactory, CancellationToken.None);
     return dependencyFactory.Interpreter;
   }
 
@@ -434,26 +435,26 @@ namespace " + Namespace + @"
       _                                           => throw Errors.Unreacheable
     };
 
-    return new SymbolNamedType(runtime, symbol);
+    return (SymbolNamedType)runtime.CreateTypeDelegator(symbol);
   }
 
-  internal SymbolMethodInfo GetInterpretedOperationMethod(GeneratorRuntime runtime, InterpretedOperationType operationType)
+  internal IMethodSymbol GetInterpretedOperationMethod(GeneratorRuntime runtime, InterpretedOperationType operationType)
   {
     SymbolType type = GetType(runtime, operationType);
     SymbolMethodInfo? method = type.GetMethod(operationType.ToString());
     Assert.NotNull(method);
-    return runtime.CreateMethodInfoDelegator(method!.OriginalSymbol);
+    return method!.OriginalSymbol;
   }
 
   internal InterpreterFrame GetInstanceFrame(GeneratorRuntime runtime, Interpreter sut, InterpretedOperationType operationType, params Type[] genericArguments)
   {
     SymbolType type = GetType(runtime, operationType);
-    InterpreterFrame classFrame = genericArguments.Length > 0
-      ? sut.GetClassFrame(type.MakeGenericType(genericArguments))
-      : sut.GetClassFrame(type);
+    InterpreterFrame typeFrame = genericArguments.Length > 0
+      ? sut.GetTypeFrame(type.MakeGenericType(genericArguments))
+      : sut.GetTypeFrame(type);
     ObjectProxy instance = new ObjectProxy();
-    InterpreterFrame instanceFrame = sut.GetInstanceFrame(classFrame, type, instance);
-    instance.Delegate = new OperationDelegate(sut, instanceFrame, new Dictionary<int, SymbolMethodInfo>());
+    InterpreterFrame instanceFrame = sut.GetInstanceFrame(typeFrame, type, instance);
+    instance.Delegate = new OperationDelegate(sut, instanceFrame, new Dictionary<int, IMethodSymbol>());
     return instanceFrame;
   }
 
@@ -461,8 +462,8 @@ namespace " + Namespace + @"
   {
     return (int)operationType switch
     {
-      < 4096 => runtime.CreateTypeDelegator(_nongenericClassInterpretSymbol),
-      < 8192 => runtime.CreateTypeDelegator(_genericClassInterpretSymbol),
+      < 4096 => (SymbolType)runtime.CreateTypeDelegator(_nongenericClassInterpretSymbol),
+      < 8192 => (SymbolType)runtime.CreateTypeDelegator(_genericClassInterpretSymbol),
       _      => throw Errors.Unreacheable
     };
   }

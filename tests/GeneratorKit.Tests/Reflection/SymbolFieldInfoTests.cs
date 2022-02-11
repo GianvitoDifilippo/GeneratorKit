@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using GeneratorKit.Comparers;
+using GeneratorKit.Reflection.Binders;
 using GeneratorKit.TestHelpers;
 using System;
 using System.Collections.Generic;
@@ -450,7 +451,7 @@ public class SymbolFieldInfoTests : IClassFixture<SymbolFieldInfoFixture>
     FieldInfo expected = reference;
 
     // Act
-    FieldInfo actual = sut.UnderlyingSystemField;
+    FieldInfo actual = DelegatorBinder.ResolveField(sut.ReflectedType.UnderlyingSystemType, sut);
 
     // Assert
     actual.Should().Equal(expected, FieldInfoEqualityComparer.Default);

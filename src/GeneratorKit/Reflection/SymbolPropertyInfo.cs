@@ -15,12 +15,12 @@ namespace GeneratorKit.Reflection;
 
 internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
 {
-  private readonly IRuntime _runtime;
+  private readonly IReflectionRuntime _runtime;
   private readonly IGeneratorContext _context;
   private readonly SymbolType? _reflectedType;
   private PropertyInfo? _underlyingSystemProperty;
 
-  public SymbolPropertyInfo(IRuntime runtime, IGeneratorContext context, IPropertySymbol symbol, SymbolType? reflectedType)
+  public SymbolPropertyInfo(IReflectionRuntime runtime, IGeneratorContext context, IPropertySymbol symbol, SymbolType? reflectedType)
   {
     _runtime = runtime;
     _context = context;
@@ -29,6 +29,10 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
   }
 
   public IPropertySymbol OriginalSymbol { get; }
+
+  public bool IsSource => OriginalSymbol.IsSource();
+
+  public bool IsStatic => OriginalSymbol.IsStatic;
 
   public bool IsIndexer => OriginalSymbol.IsIndexer;
 

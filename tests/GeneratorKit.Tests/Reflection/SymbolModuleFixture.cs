@@ -1,4 +1,5 @@
-﻿using GeneratorKit.TestHelpers;
+﻿using GeneratorKit.Reflection.Context;
+using GeneratorKit.TestHelpers;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Reflection;
@@ -43,16 +44,17 @@ namespace " + Namespace + @"
     CompilationOutput output = CompilationOutput.Create(s_source, AssemblyName);
     Assert.True(output.IsValid, $"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
 
-    FakeGeneratorRuntime runtime = new FakeGeneratorRuntime(output.Compilation);
+    FakeReflectionRuntime runtime = new FakeReflectionRuntime(output.Compilation);
     Symbol = output.Compilation.Assembly;
     EntryPoint = output.Compilation.GetEntryPoint(CancellationToken.None)!;
-    _delegator = new SymbolModule(runtime, output.Compilation.SourceModule);
+    DefaultGeneratorContext context = new DefaultGeneratorContext(runtime);
+    _delegator = new SymbolModule(context, output.Compilation.SourceModule);
     _reference = output.Assembly!.ManifestModule;
 
     INamedTypeSymbol attributeType = output.Compilation.GetTypeByMetadataName("System.CLSCompliantAttribute")!;
     CustomAttributeTypedArgument attributeArgument = new CustomAttributeTypedArgument(true);
     CustomAttributeData = CompilationCustomAttributeData.FromSymbol(
-      runtime,
+      context,
       attributeType.Constructors[0],
       new[] { attributeArgument },
       Array.Empty<CustomAttributeNamedArgument>());

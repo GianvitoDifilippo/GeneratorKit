@@ -12,7 +12,7 @@ namespace GeneratorKit.Reflection;
 
 internal sealed class SymbolNamedType : SymbolType
 {
-  public SymbolNamedType(IRuntime runtime, IGeneratorContext context, INamedTypeSymbol symbol)
+  public SymbolNamedType(IReflectionRuntime runtime, IGeneratorContext context, INamedTypeSymbol symbol)
     : base(runtime, context)
   {
     Symbol = symbol;
@@ -27,7 +27,7 @@ internal sealed class SymbolNamedType : SymbolType
 
   // System.Type overrides
 
-  public override bool ContainsGenericParameters => Symbol.IsGenericType && Symbol.TypeArguments.Any(x => x.TypeKind is TypeKind.TypeParameter);
+  public override bool ContainsGenericParameters => Context.ContainsGenericParameters(Symbol);
 
   public override MethodBase? DeclaringMethod => throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
 
@@ -35,7 +35,7 @@ internal sealed class SymbolNamedType : SymbolType
 
   public override int GenericParameterPosition => throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericParameter is true.");
 
-  public override bool IsConstructedGenericType => Symbol.TypeArguments.Any(x => x.TypeKind is not TypeKind.TypeParameter || !x.ContainingType.Equals(Symbol, SymbolEqualityComparer.Default));
+  public override bool IsConstructedGenericType => IsGenericType && !IsGenericTypeDefinition;
 
   public override bool IsEnum => Symbol.EnumUnderlyingType is not null;
 
@@ -43,7 +43,7 @@ internal sealed class SymbolNamedType : SymbolType
 
   public override bool IsGenericType => Symbol.IsGenericType;
 
-  public override bool IsGenericTypeDefinition => Symbol.IsGenericType && !IsConstructedGenericType;
+  public override bool IsGenericTypeDefinition => Context.IsGenericTypeDefinition(Symbol);
 
   public override bool IsSerializable
   {
@@ -185,7 +185,7 @@ internal sealed class SymbolNamedType : SymbolType
 
   public override Type[] GetGenericArguments()
   {
-    return Symbol.TypeParameters.Map(Context.GetContextType);
+    return Symbol.TypeArguments.Map(Context.GetContextType);
   }
 
   public override Type[] GetGenericParameterConstraints()

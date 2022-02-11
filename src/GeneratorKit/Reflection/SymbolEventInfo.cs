@@ -8,11 +8,11 @@ namespace GeneratorKit.Reflection;
 
 internal sealed class SymbolEventInfo : SymbolEventInfoBase
 {
-  private readonly IRuntime _runtime;
+  private readonly IReflectionRuntime _runtime;
   private readonly IGeneratorContext _context;
   private readonly SymbolType? _reflectedType;
 
-  public SymbolEventInfo(IRuntime runtime, IGeneratorContext context, IEventSymbol symbol, SymbolType? reflectedType)
+  public SymbolEventInfo(IReflectionRuntime runtime, IGeneratorContext context, IEventSymbol symbol, SymbolType? reflectedType)
   {
     Debug.Assert(false, "Events are not supported");
     _runtime = runtime;

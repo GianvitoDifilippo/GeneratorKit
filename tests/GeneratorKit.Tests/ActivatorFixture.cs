@@ -1,7 +1,8 @@
 ﻿#pragma warning disable RS1024 // Compare symbols correctly
 
-using GeneratorKit.Interpret;
+using GeneratorKit.Interpret.Frame;
 using GeneratorKit.Reflection;
+using GeneratorKit.Reflection.Context;
 using GeneratorKit.TestHelpers;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
@@ -96,7 +97,8 @@ namespace " + Namespace + @"
 ";
 
   private readonly Compilation _compilation;
-  private readonly FakeGeneratorRuntime _runtime;
+  private readonly FakeReflectionRuntime _runtime;
+  private readonly DefaultGeneratorContext _context;
 
   private readonly INamedTypeSymbol _nonGenericClassSourceSymbol;
   private readonly INamedTypeSymbol _nonGenericClassWithMembersSourceSymbol;
@@ -111,7 +113,8 @@ namespace " + Namespace + @"
     Assert.True(output.IsValid, $"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
 
     _compilation = output.Compilation;
-    _runtime = new FakeGeneratorRuntime(_compilation);
+    _runtime = new FakeReflectionRuntime(_compilation);
+    _context = new DefaultGeneratorContext(_runtime);
 
     _nonGenericClassSourceSymbol = GetTypeSymbolFromCompilation("NonGenericClassSource");
     _nonGenericClassWithMembersSourceSymbol = GetTypeSymbolFromCompilation("NonGenericClassWithMembersSource");
@@ -151,22 +154,23 @@ namespace " + Namespace + @"
       _                                           => throw Errors.Unreacheable
     };
 
-    return new SymbolNamedType(_runtime, symbol);
+    return new SymbolNamedType(_runtime, new DefaultGeneratorContext(_runtime), symbol);
   }
 
-  internal static InterpreterFrame GetClassFrame(params Type[] typeArguments)
+  internal InterpreterFrame GetTypeFrame(params Type[] typeArguments)
   {
-    return InterpreterFrame.NewClassFrame(null, new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default), typeArguments);
+    InterpreterTypeContext context = new InterpreterTypeContext(_runtime, _context, typeArguments);
+    return InterpreterFrame.NewTypeFrame(null, context, new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default));
   }
 
-  internal static InterpreterFrame GetInstanceFrame(InterpreterFrame classFrame, IRuntimeType type, object instance)
+  internal static InterpreterFrame GetInstanceFrame(InterpreterFrame classFrame, SymbolType type, object instance)
   {
     return InterpreterFrame.NewInstanceFrame(classFrame, new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default), instance);
   }
 
-  internal static InterpreterFrame GetConstructorFrame(InterpreterFrame classFrame)
+  internal static InterpreterFrame GetConstructorFrame(InterpreterFrame typeFrame)
   {
-    return InterpreterFrame.NewMethodFrame(classFrame, new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default), Type.EmptyTypes);
+    return InterpreterFrame.NewMethodFrame(typeFrame, new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default));
   }
 
   public enum SourceType

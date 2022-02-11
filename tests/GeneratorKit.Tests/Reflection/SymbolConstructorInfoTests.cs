@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using GeneratorKit.Comparers;
+using GeneratorKit.Reflection.Binders;
 using GeneratorKit.TestHelpers;
 using System;
 using System.Collections.Generic;
@@ -567,9 +568,9 @@ public class SymbolConstructorInfoTests : IClassFixture<SymbolConstructorInfoFix
     ConstructorInfo reference = _fixture.GetReference(category);
     
     ConstructorInfo expected = reference;
-  
+
     // Act
-    ConstructorInfo actual = sut.UnderlyingSystemConstructor;
+    ConstructorInfo actual = DelegatorBinder.ResolveConstructor(sut.DeclaringType.UnderlyingSystemType, sut);
   
     // Assert
     actual.Should().Equal(expected, ConstructorInfoEqualityComparer.Default);

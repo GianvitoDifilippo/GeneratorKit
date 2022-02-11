@@ -1,4 +1,5 @@
 ﻿using GeneratorKit.Reflection;
+using GeneratorKit.Reflection.Context;
 using GeneratorKit.TestHelpers;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
@@ -47,17 +48,18 @@ namespace " + Namespace + @"
     Assert.True(output.IsValid, $"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
 
     Compilation compilation = output.Compilation;
-    FakeGeneratorRuntime runtime = new FakeGeneratorRuntime(compilation);
+    FakeReflectionRuntime runtime = new FakeReflectionRuntime(compilation);
+    DefaultGeneratorContext context = new DefaultGeneratorContext(runtime);
     runtime.AddType(compilation.GetSpecialType(SpecialType.System_String), typeof(string));
     runtime.AddType(compilation.GetSpecialType(SpecialType.System_Int32), typeof(int));
 
-    _nonGenericClassSourceType = new SymbolNamedType(runtime, compilation.GetTypeByMetadataName(Namespace + ".NonGenericClassSource")!);
-    _nonGenericClassGenericBaseSourceType = new SymbolNamedType(runtime, compilation.GetTypeByMetadataName(Namespace + ".NonGenericClassGenericBaseSource")!);
-    _genericClassSourceType = new SymbolNamedType(runtime, compilation.GetTypeByMetadataName(Namespace + ".GenericClassSource`1")!);
-    _genericClassSourceLessParametersType = new SymbolNamedType(runtime, compilation.GetTypeByMetadataName(Namespace + ".GenericClassSourceLessParameters`1")!);
-    _genericClassSourceMoreParametersType1 = new SymbolNamedType(runtime, compilation.GetTypeByMetadataName(Namespace + ".GenericClassSourceMoreParameters1`3")!);
-    _genericClassSourceMoreParametersType2 = new SymbolNamedType(runtime, compilation.GetTypeByMetadataName(Namespace + ".GenericClassSourceMoreParameters2`3")!);
-    _interfaceSourceType = new SymbolNamedType(runtime, compilation.GetTypeByMetadataName(Namespace + ".InterfaceSource")!);
+    _nonGenericClassSourceType = new SymbolNamedType(runtime, context, compilation.GetTypeByMetadataName(Namespace + ".NonGenericClassSource")!);
+    _nonGenericClassGenericBaseSourceType = new SymbolNamedType(runtime, context, compilation.GetTypeByMetadataName(Namespace + ".NonGenericClassGenericBaseSource")!);
+    _genericClassSourceType = new SymbolNamedType(runtime, context, compilation.GetTypeByMetadataName(Namespace + ".GenericClassSource`1")!);
+    _genericClassSourceLessParametersType = new SymbolNamedType(runtime, context, compilation.GetTypeByMetadataName(Namespace + ".GenericClassSourceLessParameters`1")!);
+    _genericClassSourceMoreParametersType1 = new SymbolNamedType(runtime, context, compilation.GetTypeByMetadataName(Namespace + ".GenericClassSourceMoreParameters1`3")!);
+    _genericClassSourceMoreParametersType2 = new SymbolNamedType(runtime, context, compilation.GetTypeByMetadataName(Namespace + ".GenericClassSourceMoreParameters2`3")!);
+    _interfaceSourceType = new SymbolNamedType(runtime, context, compilation.GetTypeByMetadataName(Namespace + ".InterfaceSource")!);
   }
 
   internal SymbolType GetSourceType(SourceType sourceType)

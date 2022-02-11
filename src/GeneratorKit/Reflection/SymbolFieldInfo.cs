@@ -13,12 +13,12 @@ namespace GeneratorKit.Reflection;
 
 internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
 {
-  private readonly IRuntime _runtime;
+  private readonly IReflectionRuntime _runtime;
   private readonly IGeneratorContext _context;
   private readonly SymbolType? _reflectedType;
   private FieldInfo? _underlyingSystemField;
 
-  public SymbolFieldInfo(IRuntime runtime, IGeneratorContext context, IFieldSymbol symbol, SymbolType? reflectedType)
+  public SymbolFieldInfo(IReflectionRuntime runtime, IGeneratorContext context, IFieldSymbol symbol, SymbolType? reflectedType)
   {
     _runtime = runtime;
     _context = context;
@@ -27,6 +27,8 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
   }
 
   public IFieldSymbol OriginalSymbol { get; }
+
+  public bool IsSource => OriginalSymbol.IsSource();
 
   public FieldInfo UnderlyingSystemField
   {

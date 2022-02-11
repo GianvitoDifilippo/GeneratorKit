@@ -15,11 +15,11 @@ namespace GeneratorKit.Reflection;
 
 internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
 {
-  private readonly IRuntime _runtime;
+  private readonly IReflectionRuntime _runtime;
   private readonly IGeneratorContext _context;
   private ConstructorInfo? _underlyingSystemConstructor;
 
-  public SymbolConstructorInfo(IRuntime runtime, IGeneratorContext context, IMethodSymbol symbol)
+  public SymbolConstructorInfo(IReflectionRuntime runtime, IGeneratorContext context, IMethodSymbol symbol)
   {
     _runtime = runtime;
     _context = context;
@@ -27,6 +27,8 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
   }
 
   public IMethodSymbol OriginalSymbol { get; }
+
+  public bool IsSource => OriginalSymbol.IsSource();
 
   public Type[] ParameterTypes => OriginalSymbol.Parameters.Map(parameter => _context.GetContextType(parameter.Type));
 

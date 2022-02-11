@@ -8,7 +8,7 @@ internal class SymbolByRefType : SymbolType
 {
   private readonly SymbolType _elementType;
 
-  public SymbolByRefType(IRuntime runtime, IGeneratorContext context, SymbolType elementType)
+  public SymbolByRefType(IReflectionRuntime runtime, IGeneratorContext context, SymbolType elementType)
     : base(runtime, context)
   {
     _elementType = elementType;

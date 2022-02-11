@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using GeneratorKit.Comparers;
+using GeneratorKit.Reflection.Binders;
 using GeneratorKit.TestHelpers;
 using System;
 using System.Collections.Generic;
@@ -743,7 +744,7 @@ public class SymbolMethodInfoTests : IClassFixture<SymbolMethodInfoFixture>
     MethodInfo expected = reference;
 
     // Act
-    MethodInfo actual = sut.UnderlyingSystemMethod;
+    MethodInfo actual = DelegatorBinder.ResolveMethod(sut.ReflectedType.UnderlyingSystemType, sut);
 
     // Assert
     actual.Should().Equal(expected, MethodInfoEqualityComparer.Default);

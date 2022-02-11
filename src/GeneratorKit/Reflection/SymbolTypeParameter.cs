@@ -9,7 +9,7 @@ namespace GeneratorKit.Reflection;
 
 internal sealed class SymbolTypeParameter : SymbolType
 {
-  public SymbolTypeParameter(IRuntime runtime, IGeneratorContext context, ITypeParameterSymbol symbol)
+  public SymbolTypeParameter(IReflectionRuntime runtime, IGeneratorContext context, ITypeParameterSymbol symbol)
     : base(runtime, context)
   {
     Symbol = symbol;
@@ -24,7 +24,7 @@ internal sealed class SymbolTypeParameter : SymbolType
 
   // System.Type overrides
 
-  protected override SymbolType? BaseTypeCore => Context.CreateTypeDelegator(BaseTypeSymbol);
+  public override bool ContainsGenericParameters => true;
 
   public override MethodBase? DeclaringMethod => Symbol.DeclaringMethod is not null
     ? Context.CreateMethodInfoDelegator(Symbol.DeclaringMethod)
@@ -135,6 +135,8 @@ internal sealed class SymbolTypeParameter : SymbolType
   // SymbolTypeBase overrides
 
   protected override SymbolAssembly AssemblyCore => Context.CreateAssemblyDelegator(Symbol.ContainingAssembly);
+
+  protected override SymbolType? BaseTypeCore => Context.CreateTypeDelegator(BaseTypeSymbol);
 
   protected override SymbolModule ModuleCore => Context.CreateModuleDelegator(Symbol.ContainingModule);
 

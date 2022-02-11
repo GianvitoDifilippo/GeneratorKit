@@ -19,7 +19,12 @@ internal interface IGeneratorContext
 
   SymbolType GetGenericTypeDefinition(SymbolNamedType type);
   SymbolType MakeGenericType(SymbolNamedType type, Type[] typeArguments);
-  SymbolMethodInfo GetGenericMethodDefinition(SymbolMethodInfo method, SymbolType? reflectedType);
+  SymbolMethodInfo GetGenericMethodDefinition(SymbolMethodInfo method);
   SymbolMethodInfo MakeGenericMethod(SymbolMethodInfo method, Type[] typeArguments, SymbolType? reflectedType);
-  SymbolType DeclaringType(SymbolMethodInfo method);
+  SymbolType GetDeclaringType(SymbolMethodInfo method);
+  bool IsGenericTypeDefinition(INamedTypeSymbol symbol);
+  bool ContainsGenericParameters(INamedTypeSymbol symbol);
+  bool ContainsGenericParameters(IArrayTypeSymbol symbol);
+  bool IsGenericMethodDefinition(IMethodSymbol symbol);
+  bool ContainsGenericParameters(IMethodSymbol symbol);
 }

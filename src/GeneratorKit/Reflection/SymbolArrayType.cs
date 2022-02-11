@@ -11,7 +11,7 @@ internal sealed class SymbolArrayType : SymbolType
 {
   private SymbolType? _elementType;
 
-  public SymbolArrayType(IRuntime runtime, IGeneratorContext context, IArrayTypeSymbol symbol)
+  public SymbolArrayType(IReflectionRuntime runtime, IGeneratorContext context, IArrayTypeSymbol symbol)
     : base(runtime, context)
   {
     Symbol = symbol;
@@ -27,6 +27,8 @@ internal sealed class SymbolArrayType : SymbolType
 
 
   // System.Type overrides
+
+  public override bool ContainsGenericParameters => Context.ContainsGenericParameters(Symbol);
 
   public override MethodBase? DeclaringMethod => throw new InvalidOperationException($"Method may only be called on a Type for which Type.IsGenericParameter is true.");
 

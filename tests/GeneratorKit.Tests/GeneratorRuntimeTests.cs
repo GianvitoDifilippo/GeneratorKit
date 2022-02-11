@@ -6,17 +6,17 @@ using Microsoft.CodeAnalysis;
 using Moq;
 using System;
 using Xunit;
-using static GeneratorKit.ConcreteGeneratorRuntimeFixture;
+using static GeneratorKit.GeneratorRuntimeFixture;
 using static GeneratorKit.TestHelpers.ProxyTypes;
 
 namespace GeneratorKit;
 
-public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRuntimeFixture>
+public class GeneratorRuntimeTests : IClassFixture<GeneratorRuntimeFixture>
 {
-  private readonly ConcreteGeneratorRuntimeFixture _fixture;
+  private readonly GeneratorRuntimeFixture _fixture;
   private readonly Mock<IProxyManager> _proxyManagerMock;
 
-  public ConcreteGeneratorRuntimeTests(ConcreteGeneratorRuntimeFixture fixture)
+  public GeneratorRuntimeTests(GeneratorRuntimeFixture fixture)
   {
     _fixture = fixture;
     _proxyManagerMock = new Mock<IProxyManager>(MockBehavior.Strict);
@@ -26,7 +26,7 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
   public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsNotGeneric()
   {
     // Arrange
-    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+    GeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
 
     SymbolType sourceType = _fixture.GetSourceType(SourceType.NonGenericClass, sut);
     SymbolType type = sourceType;
@@ -49,7 +49,7 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
   public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsGeneric_AndIsGenericDefinition()
   {
     // Arrange
-    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+    GeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
     
     SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClass, sut);
     SymbolType type = sourceType;
@@ -72,7 +72,7 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
   public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsGeneric_AndIsConstructedGeneric()
   {
     // Arrange
-    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+    GeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
 
     SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClass, sut);
     SymbolType type = sourceType.MakeGenericType(_fixture.GetSpecialType(sut, SpecialType.System_Int32));
@@ -95,10 +95,10 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
   public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsGeneric_AndIsHybridGeneric()
   {
     // Arrange
-    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+    GeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
 
     SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClass, sut);
-    HybridGenericType type = sourceType.MakeGenericType(typeof(int));
+    SymbolType type = sourceType.MakeGenericType(typeof(int));
 
     Type proxyType = typeof(GenericClassProxy<>);
     Type expected = typeof(GenericClassProxy<int>);
@@ -118,7 +118,7 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
   public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsNonGenericClassWithGenericBase()
   {
     // Arrange
-    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+    GeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
 
     SymbolType sourceType = _fixture.GetSourceType(SourceType.NonGenericClassGenericBase, sut);
     SymbolType type = sourceType;
@@ -141,7 +141,7 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
   public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsGenericClassWithLessTypeParametersThanBase_AndIsGenericDefinition()
   {
     // Arrange
-    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+    GeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
 
     SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClassLessParameters, sut);
     SymbolType type = sourceType;
@@ -164,7 +164,7 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
   public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsGenericClassWithLessTypeParametersThanBase_AndIsConstructedGeneric()
   {
     // Arrange
-    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+    GeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
 
     SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClassLessParameters, sut);
     SymbolType type = sourceType.MakeGenericType(_fixture.GetSpecialType(sut, SpecialType.System_Int32));
@@ -187,10 +187,10 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
   public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsGenericClassWithLessTypeParametersThanBase_AndIsHybridGeneric()
   {
     // Arrange
-    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+    GeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
 
     SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClassLessParameters, sut);
-    HybridGenericType type = sourceType.MakeGenericType(typeof(int));
+    SymbolType type = sourceType.MakeGenericType(typeof(int));
 
     Type proxyType = typeof(GenericClassProxy<,>);
     Type expected = typeof(GenericClassProxy<,>).MakeGenericType(typeof(string), typeof(int));
@@ -210,7 +210,7 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
   public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsGenericClassWithMoreTypeParametersThanBase1_AndIsGenericDefinition()
   {
     // Arrange
-    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+    GeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
 
     SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClassMoreParameters1, sut);
     SymbolType type = sourceType;
@@ -233,7 +233,7 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
   public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsGenericClassWithMoreTypeParametersThanBase1_AndIsConstructedGeneric()
   {
     // Arrange
-    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+    GeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
 
     SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClassMoreParameters1, sut);
     SymbolType type = sourceType.MakeGenericType(
@@ -259,10 +259,10 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
   public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsGenericClassWithMoreTypeParametersThanBase1_AndIsHybridGeneric()
   {
     // Arrange
-    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+    GeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
 
     SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClassMoreParameters1, sut);
-    HybridGenericType type = sourceType.MakeGenericType(
+    SymbolType type = sourceType.MakeGenericType(
       typeof(byte),
       typeof(int),
       typeof(char));
@@ -285,7 +285,7 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
   public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsGenericClassWithMoreTypeParametersThanBase2_AndIsGenericDefinition()
   {
     // Arrange
-    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+    GeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
 
     SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClassMoreParameters2, sut);
     SymbolType type = sourceType;
@@ -308,7 +308,7 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
   public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsGenericClassWithMoreTypeParametersThanBase2_AndIsConstructedGeneric()
   {
     // Arrange
-    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+    GeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
 
     SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClassMoreParameters2, sut);
     SymbolType type = sourceType.MakeGenericType(
@@ -334,10 +334,10 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
   public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeIsGenericClassWithMoreTypeParametersThanBase2_AndIsHybridGeneric()
   {
     // Arrange
-    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+    GeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
 
     SymbolType sourceType = _fixture.GetSourceType(SourceType.GenericClassMoreParameters2, sut);
-    HybridGenericType type = sourceType.MakeGenericType(
+    SymbolType type = sourceType.MakeGenericType(
       typeof(byte),
       typeof(int),
       typeof(char));
@@ -360,7 +360,7 @@ public class ConcreteGeneratorRuntimeTests : IClassFixture<ConcreteGeneratorRunt
   public void GetRuntimeType_ShouldReturnEquivalentProxyType_WhenSourceTypeImplementsInterface()
   {
     // Arrange
-    ConcreteGeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
+    GeneratorRuntime sut = _fixture.CreateSut(_proxyManagerMock.Object);
 
     SymbolType sourceType = _fixture.GetSourceType(SourceType.Interface, sut);
     SymbolType type = sourceType;
