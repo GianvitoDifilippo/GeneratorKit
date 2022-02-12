@@ -54,4 +54,9 @@ internal class GenericMethodContext : GeneratorContext
   {
     return _parent.CreateTypeDelegator(method.OriginalSymbol.ContainingType);
   }
+
+  public override SymbolMethodInfo GetBaseDefinition(SymbolMethodInfo method, SymbolType? reflectedType)
+  {
+    return _parent.GetBaseDefinition(method, reflectedType);
+  }
 }

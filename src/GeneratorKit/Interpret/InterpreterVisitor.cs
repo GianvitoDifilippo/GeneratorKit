@@ -274,7 +274,15 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
 
   public override object? VisitDefaultValue(IDefaultValueOperation operation, Optional<object?> argument)
   {
-    return operation.ConstantValue.Value;
+    if (operation.ConstantValue.HasValue)
+      return operation.ConstantValue.Value;
+    if (operation.Type is null)
+      return null;
+
+    Type type = _context.GetContextType(operation.Type);
+    return type.IsValueType
+      ? System.Activator.CreateInstance(type)
+      : null;
   }
 
   public override object? VisitDiscardOperation(IDiscardOperation operation, Optional<object?> argument)

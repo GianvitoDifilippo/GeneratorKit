@@ -128,6 +128,9 @@ namespace " + Namespace + @"
     _runtime.AddType(_genericSymbol.Construct(_stringSymbol), _genericType.MakeGenericType(typeof(string)));
     _runtime.AddType(_intSymbol, typeof(int));
     _runtime.AddType(_stringSymbol, typeof(string));
+    _runtime.AddType(_genericDerivedSymbol, _genericDerivedType);
+    _runtime.AddType(_genericDerivedSymbol.Construct(_stringSymbol), _genericDerivedType.MakeGenericType(typeof(string)));
+
 
     DefaultGeneratorContext context = new DefaultGeneratorContext(_runtime);
     IntSymbolType = new SymbolNamedType(_runtime, context, _intSymbol);

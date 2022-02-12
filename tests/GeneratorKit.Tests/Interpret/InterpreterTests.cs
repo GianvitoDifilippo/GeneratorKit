@@ -1,12 +1,9 @@
-﻿#pragma warning disable RS1024 // Compare symbols correctly
-
-using FluentAssertions;
+﻿using FluentAssertions;
 using GeneratorKit.Interpret.Frame;
 using GeneratorKit.Reflection;
 using GeneratorKit.TestHelpers;
 using Microsoft.CodeAnalysis;
 using System;
-using System.Collections.Generic;
 using Xunit;
 using static GeneratorKit.Interpret.InterpreterFixture;
 
@@ -73,6 +70,55 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
 
     // Assert
     result.Should().Be(expected);
+  }
+
+  [Fact]
+  public void InterpretMethod_ShouldInterpret_Discard()
+  {
+    // Arrange
+    object?[] arguments = Array.Empty<object?>();
+    IMethodSymbol method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.Discard);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.Discard);
+
+    // Act
+    _sut.InterpretMethod(method, instanceFrame, Type.EmptyTypes, arguments);
+
+    // Assert
+    _frameProvider[2].Should().HaveCount(0);
+  }
+
+  [Fact]
+  public void InterpretMethod_ShouldInterpret_Default()
+  {
+    // Arrange
+    object?[] arguments = Array.Empty<object?>();
+    int expected = default;
+    IMethodSymbol method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.Default);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.Default);
+
+    // Act
+    object? actual = _sut.InterpretMethod(method, instanceFrame, Type.EmptyTypes, arguments);
+
+    // Assert
+    actual.Should().Be(expected);
+  }
+
+  [Theory]
+  [InlineData(typeof(int))]
+  [InlineData(typeof(string))]
+  public void InterpretMethod_ShouldInterpret_DefaultGeneric(Type typeArgument)
+  {
+    // Arrange
+    object?[] arguments = Array.Empty<object?>();
+    object? expected = typeArgument.IsValueType ? System.Activator.CreateInstance(typeArgument) : null;
+    IMethodSymbol method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.DefaultGeneric);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.DefaultGeneric);
+
+    // Act
+    object? actual = _sut.InterpretMethod(method, instanceFrame, new[] { typeArgument }, arguments);
+
+    // Assert
+    actual.Should().Be(expected);
   }
 
   [Theory]
@@ -328,6 +374,77 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     _frameProvider[2].Should().Contain("prop2", "prop");
   }
 
+  [Fact]
+  public void InterpretMethod_ShouldInterpret_Coalesce()
+  {
+    // Arrange
+    object?[] arguments = Array.Empty<object?>();
+    IMethodSymbol method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.Coalesce);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.Coalesce);
+
+    // Act
+    _sut.InterpretMethod(method, instanceFrame, Type.EmptyTypes, arguments);
+
+    // Assert
+    _frameProvider[2].Should().HaveCount(3);
+    _frameProvider[2].Should().Contain("i1", null);
+    _frameProvider[2].Should().Contain("i2", "4");
+    _frameProvider[2].Should().Contain("i3", "4");
+  }
+
+  [Fact]
+  public void InterpretMethod_ShouldInterpret_CoalesceAssignment()
+  {
+    // Arrange
+    object?[] arguments = Array.Empty<object?>();
+    IMethodSymbol method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.CoalesceAssignment);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.CoalesceAssignment);
+
+    // Act
+    _sut.InterpretMethod(method, instanceFrame, Type.EmptyTypes, arguments);
+
+    // Assert
+    _frameProvider[2].Should().HaveCount(1);
+    _frameProvider[2].Should().Contain("i1", 4);
+  }
+
+  [Fact]
+  public void InterpretMethod_ShouldInterpret_ConditionalAccess()
+  {
+    // Arrange
+    object?[] arguments = Array.Empty<object?>();
+    IMethodSymbol method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.ConditionalAccess);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.ConditionalAccess);
+
+    // Act
+    _sut.InterpretMethod(method, instanceFrame, Type.EmptyTypes, arguments);
+
+    // Assert
+    _frameProvider[2].Should().HaveCount(4);
+    _frameProvider[2].Should().Contain("v1", null);
+    _frameProvider[2].Should().Contain("v2", 4);
+  }
+
+  [Fact]
+  public void InterpretMethod_ShouldInterpret_IsType()
+  {
+    // Arrange
+    object?[] arguments = Array.Empty<object?>();
+    IMethodSymbol method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.IsType);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.IsType);
+
+    // Act
+    _sut.InterpretMethod(method, instanceFrame, Type.EmptyTypes, arguments);
+
+    // Assert
+    _frameProvider[2].Should().HaveCount(7);
+    _frameProvider[2].Should().Contain("b1", false);
+    _frameProvider[2].Should().Contain("b2", false);
+    _frameProvider[2].Should().Contain("b3", true);
+    _frameProvider[2].Should().Contain("b4", true);
+    _frameProvider[2].Should().Contain("b5", false);
+  }
+
   [Theory]
   [InlineData(typeof(string), 6)]
   [InlineData(typeof(char), 4)]
@@ -581,7 +698,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     _sut.GetInstanceFrame(typeFrame, sourceType, new object());
 
     // Assert
-    _frameProvider[0].Should().Contain("_instanceField", 12);
-    _frameProvider[0].Should().Contain("InstanceProperty", "prop1");
+    _frameProvider[2].Should().Contain("_instanceField", 12);
+    _frameProvider[2].Should().Contain("InstanceProperty", "prop1");
   }
 }

@@ -54,4 +54,9 @@ internal class InterpreterTypeContext : GeneratorContext
   {
     throw new NotSupportedException();
   }
+
+  public override SymbolMethodInfo GetBaseDefinition(SymbolMethodInfo method, SymbolType? reflectedType)
+  {
+    throw new NotSupportedException();
+  }
 }

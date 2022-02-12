@@ -356,14 +356,12 @@ internal sealed class SymbolNamedType : SymbolType
     if (!IsGenericType)
       throw new InvalidOperationException("This operation is only valid on generic types.");
 
-    return IsConstructedGenericType
-      ? Context.GetGenericTypeDefinition(this)
-      : this;
+    return Context.GetGenericTypeDefinition(this);
   }
 
   protected override SymbolType[] GetInterfacesCore()
   {
-    return Symbol.AllInterfaces.Select(x => Context.CreateTypeDelegator(x)).ToArray();
+    return Symbol.AllInterfaces.Map(Context.CreateTypeDelegator);
   }
 
   protected override SymbolType MakeArrayTypeCore()

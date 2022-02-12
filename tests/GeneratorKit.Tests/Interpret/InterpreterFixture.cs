@@ -26,10 +26,7 @@ namespace " + Namespace + @"
 {
   public class NonGenericClassSource : NonGenericClass
   {
-    static NonGenericClassSource()
-    {
-      _staticFieldFromCctor = 'a';
-    }
+    static NonGenericClassSource() => _staticFieldFromCctor = 'a';
 
     private readonly int _instanceField = 12;
     private string InstanceProperty { get; set; } = ""prop1"";
@@ -107,6 +104,21 @@ namespace " + Namespace + @"
     public string NameOf()
     {
       return nameof(NonGenericClass_Interpret);
+    }
+
+    public void Discard()
+    {
+      _ = 4;
+    }
+
+    public int Default()
+    {
+      return default;
+    }
+
+    public T DefaultGeneric<T>()
+    {
+      return default(T);
     }
 
     public int For()
@@ -280,6 +292,28 @@ namespace " + Namespace + @"
       var prop2 = obj.Prop2;
     }
 
+    public void Coalesce()
+    {
+      string? i1 = null;
+      string i2 = i1 ?? ""4"";
+      string i3 = i2 ?? ""5"";
+    }
+
+    public void CoalesceAssignment()
+    {
+      int? i1 = null;
+      i1 ??= 4;
+      i1 ??= 5;
+    }
+
+    public void ConditionalAccess()
+    {
+      OtherClass obj1 = null;
+      int? v1 = obj1?.Prop1;
+      OtherClass obj2 = new OtherClass { Prop1 = 4 };
+      int? v2 = obj2?.Prop1;
+    }
+
     public void FieldReference_Source()
     {
       OtherClass obj = new OtherClass();
@@ -287,6 +321,17 @@ namespace " + Namespace + @"
       int f1 = _field;
       obj.Field = 12;
       int f2 = obj.Field;
+    }
+
+    public void IsType()
+    {
+      OtherClass obj1 = null;
+      OtherClass obj2 = new OtherClass();
+      bool b1 = obj1 is OtherClass;
+      bool b2 = obj1 is object;
+      bool b3 = obj2 is OtherClass;
+      bool b4 = obj2 is object;
+      bool b5 = obj2 is int;
     }
   }
 
@@ -484,9 +529,15 @@ namespace " + Namespace + @"
     IfElse,
     TupleAssignment,
     NameOf,
+    Discard,
+    Default,
+    DefaultGeneric,
     For,
     ForEach,
     ObjectInitializer,
+    Coalesce,
+    CoalesceAssignment,
+    ConditionalAccess,
     While,
     DoWhile,
     For_WithBreak,
@@ -499,6 +550,7 @@ namespace " + Namespace + @"
     DoWhile_WithContinue,
     StringInterpolation,
     FieldReference_Source,
+    IsType,
 
     Invocation_NonGenericMethod_GenericType = 4096,
     Invocation_GenericMethod_GenericType1,

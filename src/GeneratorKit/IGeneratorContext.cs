@@ -22,6 +22,7 @@ internal interface IGeneratorContext
   SymbolMethodInfo GetGenericMethodDefinition(SymbolMethodInfo method);
   SymbolMethodInfo MakeGenericMethod(SymbolMethodInfo method, Type[] typeArguments, SymbolType? reflectedType);
   SymbolType GetDeclaringType(SymbolMethodInfo method);
+  SymbolMethodInfo GetBaseDefinition(SymbolMethodInfo method, SymbolType? reflectedType);
   bool IsGenericTypeDefinition(INamedTypeSymbol symbol);
   bool ContainsGenericParameters(INamedTypeSymbol symbol);
   bool ContainsGenericParameters(IArrayTypeSymbol symbol);

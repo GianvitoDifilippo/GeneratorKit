@@ -1,6 +1,7 @@
 ﻿using GeneratorKit.Reflection;
 using Microsoft.CodeAnalysis;
 using System;
+using System.Collections.Immutable;
 
 namespace GeneratorKit;
 
@@ -20,18 +21,23 @@ internal abstract class GeneratorContext : IGeneratorContext
   public abstract SymbolMethodInfo GetGenericMethodDefinition(SymbolMethodInfo method);
   public abstract SymbolMethodInfo MakeGenericMethod(SymbolMethodInfo method, Type[] typeArguments, SymbolType? reflectedType);
   public abstract SymbolType GetDeclaringType(SymbolMethodInfo method);
+  public abstract SymbolMethodInfo GetBaseDefinition(SymbolMethodInfo method, SymbolType? reflectedType);
 
   public virtual bool IsGenericTypeDefinition(INamedTypeSymbol symbol)
   {
     if (!symbol.IsGenericType)
       return false;
 
-    foreach (ITypeSymbol typeArgument in symbol.TypeArguments)
+    ImmutableArray<ITypeParameterSymbol> typeParameters = symbol.TypeParameters;
+    ImmutableArray<ITypeSymbol> typeArguments = symbol.TypeArguments;
+
+    for (int i = 0; i < typeParameters.Length; i++)
     {
-      if (typeArgument.Kind is not SymbolKind.TypeParameter)
+      ITypeParameterSymbol typeParameter = typeParameters[i];
+      if (!typeParameter.Equals(typeArguments[i], SymbolEqualityComparer.Default))
         return false;
 
-      if (!GetContextType((ITypeParameterSymbol)typeArgument).IsGenericParameter)
+      if (!GetContextType(typeParameter).IsGenericParameter)
         return false;
     }
 
@@ -70,12 +76,16 @@ internal abstract class GeneratorContext : IGeneratorContext
     if (!symbol.IsGenericMethod)
       return false;
 
-    foreach (ITypeSymbol typeArgument in symbol.TypeArguments)
+    ImmutableArray<ITypeParameterSymbol> typeParameters = symbol.TypeParameters;
+    ImmutableArray<ITypeSymbol> typeArguments = symbol.TypeArguments;
+
+    for (int i = 0; i < typeParameters.Length; i++)
     {
-      if (typeArgument.Kind is not SymbolKind.TypeParameter)
+      ITypeParameterSymbol typeParameter = typeParameters[i];
+      if (!typeParameter.Equals(typeArguments[i], SymbolEqualityComparer.Default))
         return false;
 
-      if (!GetContextType((ITypeParameterSymbol)typeArgument).IsGenericParameter)
+      if (!GetContextType(typeParameter).IsGenericParameter)
         return false;
     }
 

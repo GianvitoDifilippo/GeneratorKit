@@ -62,7 +62,8 @@ internal abstract partial class DelegatorBinder : Binder
   public static MethodInfo ResolveMethod(Type type, SymbolMethodInfo method)
   {
     BindingFlags bindingAttr = GetBindingAttr(method.OriginalSymbol);
-    Type[] parameterTypes = method.ParameterTypes;
+    SymbolMethodInfo methodDefinition = method.IsGenericMethod ? method.GetGenericMethodDefinition() : method;
+    Type[] parameterTypes = methodDefinition.ParameterTypes;
 
     MethodBinder binder = new MethodBinder(parameterTypes, method.GetGenericArguments());
     return type.GetMethod(method.Name, bindingAttr, binder, method.CallingConvention, parameterTypes, null)

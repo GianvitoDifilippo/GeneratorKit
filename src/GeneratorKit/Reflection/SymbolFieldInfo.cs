@@ -142,9 +142,9 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
     throw new NotSupportedException();
   }
 
-  public override object GetValue(object? obj)
+  public override object? GetValue(object? obj)
   {
-    return UnderlyingSystemField.GetValue(obj);
+    return _runtime.GetField(this, obj);
   }
 
   public override bool IsDefined(Type attributeType, bool inherit)
@@ -152,9 +152,9 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
     throw new NotImplementedException();
   }
 
-  public override void SetValue(object obj, object value, BindingFlags invokeAttr, Binder binder, CultureInfo culture)
+  public override void SetValue(object? obj, object? value, BindingFlags invokeAttr, Binder binder, CultureInfo culture)
   {
-    UnderlyingSystemField.SetValue(obj, value, invokeAttr, binder, culture);
+    _runtime.SetField(this, obj, value);
   }
 
 

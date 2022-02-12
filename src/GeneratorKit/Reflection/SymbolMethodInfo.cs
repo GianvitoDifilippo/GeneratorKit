@@ -195,13 +195,7 @@ internal class SymbolMethodInfo : SymbolMethodInfoBase
 
   protected override SymbolMethodInfo GetBaseDefinitionCore()
   {
-    return OriginalSymbol.IsOverride
-      ? IsGenericMethod && !IsGenericMethodDefinition
-        ? _context.CreateMethodInfoDelegator(OriginalSymbol.ConstructedFrom.OverriddenMethod!)
-        : _context.CreateMethodInfoDelegator(OriginalSymbol.OverriddenMethod!)
-      : OriginalSymbol.IsVirtual && _reflectedType is not null
-        ? _context.CreateMethodInfoDelegator(OriginalSymbol)
-        : this;
+    return _context.GetBaseDefinition(this, _reflectedType);
   }
 
   protected override SymbolMethodInfo GetGenericMethodDefinitionCore()

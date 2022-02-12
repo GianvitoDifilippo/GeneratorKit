@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using GeneratorKit.Utils;
+using Microsoft.CodeAnalysis;
 using System;
 
 namespace GeneratorKit.Reflection.Context;
@@ -64,5 +65,28 @@ internal class GenericTypeContext : GeneratorContext
   public override bool ContainsGenericParameters(IMethodSymbol symbol)
   {
     return _parent.ContainsGenericParameters(symbol);
+  }
+
+  public override SymbolMethodInfo GetBaseDefinition(SymbolMethodInfo method, SymbolType? reflectedType)
+  {
+    IMethodSymbol symbol = method.OriginalSymbol;
+    if (symbol.IsOverride)
+    {
+      IMethodSymbol overriddenMethod = method.IsGenericMethod && !method.IsGenericMethodDefinition
+        ? symbol.ConstructedFrom.OverriddenMethod!
+        : symbol.OverriddenMethod!;
+      INamedTypeSymbol containingType = overriddenMethod.ContainingType;
+      GeneratorContext context = containingType.IsGenericType
+        ? new GenericTypeContext(Runtime, _parent, containingType.TypeArguments.Map(GetContextType))
+        : this;
+
+      return context.CreateMethodInfoDelegator(overriddenMethod);
+    }
+    else
+    {
+      return symbol.IsVirtual && reflectedType is not null
+        ? CreateMethodInfoDelegator(symbol)
+        : method;
+    }
   }
 }
