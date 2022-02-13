@@ -94,13 +94,13 @@ internal class GeneratorRuntime : IReflectionRuntime, IGeneratorRuntime
     InterpreterFrame frame;
     if (method.IsStatic)
     {
-      Debug.Assert(instance is null);
+      Debug.Assert(instance is null, "Instance of non-static method must not be null.");
 
       frame = _interpreter.GetTypeFrame(method.DeclaringType);
     }
     else
     {
-      Debug.Assert(instance is not null);
+      Debug.Assert(instance is not null, "Instance of static method must be null.");
       if (instance is not IProxied proxied || proxied.Delegate is not OperationDelegate @delegate)
         throw new ArgumentException("The instance must be provided by the runtime.", nameof(instance));
 
@@ -118,13 +118,13 @@ internal class GeneratorRuntime : IReflectionRuntime, IGeneratorRuntime
     InterpreterFrame frame;
     if (property.IsStatic)
     {
-      Debug.Assert(instance is null);
+      Debug.Assert(instance is null, "Instance of non-static property must not be null.");
 
       frame = _interpreter.GetTypeFrame(property.DeclaringType);
     }
     else
     {
-      Debug.Assert(instance is not null);
+      Debug.Assert(instance is not null, "Instance of static property must be null.");
       if (instance is not IProxied proxied || proxied.Delegate is not OperationDelegate @delegate)
         throw new ArgumentException("The instance must be provided by the runtime.", nameof(instance));
 
@@ -151,13 +151,13 @@ internal class GeneratorRuntime : IReflectionRuntime, IGeneratorRuntime
     InterpreterFrame frame;
     if (property.IsStatic)
     {
-      Debug.Assert(instance is null);
+      Debug.Assert(instance is null, "Instance of non-static property must not be null.");
 
       frame = _interpreter.GetTypeFrame(property.DeclaringType);
     }
     else
     {
-      Debug.Assert(instance is not null);
+      Debug.Assert(instance is not null, "Instance of static property must be null.");
       if (instance is not IProxied proxied || proxied.Delegate is not OperationDelegate @delegate)
         throw new ArgumentException("The instance must be provided by the runtime.", nameof(instance));
 
@@ -194,13 +194,13 @@ internal class GeneratorRuntime : IReflectionRuntime, IGeneratorRuntime
     InterpreterFrame frame;
     if (field.IsStatic)
     {
-      Debug.Assert(instance is null);
+      Debug.Assert(instance is null, "Instance of non-static field must not be null.");
 
       frame = _interpreter.GetTypeFrame(field.DeclaringType);
     }
     else
     {
-      Debug.Assert(instance is not null);
+      Debug.Assert(instance is not null, "Instance of static field must be null.");
       if (instance is not IProxied proxied || proxied.Delegate is not OperationDelegate @delegate)
         throw new ArgumentException("The instance must be provided by the runtime.", nameof(instance));
 
@@ -221,13 +221,13 @@ internal class GeneratorRuntime : IReflectionRuntime, IGeneratorRuntime
     InterpreterFrame frame;
     if (field.IsStatic)
     {
-      Debug.Assert(instance is null);
+      Debug.Assert(instance is null, "Instance of non-static field must not be null.");
 
       frame = _interpreter.GetTypeFrame(field.DeclaringType);
     }
     else
     {
-      Debug.Assert(instance is not null);
+      Debug.Assert(instance is not null, "Instance of static field must be null.");
       if (instance is not IProxied proxied || proxied.Delegate is not OperationDelegate @delegate)
         throw new ArgumentException("The instance must be provided by the runtime.", nameof(instance));
 

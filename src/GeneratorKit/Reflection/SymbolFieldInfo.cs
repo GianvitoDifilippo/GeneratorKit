@@ -34,7 +34,7 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
   {
     get
     {
-      Debug.Assert(!OriginalSymbol.IsSource());
+      Debug.Assert(!OriginalSymbol.IsSource(), "Field must not be source.");
       return _underlyingSystemField ??= DelegatorBinder.ResolveField(ReflectedType.UnderlyingSystemType, this);
     }
   }

@@ -36,7 +36,7 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
   {
     get
     {
-      Debug.Assert(!OriginalSymbol.IsSource());
+      Debug.Assert(!OriginalSymbol.IsSource(), "Constructor must not be source.");
       return _underlyingSystemConstructor ??= DelegatorBinder.ResolveConstructor(DeclaringType.UnderlyingSystemType, this);
     }
   }

@@ -41,7 +41,7 @@ internal class OperationManager : IOperationManager
 
   public bool TryGetOperation(IFieldSymbol field, [NotNullWhen(true)] out IOperation? operation)
   {
-    Debug.Assert(!field.IsImplicitlyDeclared);
+    Debug.Assert(!field.IsImplicitlyDeclared, "Field must not be implicitly declared in order to get the operation from it.");
 
     if (!_operations.TryGetValue(field, out operation))
     {

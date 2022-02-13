@@ -14,7 +14,7 @@ internal sealed class SymbolEventInfo : SymbolEventInfoBase
 
   public SymbolEventInfo(IReflectionRuntime runtime, IGeneratorContext context, IEventSymbol symbol, SymbolType? reflectedType)
   {
-    Debug.Assert(false, "Events are not supported");
+    throw new NotSupportedException("Events are not supported");
     _runtime = runtime;
     _context = context;
     OriginalSymbol = symbol;

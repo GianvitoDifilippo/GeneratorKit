@@ -531,7 +531,7 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
   public override object? VisitLiteral(ILiteralOperation operation, Optional<object?> argument)
   {
     Optional<object?> constantValue = operation.ConstantValue;
-    Debug.Assert(constantValue.HasValue);
+    Debug.Assert(constantValue.HasValue, "Expected literal operation to have a constant value.");
     return constantValue.Value;
   }
 
@@ -567,13 +567,13 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
     object? instance = operation.Method.IsStatic ? null : operation.Instance!.Accept(this, default);
     SymbolMethodInfo method = _context.CreateMethodInfoDelegator(operation.Method);
 
-    return Delegate.CreateDelegate(DelegateHelper.GetDelegateType(_context, operation.Method), instance, method);
+    throw new NotSupportedException();
   }
 
   public override object? VisitNameOf(INameOfOperation operation, Optional<object?> argument)
   {
     Optional<object?> constantValue = operation.ConstantValue;
-    Debug.Assert(constantValue.HasValue);
+    Debug.Assert(constantValue.HasValue, "Expected nameof operation to have a constant value.");
     return constantValue.Value;
   }
 
@@ -671,7 +671,7 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
     if (argument.HasValue)
     {
       object?[] values = (object?[])argument.Value!;
-      Debug.Assert(values.Length == operation.Elements.Length);
+      Debug.Assert(values.Length == operation.Elements.Length, "Left side and right side of tuple assignment must have the same number of elements.");
       for (int i = 0; i < values.Length; i++)
       {
         operation.Elements[i].Accept(this, values[i]);

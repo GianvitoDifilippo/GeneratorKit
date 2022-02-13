@@ -42,7 +42,7 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
   {
     get
     {
-      Debug.Assert(!OriginalSymbol.IsSource());
+      Debug.Assert(!OriginalSymbol.IsSource(), "Property must not be source.");
       return _underlyingSystemProperty ??= DelegatorBinder.ResolveProperty(ReflectedType.UnderlyingSystemType, this);
     }
   }

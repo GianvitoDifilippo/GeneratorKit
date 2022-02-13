@@ -38,7 +38,7 @@ internal class SymbolMethodInfo : SymbolMethodInfoBase
   {
     get
     {
-      Debug.Assert(!OriginalSymbol.IsSource());
+      Debug.Assert(!OriginalSymbol.IsSource(), "Method must not be source.");
       return _underlyingSystemMethod ??= DelegatorBinder.ResolveMethod(ReflectedType.UnderlyingSystemType, this);
     }
   }

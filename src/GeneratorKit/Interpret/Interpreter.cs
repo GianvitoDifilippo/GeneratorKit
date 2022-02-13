@@ -8,8 +8,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
 
 namespace GeneratorKit.Interpret;
 
@@ -91,8 +89,8 @@ internal class Interpreter : IInterpreter
 
   public InterpreterFrame GetTypeFrame(SymbolType type)
   {
-    Debug.Assert(type.Symbol.IsSource());
-    Debug.Assert(!type.ContainsGenericParameters);
+    Debug.Assert(type.IsSource, "Type must be source.");
+    Debug.Assert(!type.ContainsGenericParameters, "Type must not contain generic parameters.");
 
     if (_typeFrames.TryGetValue(type, out InterpreterFrame? typeFrame))
       return typeFrame;
@@ -159,7 +157,7 @@ internal class Interpreter : IInterpreter
 
   private InterpreterFrame GetMethodFrame(InterpreterFrame parent, IMethodSymbol method, object?[] arguments)
   {
-    Debug.Assert(method.IsSource());
+    Debug.Assert(method.IsSource(), "Method must be source.");
 
     ImmutableArray<IParameterSymbol> parameters = method.Parameters;
     int length = parameters.Length;
@@ -178,7 +176,7 @@ internal class Interpreter : IInterpreter
 
   private InterpreterFrame GetConstructorFrame(InterpreterFrame typeFrame, IMethodSymbol constructor, object?[] arguments)
   {
-    Debug.Assert(constructor.IsSource());
+    Debug.Assert(constructor.IsSource(), "Constructor must be source.");
 
     ImmutableArray<IParameterSymbol> parameters = constructor.Parameters;
     int length = parameters.Length;
