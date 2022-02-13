@@ -340,12 +340,23 @@ namespace " + Namespace + @"
       bool b8 = i1 is string;
     }
 
-  public void Array()
-  {
-    int[] arr1 = new int[4] { 1, 2, 3, 4 };
-    int[][] arr2 = new int[][] { new[] { 1, 2 }, new[] { 3, 4 }, new[] { 5, 6 } };
-    int[,,] arr3 = new int[2, 3, 4] { { { 1, 2, 3, 4 }, { 5, 6, 7, 8 }, { 9, 10, 11, 12 } }, { { 13, 14, 15, 16 }, { 17, 18, 19, 20 }, { 21, 22, 23, 24 } } };
-  }
+    public void Array()
+    {
+      int[] arr1 = new int[4] { 1, 2, 3, 4 };
+      int[][] arr2 = new int[][] { new[] { 1, 2 }, new[] { 3, 4 }, new[] { 5, 6 } };
+      int[,,] arr3 = new int[2, 3, 4] { { { 1, 2, 3, 4 }, { 5, 6, 7, 8 }, { 9, 10, 11, 12 } }, { { 13, 14, 15, 16 }, { 17, 18, 19, 20 }, { 21, 22, 23, 24 } } };
+    }
+
+    public void AnonymousObjectCreation()
+    {
+      var obj = new
+      {
+        Prop1 = 1,
+        Prop2 = ""str""
+      };
+      int prop1 = obj.Prop1;
+      string prop2 = obj.Prop2;
+    }
   }
 
   public class GenericClass_Interpret<T>
@@ -487,7 +498,7 @@ namespace " + Namespace + @"
     return dependencyFactory.Interpreter;
   }
 
-  internal SymbolType GetSourceType(GeneratorRuntime runtime, SourceType sourceType)
+  internal SymbolNamedType GetSourceType(GeneratorRuntime runtime, SourceType sourceType)
   {
     INamedTypeSymbol symbol = sourceType switch
     {
@@ -499,7 +510,7 @@ namespace " + Namespace + @"
       _                                           => throw Errors.Unreacheable
     };
 
-    return (SymbolNamedType)runtime.CreateTypeDelegator(symbol);
+    return runtime.CreateTypeDelegator(symbol);
   }
 
   internal IMethodSymbol GetInterpretedOperationMethod(GeneratorRuntime runtime, InterpretedOperationType operationType)
@@ -507,12 +518,12 @@ namespace " + Namespace + @"
     SymbolType type = GetType(runtime, operationType);
     SymbolMethodInfo? method = type.GetMethod(operationType.ToString());
     Assert.NotNull(method);
-    return method!.OriginalSymbol;
+    return method!.Symbol;
   }
 
   internal InterpreterFrame GetInstanceFrame(GeneratorRuntime runtime, Interpreter sut, InterpretedOperationType operationType, params Type[] genericArguments)
   {
-    SymbolType type = GetType(runtime, operationType);
+    SymbolNamedType type = GetType(runtime, operationType);
     InterpreterFrame typeFrame = genericArguments.Length > 0
       ? sut.GetTypeFrame(type.MakeGenericType(genericArguments))
       : sut.GetTypeFrame(type);
@@ -522,12 +533,12 @@ namespace " + Namespace + @"
     return instanceFrame;
   }
 
-  private SymbolType GetType(GeneratorRuntime runtime, InterpretedOperationType operationType)
+  private SymbolNamedType GetType(GeneratorRuntime runtime, InterpretedOperationType operationType)
   {
     return (int)operationType switch
     {
-      < 4096 => (SymbolType)runtime.CreateTypeDelegator(_nongenericClassInterpretSymbol),
-      < 8192 => (SymbolType)runtime.CreateTypeDelegator(_genericClassInterpretSymbol),
+      < 4096 => runtime.CreateTypeDelegator(_nongenericClassInterpretSymbol),
+      < 8192 => runtime.CreateTypeDelegator(_genericClassInterpretSymbol),
       _      => throw Errors.Unreacheable
     };
   }
@@ -571,6 +582,7 @@ namespace " + Namespace + @"
     FieldReference_Source,
     IsType,
     Array,
+    AnonymousObjectCreation,
 
     Invocation_NonGenericMethod_GenericType = 4096,
     Invocation_GenericMethod_GenericType1,

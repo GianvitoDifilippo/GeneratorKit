@@ -1,5 +1,6 @@
 ﻿#pragma warning disable RS1024 // Compare symbols correctly
 
+using GeneratorKit.Interpret.Context;
 using GeneratorKit.Interpret.Frame;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Operations;
@@ -10,7 +11,7 @@ namespace GeneratorKit.Interpret;
 
 internal partial class InterpreterVisitor
 {
-  private readonly IGeneratorContext _context;
+  private readonly IInterpreterContext _context;
   private readonly Stack<InterpreterFrame> _frames;
   private readonly Stack<object> _implicitReceivers;
   private readonly Stack<object> _conditionalAccessInstances;
@@ -18,7 +19,7 @@ internal partial class InterpreterVisitor
   private Optional<object?> _returnValue;
   private BranchKind _branchState;
 
-  public InterpreterVisitor(IGeneratorContext context, InterpreterFrame frame)
+  public InterpreterVisitor(IInterpreterContext context, InterpreterFrame frame)
   {
     _context = context;
     _frames = new Stack<InterpreterFrame>(1);

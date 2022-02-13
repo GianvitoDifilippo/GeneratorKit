@@ -1,5 +1,6 @@
 ﻿using GeneratorKit.Comparers;
 using GeneratorKit.Exceptions;
+using GeneratorKit.Interpret.Context;
 using GeneratorKit.Interpret.Frame;
 using GeneratorKit.Reflection;
 using Microsoft.CodeAnalysis;
@@ -13,15 +14,13 @@ namespace GeneratorKit.Interpret;
 
 internal class Interpreter : IInterpreter
 {
-  private readonly IReflectionRuntime _runtime;
   private readonly GeneratorContext _context;
   private readonly IOperationManager _operationManager;
   private readonly IFrameProvider _frameProvider;
   private readonly Dictionary<SymbolType, InterpreterFrame> _typeFrames;
 
-  public Interpreter(IReflectionRuntime runtime, GeneratorContext context, IOperationManager operationManager, IFrameProvider frameProvider)
+  public Interpreter(GeneratorContext context, IOperationManager operationManager, IFrameProvider frameProvider)
   {
-    _runtime = runtime;
     _context = context;
     _operationManager = operationManager;
     _frameProvider = frameProvider;
@@ -34,7 +33,7 @@ internal class Interpreter : IInterpreter
       throw new InvalidUserCodeException(); // TODO: Message
 
     InterpreterFrame constructorFrame = GetConstructorFrame(typeFrame, constructor, arguments);
-    InterpreterMethodContext context = new InterpreterMethodContext(_runtime, typeFrame.TypeContext, Type.EmptyTypes);
+    InterpreterMethodContext context = new InterpreterMethodContext(typeFrame.TypeContext, Type.EmptyTypes);
 
     return (object?[])new ConstructorInitializerVisitor(context, constructorFrame).Visit(operation, default)!;
   }
@@ -45,7 +44,7 @@ internal class Interpreter : IInterpreter
       throw new InvalidUserCodeException(); // TODO: Message
 
     InterpreterFrame methodFrame = GetMethodFrame(frame, method, arguments);
-    InterpreterMethodContext context = new InterpreterMethodContext(_runtime, frame.TypeContext, typeArguments);
+    InterpreterMethodContext context = new InterpreterMethodContext(frame.TypeContext, typeArguments);
 
     return new InterpreterVisitor(context, methodFrame).Visit(operation, default);
   }
@@ -56,12 +55,12 @@ internal class Interpreter : IInterpreter
       throw new InvalidUserCodeException(); // TODO: Message
 
     InterpreterFrame methodFrame = GetConstructorFrame(frame, constructor, arguments);
-    InterpreterMethodContext context = new InterpreterMethodContext(_runtime, frame.TypeContext, Type.EmptyTypes);
+    InterpreterMethodContext context = new InterpreterMethodContext(frame.TypeContext, Type.EmptyTypes);
 
     new InterpreterVisitor(context, methodFrame).Visit(operation, default);
   }
 
-  private void InitField(IFieldSymbol field, IGeneratorContext context, InterpreterFrame frame)
+  private void InitField(IFieldSymbol field, IInterpreterContext context, InterpreterFrame frame)
   {
     if (_operationManager.TryGetOperation(field, out IOperation? operation))
     {
@@ -74,7 +73,7 @@ internal class Interpreter : IInterpreter
     }
   }
 
-  private void InitProperty(IPropertySymbol property, IGeneratorContext context, InterpreterFrame frame)
+  private void InitProperty(IPropertySymbol property, IInterpreterContext context, InterpreterFrame frame)
   {
     if (_operationManager.TryGetOperation(property, out IOperation? operation))
     {
@@ -87,7 +86,7 @@ internal class Interpreter : IInterpreter
     }
   }
 
-  public InterpreterFrame GetTypeFrame(SymbolType type)
+  public InterpreterFrame GetTypeFrame(SymbolNamedType type)
   {
     Debug.Assert(type.IsSource, "Type must be source.");
     Debug.Assert(!type.ContainsGenericParameters, "Type must not contain generic parameters.");
@@ -96,17 +95,17 @@ internal class Interpreter : IInterpreter
       return typeFrame;
 
     InterpreterFrame? parentFrame = null;
-    SymbolType? baseType = type.BaseType;
+    SymbolNamedType? baseType = type.BaseType;
     if (baseType is not null && baseType.Symbol.IsSource())
     {
       parentFrame = GetTypeFrame(baseType);
     }
 
-    InterpreterTypeContext typeContext = new InterpreterTypeContext(_runtime, _context, type.GetGenericArguments());
+    InterpreterTypeContext typeContext = new InterpreterTypeContext(_context, type.GetGenericArguments());
     typeFrame = InterpreterFrame.NewTypeFrame(parentFrame, typeContext, _frameProvider.GetValues());
     _typeFrames.Add(type, typeFrame);
 
-    INamedTypeSymbol symbol = type.OriginalSymbol;
+    INamedTypeSymbol symbol = type.Symbol;
     IEnumerable<ISymbol> fields = symbol.GetMembers().Where(m => m.Kind is SymbolKind.Field && m.IsStatic);
     foreach (IFieldSymbol field in fields)
     {
@@ -126,7 +125,7 @@ internal class Interpreter : IInterpreter
       if (!_operationManager.TryGetOperation(constructor, out IOperation? operation))
         throw new InvalidUserCodeException(); // TODO: Message
 
-      InterpreterMethodContext methodContext = new InterpreterMethodContext(_runtime, typeContext, Type.EmptyTypes);
+      InterpreterMethodContext methodContext = new InterpreterMethodContext(typeContext, Type.EmptyTypes);
       InterpreterFrame methodFrame = InterpreterFrame.NewMethodFrame(typeFrame, _frameProvider.GetValues());
 
       new InterpreterVisitor(methodContext, methodFrame).Visit(operation, default);
@@ -135,7 +134,7 @@ internal class Interpreter : IInterpreter
     return typeFrame;
   }
 
-  public InterpreterFrame GetInstanceFrame(InterpreterFrame typeFrame, SymbolType type, object instance)
+  public InterpreterFrame GetInstanceFrame(InterpreterFrame typeFrame, SymbolNamedType type, object instance)
   {
     InterpreterFrame instanceFrame = InterpreterFrame.NewInstanceFrame(typeFrame, _frameProvider.GetValues(), instance);
 

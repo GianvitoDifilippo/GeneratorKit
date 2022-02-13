@@ -117,7 +117,7 @@ namespace " + Namespace + @"
 
 ";
 
-  private readonly FakeReflectionRuntime _runtime;
+  private readonly FakeReflectionContext _context;
   private readonly Type _baseType;
   private readonly Type _derivedType;
   private readonly INamedTypeSymbol _baseSymbol;
@@ -128,7 +128,7 @@ namespace " + Namespace + @"
     CompilationOutput output = CompilationOutput.Create(s_source, AssemblyName);
     Assert.True(output.IsValid, $"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
 
-    _runtime = new FakeReflectionRuntime(output.Compilation);
+    _context = new FakeReflectionContext(output.Compilation);
 
     _baseType = output.Assembly!.GetType(Namespace + ".BaseClass")!;
     _derivedType = output.Assembly!.GetType(Namespace + ".DerivedClass")!;
@@ -136,8 +136,8 @@ namespace " + Namespace + @"
     _baseSymbol = output.Compilation.GetTypeByMetadataName(Namespace + ".BaseClass")!;
     _derivedSymbol = output.Compilation.GetTypeByMetadataName(Namespace + ".DerivedClass")!;
 
-    _runtime.AddType(_baseSymbol, _baseType);
-    _runtime.AddType(_derivedSymbol, _derivedType);
+    _context.AddType(_baseSymbol, _baseType);
+    _context.AddType(_derivedSymbol, _derivedType);
   }
 
   public PropertyInfo GetReference(PropertyCategory category)
@@ -562,10 +562,9 @@ namespace " + Namespace + @"
       _ => throw new InvalidOperationException()
     };
 
-    DefaultGeneratorContext context = new DefaultGeneratorContext(_runtime);
     return NeedsReflectedType(category)
-      ? new SymbolPropertyInfo(_runtime, context, symbol, context.CreateTypeDelegator(_derivedSymbol))
-      : new SymbolPropertyInfo(_runtime, context, symbol, null);
+      ? new SymbolPropertyInfo(_context, symbol, _context.CreateTypeDelegator(_derivedSymbol))
+      : new SymbolPropertyInfo(_context, symbol, null);
 
     static IPropertySymbol GetPropertyFromType(INamedTypeSymbol symbol, string name)
     {

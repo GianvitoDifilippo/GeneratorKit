@@ -18,31 +18,31 @@ internal class Activator : IActivator
   private const BindingFlags s_allDeclared = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
   
   private readonly IInterpreter _interpreter;
-  private readonly Dictionary<INamedTypeSymbol, IReadOnlyDictionary<int, IMethodSymbol>> _methods;
+  private readonly Dictionary<ITypeSymbol, IReadOnlyDictionary<int, IMethodSymbol>> _methods;
 
   public Activator(IInterpreter interpreter)
   {
     _interpreter = interpreter;
-    _methods = new Dictionary<INamedTypeSymbol, IReadOnlyDictionary<int, IMethodSymbol>>(SymbolDefinitionEqualityComparer.Default);
+    _methods = new Dictionary<ITypeSymbol, IReadOnlyDictionary<int, IMethodSymbol>>(SymbolDefinitionEqualityComparer.Default);
   }
 
-  public object CreateInstance(SymbolType type, object?[] arguments)
+  public object CreateInstance(SymbolNamedType type, object?[] arguments)
   {
     InterpreterFrame typeFrame = _interpreter.GetTypeFrame(type);
     SymbolConstructorInfo constructor = FindConstructor(type, arguments);
 
-    return CreateInstance(constructor.OriginalSymbol, type, typeFrame, arguments);
+    return CreateInstance(constructor.Symbol, type, typeFrame, arguments);
   }
 
   public object CreateInstance(SymbolConstructorInfo constructor, object?[] arguments)
   {
-    SymbolType type = constructor.DeclaringType;
+    SymbolNamedType type = constructor.DeclaringType;
     InterpreterFrame typeFrame = _interpreter.GetTypeFrame(type);
 
-    return CreateInstance(constructor.OriginalSymbol, type, typeFrame, arguments);
+    return CreateInstance(constructor.Symbol, type, typeFrame, arguments);
   }
 
-  private object CreateInstance(IMethodSymbol constructor, SymbolType type, InterpreterFrame typeFrame, object?[] arguments)
+  private object CreateInstance(IMethodSymbol constructor, SymbolNamedType type, InterpreterFrame typeFrame, object?[] arguments)
   {
     Type proxyType = type.RuntimeType.UnderlyingSystemType;
     object?[] proxyArguments = constructor.IsImplicitlyDeclared
@@ -52,7 +52,7 @@ internal class Activator : IActivator
 
     IProxied instance = (IProxied)proxyConstructor.Invoke(proxyArguments);
     InterpreterFrame instanceFrame = _interpreter.GetInstanceFrame(typeFrame, type, instance);
-    IReadOnlyDictionary<int, IMethodSymbol> methods = GetMethods(type.OriginalSymbol);
+    IReadOnlyDictionary<int, IMethodSymbol> methods = GetMethods(type.Symbol);
     instance.Delegate = new OperationDelegate(_interpreter, type, instanceFrame, methods);
     if (!constructor.IsImplicitlyDeclared)
     {
@@ -62,7 +62,7 @@ internal class Activator : IActivator
     return instance;
   }
 
-  private IReadOnlyDictionary<int, IMethodSymbol> GetMethods(INamedTypeSymbol symbol)
+  private IReadOnlyDictionary<int, IMethodSymbol> GetMethods(ITypeSymbol symbol)
   {
     if (_methods.TryGetValue(symbol, out IReadOnlyDictionary<int, IMethodSymbol>? methods))
       return methods;

@@ -44,10 +44,9 @@ namespace " + Namespace + @"
     CompilationOutput output = CompilationOutput.Create(s_source, AssemblyName);
     Assert.True(output.IsValid, $"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
 
-    FakeReflectionRuntime runtime = new FakeReflectionRuntime(output.Compilation);
+    FakeReflectionContext context = new FakeReflectionContext(output.Compilation);
     Symbol = output.Compilation.Assembly;
     EntryPoint = output.Compilation.GetEntryPoint(CancellationToken.None)!;
-    DefaultGeneratorContext context = new DefaultGeneratorContext(runtime);
     _delegator = new SymbolModule(context, output.Compilation.SourceModule);
     _reference = output.Assembly!.ManifestModule;
 

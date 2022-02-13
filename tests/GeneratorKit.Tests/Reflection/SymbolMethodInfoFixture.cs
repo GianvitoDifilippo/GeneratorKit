@@ -90,7 +90,7 @@ namespace " + Namespace + @"
 
 ";
 
-  private readonly FakeReflectionRuntime _runtime;
+  private readonly FakeReflectionContext _context;
   private readonly Type _baseType;
   private readonly Type _derivedType;
   private readonly Type _genericType;
@@ -107,7 +107,7 @@ namespace " + Namespace + @"
     CompilationOutput output = CompilationOutput.Create(s_source, AssemblyName);
     Assert.True(output.IsValid, $"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
 
-    _runtime = new FakeReflectionRuntime(output.Compilation);
+    _context = new FakeReflectionContext(output.Compilation);
 
     _baseType = output.Assembly!.GetType(Namespace + ".BaseClass")!;
     _derivedType = output.Assembly!.GetType(Namespace + ".DerivedClass")!;
@@ -122,19 +122,18 @@ namespace " + Namespace + @"
     _intSymbol = output.Compilation.GetSpecialType(SpecialType.System_Int32);
     _stringSymbol = output.Compilation.GetSpecialType(SpecialType.System_String);
 
-    _runtime.AddType(_baseSymbol, _baseType);
-    _runtime.AddType(_derivedSymbol, _derivedType);
-    _runtime.AddType(_genericSymbol, _genericType);
-    _runtime.AddType(_genericSymbol.Construct(_stringSymbol), _genericType.MakeGenericType(typeof(string)));
-    _runtime.AddType(_intSymbol, typeof(int));
-    _runtime.AddType(_stringSymbol, typeof(string));
-    _runtime.AddType(_genericDerivedSymbol, _genericDerivedType);
-    _runtime.AddType(_genericDerivedSymbol.Construct(_stringSymbol), _genericDerivedType.MakeGenericType(typeof(string)));
+    _context.AddType(_baseSymbol, _baseType);
+    _context.AddType(_derivedSymbol, _derivedType);
+    _context.AddType(_genericSymbol, _genericType);
+    _context.AddType(_genericSymbol.Construct(_stringSymbol), _genericType.MakeGenericType(typeof(string)));
+    _context.AddType(_intSymbol, typeof(int));
+    _context.AddType(_stringSymbol, typeof(string));
+    _context.AddType(_genericDerivedSymbol, _genericDerivedType);
+    _context.AddType(_genericDerivedSymbol.Construct(_stringSymbol), _genericDerivedType.MakeGenericType(typeof(string)));
 
 
-    DefaultGeneratorContext context = new DefaultGeneratorContext(_runtime);
-    IntSymbolType = new SymbolNamedType(_runtime, context, _intSymbol);
-    StringSymbolType = new SymbolNamedType(_runtime, context, _stringSymbol);
+    IntSymbolType = new SymbolNamedType(_context, _intSymbol);
+    StringSymbolType = new SymbolNamedType(_context, _stringSymbol);
   }
 
   internal SymbolType IntSymbolType { get; }
@@ -434,10 +433,9 @@ namespace " + Namespace + @"
       _ => throw new InvalidOperationException()
     };
 
-    DefaultGeneratorContext context = new DefaultGeneratorContext(_runtime);
     SymbolMethodInfo result = NeedsReflectedType(category)
-      ? new SymbolMethodInfo(_runtime, context, symbol, new SymbolNamedType(_runtime, context, _derivedSymbol))
-      : new SymbolMethodInfo(_runtime, context, symbol, null);
+      ? new SymbolMethodInfo(_context, symbol, new SymbolNamedType(_context, _derivedSymbol))
+      : new SymbolMethodInfo(_context, symbol, null);
 
     return NeedsTwoGenericArguments(category)
       ? result.MakeGenericMethod(IntSymbolType, StringSymbolType)

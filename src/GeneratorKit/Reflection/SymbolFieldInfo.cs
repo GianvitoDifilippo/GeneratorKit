@@ -1,5 +1,6 @@
 ﻿using GeneratorKit.Comparers;
 using GeneratorKit.Reflection.Binders;
+using GeneratorKit.Reflection.Context;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -13,28 +14,26 @@ namespace GeneratorKit.Reflection;
 
 internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
 {
-  private readonly IReflectionRuntime _runtime;
-  private readonly IGeneratorContext _context;
+  private readonly IReflectionContext _context;
   private readonly SymbolType? _reflectedType;
   private FieldInfo? _underlyingSystemField;
 
-  public SymbolFieldInfo(IReflectionRuntime runtime, IGeneratorContext context, IFieldSymbol symbol, SymbolType? reflectedType)
+  public SymbolFieldInfo(IReflectionContext context, IFieldSymbol symbol, SymbolType? reflectedType)
   {
-    _runtime = runtime;
     _context = context;
-    OriginalSymbol = symbol;
+    Symbol = symbol;
     _reflectedType = reflectedType;
   }
 
-  public IFieldSymbol OriginalSymbol { get; }
+  public IFieldSymbol Symbol { get; }
 
-  public bool IsSource => OriginalSymbol.IsSource();
+  public bool IsSource => Symbol.IsSource();
 
   public FieldInfo UnderlyingSystemField
   {
     get
     {
-      Debug.Assert(!OriginalSymbol.IsSource(), "Field must not be source.");
+      Debug.Assert(!Symbol.IsSource(), "Field must not be source.");
       return _underlyingSystemField ??= DelegatorBinder.ResolveField(ReflectedType.UnderlyingSystemType, this);
     }
   }
@@ -48,7 +47,7 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
     {
       FieldAttributes result = default;
 
-      switch (OriginalSymbol.DeclaredAccessibility)
+      switch (Symbol.DeclaredAccessibility)
       {
         case Accessibility.Public:
           result |= FieldAttributes.Public;
@@ -70,15 +69,15 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
           break;
       }
 
-      if (OriginalSymbol.IsStatic)
+      if (Symbol.IsStatic)
         result |= FieldAttributes.Static;
-      if (OriginalSymbol.IsConst)
+      if (Symbol.IsConst)
         result |= FieldAttributes.Literal;
-      if (OriginalSymbol.IsReadOnly)
+      if (Symbol.IsReadOnly)
         result |= FieldAttributes.InitOnly;
-      if (OriginalSymbol.HasConstantValue)
+      if (Symbol.HasConstantValue)
         result |= FieldAttributes.HasDefault;
-      if (OriginalSymbol.GetAttributes().Any(x => x.AttributeClass!.ContainingNamespace.Name == "System" && x.AttributeClass!.Name == "NonSerializedAttribute"))
+      if (Symbol.GetAttributes().Any(x => x.AttributeClass!.ContainingNamespace.Name == "System" && x.AttributeClass!.Name == "NonSerializedAttribute"))
         result |= FieldAttributes.NotSerialized;
 
       return result;
@@ -87,7 +86,7 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
 
   public override RuntimeFieldHandle FieldHandle => UnderlyingSystemField.FieldHandle;
 
-  public override Type FieldType => _context.GetContextType(OriginalSymbol.Type);
+  public override Type FieldType => _context.GetContextType(Symbol.Type);
 
   public override bool IsSecurityCritical => true;
 
@@ -99,21 +98,21 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
 
   public override int MetadataToken => throw new NotSupportedException();
 
-  public override string Name => OriginalSymbol.Name;
+  public override string Name => Symbol.Name;
 
   public override IList<CustomAttributeData> GetCustomAttributesData()
   {
-    List<CustomAttributeData> result = OriginalSymbol
+    List<CustomAttributeData> result = Symbol
       .GetAttributes()
       .Select(data => CompilationCustomAttributeData.FromAttributeData(_context, data) as CustomAttributeData)
       .ToList();
 
-    if (OriginalSymbol.IsImplicitlyDeclared)
+    if (Symbol.IsImplicitlyDeclared)
     {
-      INamedTypeSymbol compilerGeneratedAttributeSymbol = _runtime.Compilation.GetTypeByMetadataName("System.Runtime.CompilerServices.CompilerGeneratedAttribute")!;
+      INamedTypeSymbol compilerGeneratedAttributeSymbol = _context.Compilation.GetTypeByMetadataName("System.Runtime.CompilerServices.CompilerGeneratedAttribute")!;
       result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(_context, compilerGeneratedAttributeSymbol));
 
-      INamedTypeSymbol debuggerBrowsableAttributeSymbol = _runtime.Compilation.GetTypeByMetadataName("System.Diagnostics.DebuggerBrowsableAttribute")!;
+      INamedTypeSymbol debuggerBrowsableAttributeSymbol = _context.Compilation.GetTypeByMetadataName("System.Diagnostics.DebuggerBrowsableAttribute")!;
       IMethodSymbol constructor = debuggerBrowsableAttributeSymbol.Constructors[0];
       CustomAttributeTypedArgument[] arguments = new[] { new CustomAttributeTypedArgument(DebuggerBrowsableState.Never) };
       result.Add(CompilationCustomAttributeData.FromSymbol(_context, constructor, arguments, Array.Empty<CustomAttributeNamedArgument>()));
@@ -144,7 +143,7 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
 
   public override object? GetValue(object? obj)
   {
-    return _runtime.GetField(this, obj);
+    return _context.GetField(this, obj);
   }
 
   public override bool IsDefined(Type attributeType, bool inherit)
@@ -154,15 +153,15 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
 
   public override void SetValue(object? obj, object? value, BindingFlags invokeAttr, Binder binder, CultureInfo culture)
   {
-    _runtime.SetField(this, obj, value);
+    _context.SetField(this, obj, value);
   }
 
 
   // SymbolFieldInfoBase overrides
 
-  protected override SymbolType DeclaringTypeCore => _context.CreateTypeDelegator(OriginalSymbol.ContainingType);
+  protected override SymbolNamedType DeclaringTypeCore => _context.CreateTypeDelegator(Symbol.ContainingType);
 
-  protected override SymbolModule ModuleCore => _context.CreateModuleDelegator(OriginalSymbol.ContainingModule);
+  protected override SymbolModule ModuleCore => _context.CreateModuleDelegator(Symbol.ContainingModule);
 
   protected override SymbolType ReflectedTypeCore => _reflectedType ?? DeclaringTypeCore;
 
@@ -191,7 +190,7 @@ internal sealed class SymbolFieldInfo : SymbolFieldInfoBase
   // New members
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  public new SymbolType DeclaringType => DeclaringTypeCore;
+  public new SymbolNamedType DeclaringType => DeclaringTypeCore;
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   public new SymbolModule Module => ModuleCore;
@@ -214,7 +213,7 @@ internal abstract class SymbolFieldInfoBase : FieldInfo
   // Abstract members
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  protected abstract SymbolType DeclaringTypeCore { get; }
+  protected abstract SymbolNamedType DeclaringTypeCore { get; }
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   protected abstract SymbolModule ModuleCore { get; }

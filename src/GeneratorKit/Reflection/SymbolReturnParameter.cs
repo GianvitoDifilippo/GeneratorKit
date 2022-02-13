@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using GeneratorKit.Reflection.Context;
+using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -11,7 +12,7 @@ internal class SymbolReturnParameter : SymbolParameterInfo
 {
   private readonly SymbolMethodInfo _method;
 
-  public SymbolReturnParameter(IGeneratorContext context, SymbolMethodInfo method)
+  public SymbolReturnParameter(IReflectionContext context, SymbolMethodInfo method)
     : base(context)
   {
     _method = method;
@@ -36,9 +37,8 @@ internal class SymbolReturnParameter : SymbolParameterInfo
   {
     get
     {
-      IMethodSymbol symbol = _method.OriginalSymbol;
-      Type type = Context.GetContextType(symbol.ReturnType);
-      return symbol.ReturnsByRef
+      Type type = _method.ReturnType;
+      return _method.Symbol.ReturnsByRef
         ? type.MakeByRefType()
         : type;
     }
@@ -48,7 +48,7 @@ internal class SymbolReturnParameter : SymbolParameterInfo
 
   public override IList<CustomAttributeData> GetCustomAttributesData()
   {
-    List<CustomAttributeData> result = _method.OriginalSymbol
+    List<CustomAttributeData> result = _method.Symbol
       .GetReturnTypeAttributes()
       .Select(data => CompilationCustomAttributeData.FromAttributeData(Context, data) as CustomAttributeData)
       .ToList();

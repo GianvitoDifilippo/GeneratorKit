@@ -1,19 +1,24 @@
 ﻿using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
+using System.Diagnostics;
 
 namespace GeneratorKit.Reflection.Context;
 
 internal class GenericTypeContext : GeneratorContext
 {
-  private readonly DefaultGeneratorContext _parent;
+  private readonly GeneratorContext _parent;
   private readonly Type[] _typeArguments;
 
-  public GenericTypeContext(IReflectionRuntime runtime, DefaultGeneratorContext parent, Type[] typeArguments)
-    : base(runtime)
+  public GenericTypeContext(GeneratorContext parent, Type[] typeArguments)
   {
     _parent = parent;
     _typeArguments = typeArguments;
+  }
+
+  public override object CreateInstance(Type type, object?[] arguments)
+  {
+    throw new NotSupportedException();
   }
 
   public override Type GetContextType(ITypeParameterSymbol symbol)
@@ -23,46 +28,35 @@ internal class GenericTypeContext : GeneratorContext
       : CreateTypeDelegator(symbol);
   }
 
-  public override SymbolType GetGenericTypeDefinition(SymbolNamedType type)
+  public override SymbolNamedType GetGenericTypeDefinition(SymbolNamedType type)
   {
-    return _parent.CreateTypeDelegator(type.OriginalSymbol.ConstructedFrom);
+    SymbolNamedType result = _parent.CreateTypeDelegator(type.Symbol.ConstructedFrom);
+    Debug.Assert(result.IsGenericTypeDefinition, "Failed to create a generic type definition for the current context.");
+    return result;
   }
 
-  public override SymbolType MakeGenericType(SymbolNamedType type, Type[] typeArguments)
+  public override SymbolNamedType MakeGenericType(SymbolNamedType type, Type[] typeArguments)
   {
-    GenericTypeContext context = new GenericTypeContext(Runtime, _parent, typeArguments);
-    return context.CreateTypeDelegator(type.OriginalSymbol.ConstructedFrom);
+    GenericTypeContext context = new GenericTypeContext(_parent, typeArguments);
+    return context.CreateTypeDelegator(type.Symbol);
   }
 
   public override SymbolMethodInfo GetGenericMethodDefinition(SymbolMethodInfo method)
   {
-    return CreateMethodInfoDelegator(method.OriginalSymbol.ConstructedFrom, null);
+    SymbolMethodInfo result = CreateMethodInfoDelegator(method.Symbol.ConstructedFrom, null);
+    Debug.Assert(result.IsGenericMethodDefinition, "Failed to create a generic method definition for the current context.");
+    return result;
   }
 
   public override SymbolMethodInfo MakeGenericMethod(SymbolMethodInfo method, Type[] typeArguments, SymbolType? reflectedType)
   {
-    GenericMethodContext context = new GenericMethodContext(Runtime, this, typeArguments);
-    return context.CreateMethodInfoDelegator(method.OriginalSymbol.ConstructedFrom, reflectedType);
-  }
-
-  public override SymbolType GetDeclaringType(SymbolMethodInfo method)
-  {
-    return CreateTypeDelegator(method.OriginalSymbol.ContainingType);
-  }
-
-  public override bool IsGenericMethodDefinition(IMethodSymbol symbol)
-  {
-    return _parent.IsGenericMethodDefinition(symbol);
-  }
-
-  public override bool ContainsGenericParameters(IMethodSymbol symbol)
-  {
-    return _parent.ContainsGenericParameters(symbol);
+    GenericMethodContext context = new GenericMethodContext(this, typeArguments);
+    return context.CreateMethodInfoDelegator(method.Symbol, reflectedType);
   }
 
   public override SymbolMethodInfo GetBaseDefinition(SymbolMethodInfo method, SymbolType? reflectedType)
   {
-    IMethodSymbol symbol = method.OriginalSymbol;
+    IMethodSymbol symbol = method.Symbol;
     if (symbol.IsOverride)
     {
       IMethodSymbol overriddenMethod = method.IsGenericMethod && !method.IsGenericMethodDefinition
@@ -70,7 +64,7 @@ internal class GenericTypeContext : GeneratorContext
         : symbol.OverriddenMethod!;
       INamedTypeSymbol containingType = overriddenMethod.ContainingType;
       GeneratorContext context = containingType.IsGenericType
-        ? new GenericTypeContext(Runtime, _parent, containingType.TypeArguments.Map(GetContextType))
+        ? new GenericTypeContext(_parent, containingType.TypeArguments.Map(GetContextType))
         : this;
 
       return context.CreateMethodInfoDelegator(overriddenMethod);
@@ -82,4 +76,55 @@ internal class GenericTypeContext : GeneratorContext
         : method;
     }
   }
+
+  #region Implemented through parent
+
+  public override Compilation Compilation => _parent.Compilation;
+
+  public override bool IsGenericMethodDefinition(IMethodSymbol symbol)
+  {
+    return _parent.IsGenericMethodDefinition(symbol);
+  }
+
+  public override bool ContainsGenericParameters(IMethodSymbol symbol)
+  {
+    return _parent.ContainsGenericParameters(symbol);
+  }
+
+  public override Type GetRuntimeType(SymbolType type)
+  {
+    return _parent.GetRuntimeType(type);
+  }
+
+  public override object InvokeConstructor(SymbolConstructorInfo constructor, object?[] arguments)
+  {
+    return _parent.InvokeConstructor(constructor, arguments);
+  }
+
+  public override object? InvokeMethod(SymbolMethodInfo method, object? instance, object?[] arguments)
+  {
+    return _parent.InvokeMethod(method, instance, arguments);
+  }
+
+  public override object? GetProperty(SymbolPropertyInfo property, object? instance, object?[] arguments)
+  {
+    return _parent.GetProperty(property, instance, arguments);
+  }
+
+  public override void SetProperty(SymbolPropertyInfo property, object? instance, object?[] arguments, object? value)
+  {
+    _parent.SetProperty(property, instance, arguments, value);
+  }
+
+  public override object? GetField(SymbolFieldInfo field, object? instance)
+  {
+    return _parent.GetField(field, instance);
+  }
+
+  public override void SetField(SymbolFieldInfo field, object? instance, object? value)
+  {
+    _parent.SetField(field, instance, value);
+  }
+
+  #endregion
 }

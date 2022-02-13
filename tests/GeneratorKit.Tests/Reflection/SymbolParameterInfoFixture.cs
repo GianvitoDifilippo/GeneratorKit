@@ -43,7 +43,7 @@ namespace " + Namespace + @"
 
 ";
 
-  private readonly FakeReflectionRuntime _runtime;
+  private readonly FakeReflectionContext _context;
   private readonly Type _type;
   private readonly Type _staticType;
   private readonly INamedTypeSymbol _symbol;
@@ -54,7 +54,7 @@ namespace " + Namespace + @"
     CompilationOutput output = CompilationOutput.Create(s_source, AssemblyName);
     Assert.True(output.IsValid, $"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
 
-    _runtime = new FakeReflectionRuntime(output.Compilation);
+    _context = new FakeReflectionContext(output.Compilation);
 
     _type = output.Assembly!.GetType(Namespace + ".Class")!;
     _staticType = output.Assembly!.GetType(Namespace + ".StaticClass")!;
@@ -62,7 +62,7 @@ namespace " + Namespace + @"
     _symbol = output.Compilation.GetTypeByMetadataName(Namespace + ".Class")!;
     _staticSymbol = output.Compilation.GetTypeByMetadataName(Namespace + ".StaticClass")!;
 
-    _runtime.AddType(_symbol, _type);
+    _context.AddType(_symbol, _type);
   }
 
   public ParameterInfo GetReference(ParameterCategory category)
@@ -128,20 +128,18 @@ namespace " + Namespace + @"
     {
       INamedTypeSymbol symbol = name == "WithThis" ? _staticSymbol : _symbol;
       IMethodSymbol methodSymbol = (IMethodSymbol)symbol.GetMembers(name).Single();
-      DefaultGeneratorContext context = new DefaultGeneratorContext(_runtime);
-      SymbolMethodInfo method = new SymbolMethodInfo(_runtime, context, methodSymbol, null);
+      SymbolMethodInfo method = new SymbolMethodInfo(_context, methodSymbol, null);
       return position == -1
-        ? new SymbolReturnParameter(context, method)
-        : new SymbolArgumentParameter(_runtime, context, method, methodSymbol.Parameters[position]);
+        ? new SymbolReturnParameter(_context, method)
+        : new SymbolArgumentParameter(_context, method, methodSymbol.Parameters[position]);
     }
 
     SymbolArgumentParameter GetParameterFromIndexer(int position = 0)
     {
       IPropertySymbol propertySymbol = (IPropertySymbol)_symbol.GetMembers("this[]").Single();
-      DefaultGeneratorContext context = new DefaultGeneratorContext(_runtime);
-      SymbolPropertyInfo property = new SymbolPropertyInfo(_runtime, context, propertySymbol, null);
+      SymbolPropertyInfo property = new SymbolPropertyInfo(_context, propertySymbol, null);
       IParameterSymbol parameterSymbol = propertySymbol.Parameters[position];
-      return new SymbolArgumentParameter(_runtime, context, property, parameterSymbol);
+      return new SymbolArgumentParameter(_context, property, parameterSymbol);
     }
   }
 }

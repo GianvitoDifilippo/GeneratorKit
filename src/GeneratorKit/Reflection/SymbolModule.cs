@@ -1,4 +1,5 @@
 ﻿using GeneratorKit.Comparers;
+using GeneratorKit.Reflection.Context;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
@@ -13,9 +14,9 @@ namespace GeneratorKit.Reflection;
 
 internal sealed class SymbolModule : SymbolModuleBase
 {
-  private readonly IGeneratorContext _context;
+  private readonly IReflectionContext _context;
 
-  public SymbolModule(IGeneratorContext context, IModuleSymbol symbol)
+  public SymbolModule(IReflectionContext context, IModuleSymbol symbol)
   {
     _context = context;
     Symbol = symbol;

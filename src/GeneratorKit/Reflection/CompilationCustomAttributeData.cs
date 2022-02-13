@@ -4,6 +4,7 @@ using System;
 using System.Reflection;
 using System.Linq;
 using GeneratorKit.Utils;
+using GeneratorKit.Reflection.Context;
 
 namespace GeneratorKit.Reflection;
 
@@ -23,7 +24,7 @@ internal class CompilationCustomAttributeData : CustomAttributeData
   public override IList<CustomAttributeNamedArgument> NamedArguments { get; }
 
   public static CompilationCustomAttributeData FromSymbol(
-    IGeneratorContext context,
+    IReflectionContext context,
     IMethodSymbol symbol,
     IList<CustomAttributeTypedArgument> constructorArguments,
     IList<CustomAttributeNamedArgument> namedArguments)
@@ -32,7 +33,7 @@ internal class CompilationCustomAttributeData : CustomAttributeData
     return new CompilationCustomAttributeData(constructor, constructorArguments, namedArguments);
   }
 
-  public static CompilationCustomAttributeData FromParameterlessAttribute(IGeneratorContext context, INamedTypeSymbol attribute)
+  public static CompilationCustomAttributeData FromParameterlessAttribute(IReflectionContext context, INamedTypeSymbol attribute)
   {
     if (attribute.InstanceConstructors.Length != 1)
       throw new ArgumentException("Symbol must contain a single parameterless constructor.", nameof(attribute));
@@ -40,7 +41,7 @@ internal class CompilationCustomAttributeData : CustomAttributeData
     return FromSymbol(context, attribute.InstanceConstructors[0], Array.Empty<CustomAttributeTypedArgument>(), Array.Empty<CustomAttributeNamedArgument>());
   }
 
-  public static CompilationCustomAttributeData FromAttributeData(IGeneratorContext context, AttributeData data)
+  public static CompilationCustomAttributeData FromAttributeData(IReflectionContext context, AttributeData data)
   {
     ConstructorInfo constructor = context.CreateConstructorInfoDelegator(data.AttributeConstructor!);
     IList<CustomAttributeTypedArgument> constructorArguments = data.ConstructorArguments
@@ -52,7 +53,7 @@ internal class CompilationCustomAttributeData : CustomAttributeData
 
     return new CompilationCustomAttributeData(constructor, constructorArguments, namedArguments);
 
-    static MemberInfo GetMember(IGeneratorContext context, INamedTypeSymbol attributeType, string memberName)
+    static MemberInfo GetMember(IReflectionContext context, INamedTypeSymbol attributeType, string memberName)
     {
       ISymbol member = attributeType.GetMembers(memberName)[0];
       return member.Kind switch
@@ -63,7 +64,7 @@ internal class CompilationCustomAttributeData : CustomAttributeData
       };
     }
 
-    static CustomAttributeTypedArgument CreateCustomAttributeTypedArgument(IGeneratorContext context, TypedConstant constant)
+    static CustomAttributeTypedArgument CreateCustomAttributeTypedArgument(IReflectionContext context, TypedConstant constant)
     {
       return new CustomAttributeTypedArgument(context.CreateTypeDelegator(constant.Type!), constant.Value);
     }

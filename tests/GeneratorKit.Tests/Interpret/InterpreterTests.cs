@@ -462,7 +462,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     int[] arr1 = new int[4] { 1, 2, 3, 4 };
     int[][] arr2 = new int[][] { new[] { 1, 2 }, new[] { 3, 4 }, new[] { 5, 6 } };
     int[,,] arr3 = new int[2, 3, 4] { { { 1, 2, 3, 4 }, { 5, 6, 7, 8 }, { 9, 10, 11, 12 } }, { { 13, 14, 15, 16 }, { 17, 18, 19, 20 }, { 21, 22, 23, 24 } } };
-    
+
     // Act
     _sut.InterpretMethod(method, instanceFrame, Type.EmptyTypes, arguments);
 
@@ -475,6 +475,23 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     frame["arr1"].Should().BeOfType<int[]>().Which.Should().Equal(arr1);
     frame["arr2"].Should().BeOfType<int[][]>().Which.As<object>().Should().Equal(arr2, new ArrayArrayEqualityComparer<int>());
     frame["arr3"].Should().BeOfType<int[,,]>().Which.Should().Equal(arr3, new Array3EqualityComparer<int>());
+  }
+
+  [Fact]
+  public void InterpretMethod_ShouldInterpret_AnonymousObjectCreation()
+  {
+    // Arrange
+    object?[] arguments = Array.Empty<object?>();
+    IMethodSymbol method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.AnonymousObjectCreation);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.AnonymousObjectCreation);
+
+    // Act
+    _sut.InterpretMethod(method, instanceFrame, Type.EmptyTypes, arguments);
+
+    // Assert
+    _frameProvider[2].Should().HaveCount(3);
+    _frameProvider[2].Should().Contain("prop1", 3);
+    _frameProvider[2].Should().Contain("prop2", "str");
   }
 
   [Theory]
@@ -629,7 +646,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
   {
     // Arrange
     const int value1 = 10;
-    SymbolType sourceType = _fixture.GetSourceType(_runtime, SourceType.NonGenericClassWithCtors);
+    SymbolNamedType sourceType = _fixture.GetSourceType(_runtime, SourceType.NonGenericClassWithCtors);
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[0];
     InterpreterFrame typeFrame = _sut.GetTypeFrame(sourceType);
     object?[] arguments = new object?[] { value1 };
@@ -637,7 +654,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     object?[] expected = new object?[] { value1 };
 
     // Act
-    object?[] result = _sut.GetProxyArguments(constructor.OriginalSymbol, typeFrame, arguments);
+    object?[] result = _sut.GetProxyArguments(constructor.Symbol, typeFrame, arguments);
 
     // Assert
     result.Should().Equal(expected);
@@ -648,7 +665,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
   {
     // Arrange
     const int value1 = 42;
-    SymbolType sourceType = _fixture.GetSourceType(_runtime, SourceType.NonGenericClassWithCtors);
+    SymbolNamedType sourceType = _fixture.GetSourceType(_runtime, SourceType.NonGenericClassWithCtors);
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[1];
     InterpreterFrame typeFrame = _sut.GetTypeFrame(sourceType);
     object?[] arguments = Array.Empty<object?>();
@@ -656,7 +673,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     object?[] expected = new object?[] { value1 };
 
     // Act
-    object?[] result = _sut.GetProxyArguments(constructor.OriginalSymbol, typeFrame, arguments);
+    object?[] result = _sut.GetProxyArguments(constructor.Symbol, typeFrame, arguments);
 
     // Assert
     result.Should().Equal(expected);
@@ -668,7 +685,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     // Arrange
     const int value1 = 10;
     const string value2 = "v2";
-    SymbolType sourceType = _fixture.GetSourceType(_runtime, SourceType.NonGenericClassWithCtors);
+    SymbolNamedType sourceType = _fixture.GetSourceType(_runtime, SourceType.NonGenericClassWithCtors);
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[2];
     InterpreterFrame typeFrame = _sut.GetTypeFrame(sourceType);
     object?[] arguments = new object?[] { value1, value2 };
@@ -676,7 +693,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     object?[] expected = new object?[] { value2 };
 
     // Act
-    object?[] result = _sut.GetProxyArguments(constructor.OriginalSymbol, typeFrame, arguments);
+    object?[] result = _sut.GetProxyArguments(constructor.Symbol, typeFrame, arguments);
 
     // Assert
     result.Should().Equal(expected);
@@ -688,7 +705,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     // Arrange
     const int value1 = 10;
     const string value2 = "v2";
-    SymbolType sourceType = _fixture.GetSourceType(_runtime, SourceType.GenericClassWithCtors);
+    SymbolNamedType sourceType = _fixture.GetSourceType(_runtime, SourceType.GenericClassWithCtors);
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[0];
     InterpreterFrame typeFrame = _sut.GetTypeFrame(sourceType.MakeGenericType(typeof(string)));
     object?[] arguments = new object?[] { value1, value2 };
@@ -696,7 +713,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     object?[] expected = new object?[] { value2 };
 
     // Act
-    object?[] result = _sut.GetProxyArguments(constructor.OriginalSymbol, typeFrame, arguments);
+    object?[] result = _sut.GetProxyArguments(constructor.Symbol, typeFrame, arguments);
 
     // Assert
     result.Should().Equal(expected);
@@ -707,7 +724,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
   {
     // Arrange
     const int value1 = 10;
-    SymbolType sourceType = _fixture.GetSourceType(_runtime, SourceType.Interface);
+    SymbolNamedType sourceType = _fixture.GetSourceType(_runtime, SourceType.Interface);
     SymbolConstructorInfo constructor = sourceType.GetConstructors()[0];
     InterpreterFrame typeFrame = _sut.GetTypeFrame(sourceType);
     object?[] arguments = new object?[] { value1 };
@@ -715,7 +732,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     object?[] expected = Array.Empty<object?>();
 
     // Act
-    object?[] result = _sut.GetProxyArguments(constructor.OriginalSymbol, typeFrame, arguments);
+    object?[] result = _sut.GetProxyArguments(constructor.Symbol, typeFrame, arguments);
 
     // Assert
     result.Should().Equal(expected);
@@ -725,7 +742,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
   public void GetTypeFrame_ShouldInitializeInstanceFieldsAndProperties()
   {
     // Arrange
-    SymbolType sourceType = _fixture.GetSourceType(_runtime, SourceType.NonGenericClass);
+    SymbolNamedType sourceType = _fixture.GetSourceType(_runtime, SourceType.NonGenericClass);
 
     // Act
     _sut.GetTypeFrame(sourceType);
@@ -740,7 +757,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
   public void GetInstanceFrame_ShouldInitializeInstanceFieldsAndProperties()
   {
     // Arrange
-    SymbolType sourceType = _fixture.GetSourceType(_runtime, SourceType.NonGenericClass);
+    SymbolNamedType sourceType = _fixture.GetSourceType(_runtime, SourceType.NonGenericClass);
     InterpreterFrame typeFrame = _sut.GetTypeFrame(sourceType);
 
     // Act

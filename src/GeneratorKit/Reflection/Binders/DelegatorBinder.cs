@@ -41,7 +41,7 @@ internal abstract partial class DelegatorBinder : Binder
 
   public static PropertyInfo ResolveProperty(Type type, SymbolPropertyInfo property)
   {
-    BindingFlags bindingAttr = GetBindingAttr(property.OriginalSymbol);
+    BindingFlags bindingAttr = GetBindingAttr(property.Symbol);
 
     PropertyInfo? result;
     if (property.IsIndexer)
@@ -61,7 +61,7 @@ internal abstract partial class DelegatorBinder : Binder
 
   public static MethodInfo ResolveMethod(Type type, SymbolMethodInfo method)
   {
-    BindingFlags bindingAttr = GetBindingAttr(method.OriginalSymbol);
+    BindingFlags bindingAttr = GetBindingAttr(method.Symbol);
     SymbolMethodInfo methodDefinition = method.IsGenericMethod ? method.GetGenericMethodDefinition() : method;
     Type[] parameterTypes = methodDefinition.ParameterTypes;
 
@@ -72,7 +72,7 @@ internal abstract partial class DelegatorBinder : Binder
 
   public static ConstructorInfo ResolveConstructor(Type type, SymbolConstructorInfo constructor)
   {
-    BindingFlags bindingAttr = GetBindingAttr(constructor.OriginalSymbol);
+    BindingFlags bindingAttr = GetBindingAttr(constructor.Symbol);
 
     ConstructorBinder binder = new ConstructorBinder(constructor.ParameterTypes);
     return type.GetConstructor(bindingAttr, binder, constructor.CallingConvention, constructor.ParameterTypes, null)
@@ -81,7 +81,7 @@ internal abstract partial class DelegatorBinder : Binder
 
   public static FieldInfo ResolveField(Type type, SymbolFieldInfo field)
   {
-    BindingFlags bindingAttr = GetBindingAttr(field.OriginalSymbol);
+    BindingFlags bindingAttr = GetBindingAttr(field.Symbol);
 
     return type.GetField(field.Name, bindingAttr)
       ?? throw new InvalidOperationException($"Cannot resolve field {field} in type {type}.");

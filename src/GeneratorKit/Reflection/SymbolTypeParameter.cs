@@ -1,4 +1,5 @@
 ﻿using GeneratorKit.Comparers;
+using GeneratorKit.Reflection.Context;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
@@ -10,15 +11,13 @@ namespace GeneratorKit.Reflection;
 
 internal sealed class SymbolTypeParameter : SymbolType
 {
-  public SymbolTypeParameter(IReflectionRuntime runtime, IGeneratorContext context, ITypeParameterSymbol symbol)
-    : base(runtime, context)
+  public SymbolTypeParameter(IReflectionContext context, ITypeParameterSymbol symbol)
+    : base(context)
   {
     Symbol = symbol;
   }
 
   public new ITypeParameterSymbol Symbol { get; }
-
-  public override INamedTypeSymbol OriginalSymbol => throw new InvalidOperationException();
 
   protected override ITypeSymbol SymbolCore => Symbol;
 
@@ -60,7 +59,7 @@ internal sealed class SymbolTypeParameter : SymbolType
 
   public override bool IsGenericParameter => true;
 
-  public override bool IsEnum => !Symbol.IsValueType && Symbol.ConstraintTypes.Contains(Runtime.Compilation.GetSpecialType(SpecialType.System_Enum));
+  public override bool IsEnum => !Symbol.IsValueType && Symbol.ConstraintTypes.Contains(Context.Compilation.GetSpecialType(SpecialType.System_Enum));
 
   public override bool IsSerializable => IsEnum;
 
@@ -97,7 +96,7 @@ internal sealed class SymbolTypeParameter : SymbolType
   {
     IEnumerable<ITypeSymbol> constraintTypes = Symbol.ConstraintTypes;
     if (Symbol.HasValueTypeConstraint)
-      constraintTypes = constraintTypes.Concat(new[] { Runtime.Compilation.GetSpecialType(SpecialType.System_ValueType) });
+      constraintTypes = constraintTypes.Concat(new[] { Context.Compilation.GetSpecialType(SpecialType.System_ValueType) });
 
     return constraintTypes.Select(Context.GetContextType).ToArray();
   }
@@ -153,7 +152,7 @@ internal sealed class SymbolTypeParameter : SymbolType
     throw new InvalidOperationException();
   }
 
-  protected override SymbolType GetGenericTypeDefinitionCore()
+  protected override SymbolNamedType GetGenericTypeDefinitionCore()
   {
     throw new InvalidOperationException("This operation is only valid on generic types.");
   }
@@ -190,7 +189,7 @@ internal sealed class SymbolTypeParameter : SymbolType
 
   protected override SymbolType MakeArrayTypeCore()
   {
-    return Context.CreateTypeDelegator(Runtime.Compilation.CreateArrayTypeSymbol(Symbol));
+    return Context.CreateTypeDelegator(Context.Compilation.CreateArrayTypeSymbol(Symbol));
   }
 
   protected override SymbolType MakeArrayTypeCore(int rank)
@@ -198,22 +197,22 @@ internal sealed class SymbolTypeParameter : SymbolType
     if (rank == 1)
       throw new NotSupportedException("MDArrays of rank 1 are currently not supported.");
 
-    return Context.CreateTypeDelegator(Runtime.Compilation.CreateArrayTypeSymbol(Symbol, rank));
+    return Context.CreateTypeDelegator(Context.Compilation.CreateArrayTypeSymbol(Symbol, rank));
   }
 
   protected override SymbolType MakeByRefTypeCore()
   {
-    return new SymbolByRefType(Runtime, Context, this);
+    return new SymbolByRefType(Context, this);
   }
 
-  protected override SymbolType MakeGenericTypeCore(Type[] typeArguments)
+  protected override SymbolNamedType MakeGenericTypeCore(Type[] typeArguments)
   {
     throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
   }
 
   private ITypeSymbol BaseTypeSymbol => Symbol.HasValueTypeConstraint
-    ? Runtime.Compilation.GetSpecialType(SpecialType.System_ValueType)
+    ? Context.Compilation.GetSpecialType(SpecialType.System_ValueType)
     : Symbol.ConstraintTypes.Length != 0
       ? Symbol.ConstraintTypes[0]
-      : Runtime.Compilation.GetSpecialType(SpecialType.System_Object);
+      : Context.Compilation.GetSpecialType(SpecialType.System_Object);
 }

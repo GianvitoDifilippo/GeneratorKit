@@ -1,5 +1,4 @@
 ﻿using GeneratorKit.Exceptions;
-using GeneratorKit.Reflection;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Operations;
@@ -26,6 +25,13 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
   }
 
 
+  public override object? VisitAnonymousObjectCreation(IAnonymousObjectCreationOperation operation, Optional<object?> argument)
+  {
+    object?[] initializers = operation.Initializers.Map(operation => operation.Accept(this, default));
+
+    throw new NotImplementedException();
+  }
+
   public override object? VisitArgument(IArgumentOperation operation, Optional<object?> argument)
   {
     if (operation.Parameter is null)
@@ -38,7 +44,7 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
   {
     int rank = operation.DimensionSizes.Length;
     int[] dimensionSizes = operation.DimensionSizes.Map(x => (int)x.Accept(this, default)!);
-    Type elementType = _context.CreateTypeDelegator(operation.Type!).GetElementType()!.UnderlyingSystemType;
+    Type elementType = _context.GetType(operation.Type!).GetElementType()!.UnderlyingSystemType;
     Array array = Array.CreateInstance(elementType, dimensionSizes);
     int[] indices = new int[rank];
 
@@ -105,7 +111,7 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
 
     if (operation.OperatorMethod is not null)
     {
-      SymbolMethodInfo method = _context.CreateMethodInfoDelegator(operation.OperatorMethod);
+      MethodInfo method = _context.GetMethodInfo(operation.OperatorMethod);
 
       result = method.Invoke(null, new object?[2] { leftOperand, rightOperand });
     }
@@ -204,7 +210,7 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
 
     if (operation.OperatorMethod is not null)
     {
-      SymbolMethodInfo method = _context.CreateMethodInfoDelegator(operation.OperatorMethod);
+      MethodInfo method = _context.GetMethodInfo(operation.OperatorMethod);
 
       result = method.Invoke(null, new object?[2] { target, value });
     }
@@ -241,6 +247,7 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
   {
     bool condition = (bool)operation.Condition.Accept(this, default)!;
     object? result = null;
+    
     if (condition)
     {
       BeginScope();
@@ -254,6 +261,7 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
       result = operation.WhenFalse.Accept(this, default);
       EndScope();
     }
+
     return result;
   }
 
@@ -270,15 +278,15 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
 
     CommonConversion conversion = operation.Conversion;
     if (conversion.IsIdentity)
-    {
       return operand;
-    }
+
     if (conversion.IsUserDefined)
     {
-      SymbolMethodInfo method = _context.CreateMethodInfoDelegator(operation.OperatorMethod!);
+      MethodInfo method = _context.GetMethodInfo(operation.OperatorMethod!);
 
       return method.Invoke(null, new object?[1] { operand });
     }
+
     if (conversion.IsImplicit && operation.Type!.ContainingNamespace.Name == "System")
     {
       switch (operation.Type.Name)
@@ -315,7 +323,7 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
     if (operand is null)
       return null;
 
-    SymbolType type = _context.CreateTypeDelegator(operation.Type!);
+    Type type = _context.GetType(operation.Type!);
     Type operandType = operand.GetType();
 
     if (!type.IsAssignableFrom(operandType))
@@ -342,7 +350,7 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
     if (operation.Type is null)
       return null;
 
-    Type type = _context.GetContextType(operation.Type);
+    Type type = _context.GetType(operation.Type);
     return type.IsValueType
       ? System.Activator.CreateInstance(type)
       : null;
@@ -366,7 +374,7 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
   public override object? VisitFieldReference(IFieldReferenceOperation operation, Optional<object?> argument)
   {
     object? instance = operation.Field.IsStatic ? null : operation.Instance!.Accept(this, default);
-    SymbolFieldInfo field = _context.CreateFieldInfoDelegator(operation.Field);
+    FieldInfo field = _context.GetFieldInfo(operation.Field);
 
     if (argument.HasValue)
     {
@@ -433,7 +441,7 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
 
     if (operation.OperatorMethod is not null)
     {
-      SymbolMethodInfo method = _context.CreateMethodInfoDelegator(operation.OperatorMethod);
+      MethodInfo method = _context.GetMethodInfo(operation.OperatorMethod);
 
       result = method.Invoke(null, new object?[1] { target });
     }
@@ -515,7 +523,7 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
     // TODO: Intercept GetType, ToString, GetHashCode, MethodBase.GetCurrentMethod()
     object? instance = operation.TargetMethod.IsStatic ? null : operation.Instance!.Accept(this, default);
     object?[] arguments = operation.Arguments.Map(arg => arg.Accept(this, default));
-    SymbolMethodInfo method = _context.CreateMethodInfoDelegator(operation.TargetMethod);
+    MethodInfo method = _context.GetMethodInfo(operation.TargetMethod);
 
     return method.Invoke(instance, arguments);
   }
@@ -523,7 +531,7 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
   public override object? VisitIsType(IIsTypeOperation operation, Optional<object?> argument)
   {
     object? valueOperand = operation.ValueOperand.Accept(this, default);
-    SymbolType typeOperand = _context.CreateTypeDelegator(operation.TypeOperand);
+    Type typeOperand = _context.GetType(operation.TypeOperand);
 
     return typeOperand.IsInstanceOfType(valueOperand);
   }
@@ -565,7 +573,7 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
   public override object? VisitMethodReference(IMethodReferenceOperation operation, Optional<object?> argument)
   {
     object? instance = operation.Method.IsStatic ? null : operation.Instance!.Accept(this, default);
-    SymbolMethodInfo method = _context.CreateMethodInfoDelegator(operation.Method);
+    MethodInfo method = _context.GetMethodInfo(operation.Method);
 
     throw new NotSupportedException();
   }
@@ -580,7 +588,7 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
   public override object? VisitObjectCreation(IObjectCreationOperation operation, Optional<object?> argument)
   {
     object?[] arguments = operation.Arguments.Map(arg => arg.Accept(this, default));
-    SymbolConstructorInfo constructor = _context.CreateConstructorInfoDelegator(operation.Constructor); // TODO: Why can it be null?
+    ConstructorInfo constructor = _context.GetConstructorInfo(operation.Constructor); // TODO: Why can it be null?
 
     object? result = constructor.Invoke(arguments);
 
@@ -621,7 +629,7 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
   {
     object? instance = operation.Property.IsStatic ? null : operation.Instance!.Accept(this, default);
     object?[] arguments = operation.Arguments.Map(arg => arg.Accept(this, default));
-    SymbolPropertyInfo property = _context.CreatePropertyInfoDelegator(operation.Property);
+    PropertyInfo property = _context.GetPropertyInfo(operation.Property);
 
     if (argument.HasValue)
     {
@@ -663,7 +671,7 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
 
   public override object? VisitTypeOf(ITypeOfOperation operation, Optional<object?> argument)
   {
-    return _context.GetContextType(operation.TypeOperand);
+    return _context.GetType(operation.TypeOperand);
   }
 
   public override object? VisitTuple(ITupleOperation operation, Optional<object?> argument)
@@ -691,7 +699,7 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
 
     if (operation.OperatorMethod is not null)
     {
-      MethodInfo method = _context.CreateMethodInfoDelegator(operation.OperatorMethod);
+      MethodInfo method = _context.GetMethodInfo(operation.OperatorMethod);
 
       result = method.Invoke(null, new object?[1] { operand });
     }

@@ -52,20 +52,17 @@ namespace " + Namespace + @"
 
     _activatorMock = new Mock<IActivator>(MockBehavior.Strict);
     _interpreterMock = new Mock<IInterpreter>(MockBehavior.Strict);
-
-    IActivator activator = _activatorMock.Object;
-    IInterpreter interpreter = _interpreterMock.Object;
   }
 
   internal SymbolType GetSpecialType(GeneratorRuntime runtime, SpecialType specialType)
   {
-    return new SymbolNamedType(runtime, new DefaultGeneratorContext(runtime), _compilation.GetSpecialType(specialType));
+    return new SymbolNamedType(runtime, _compilation.GetSpecialType(specialType));
   }
 
   public void MockActivator<T>()
   {
     _activatorMock
-      .Setup(x => x.CreateInstance(It.IsAny<SymbolType>(), Array.Empty<object?>()))
+      .Setup(x => x.CreateInstance(It.IsAny<SymbolNamedType>(), Array.Empty<object?>()))
       .Returns<SymbolType, object?[]>((t, args) => (T)System.Activator.CreateInstance(t.UnderlyingSystemType)!);
   }
 
@@ -88,7 +85,7 @@ namespace " + Namespace + @"
       _                                      => throw Errors.Unreacheable
     };
 
-    return new SymbolNamedType(runtime, new DefaultGeneratorContext(runtime), symbol);
+    return new SymbolNamedType(runtime, symbol);
 
     INamedTypeSymbol GetTypeSymbolFromCompilation(string name)
     {
@@ -122,9 +119,8 @@ namespace " + Namespace + @"
       _interpreter = interpreter;
     }
 
-    public void CreateDependencies(IReflectionRuntime runtime, out IGeneratorContext context, out IActivator activator, out IProxyManager proxyManager, out IInterpreter interpreter)
+    public void CreateDependencies(GeneratorContext context, out IActivator activator, out IProxyManager proxyManager, out IInterpreter interpreter)
     {
-      context = new DefaultGeneratorContext(runtime);
       activator = _activator;
       proxyManager = _proxyManager;
       interpreter = _interpreter;

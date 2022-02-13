@@ -1,4 +1,5 @@
 ﻿using GeneratorKit.Comparers;
+using GeneratorKit.Reflection.Context;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
@@ -17,10 +18,10 @@ namespace GeneratorKit.Reflection;
 
 internal sealed class SymbolAssembly : SymbolAssemblyBase
 {
-  private readonly IGeneratorContext _context;
+  private readonly IReflectionContext _context;
   private readonly IMethodSymbol? _entryPoint;
 
-  public SymbolAssembly(IGeneratorContext context, IAssemblySymbol symbol, IMethodSymbol? entryPoint)
+  public SymbolAssembly(IReflectionContext context, IAssemblySymbol symbol, IMethodSymbol? entryPoint)
   {
     _context = context;
     Symbol = symbol;

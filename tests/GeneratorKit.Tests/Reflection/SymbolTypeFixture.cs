@@ -293,7 +293,7 @@ namespace " + Namespace + @"
 
 ";
 
-  private readonly FakeReflectionRuntime _runtime;
+  private readonly FakeReflectionContext _context;
   private readonly Compilation _compilation;
   private readonly Assembly _assembly;
   private readonly IReadOnlyDictionary<TypeCategory, DataPair> _data;
@@ -303,7 +303,7 @@ namespace " + Namespace + @"
     CompilationOutput output = CompilationOutput.Create(s_source, AssemblyName);
     Assert.True(output.IsValid, $"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
 
-    _runtime = new FakeReflectionRuntime(output.Compilation);
+    _context = new FakeReflectionContext(output.Compilation);
     _compilation = output.Compilation;
     _assembly = output.Assembly!;
     _data = new Dictionary<TypeCategory, DataPair>(CreateData());
@@ -325,7 +325,7 @@ namespace " + Namespace + @"
     {
       SymbolType symbolType = GetSymbolType(category);
       Type type = GetType(category);
-      _runtime.AddType(symbolType, type);
+      _context.AddType(symbolType, type);
       return KeyValuePair.Create(category, new DataPair(symbolType, type));
     });
   }
@@ -543,9 +543,9 @@ namespace " + Namespace + @"
 
     return symbol switch
     {
-      INamedTypeSymbol     => new SymbolNamedType(_runtime, new DefaultGeneratorContext(_runtime), (INamedTypeSymbol)symbol),
-      IArrayTypeSymbol     => new SymbolArrayType(_runtime, new DefaultGeneratorContext(_runtime), (IArrayTypeSymbol)symbol),
-      ITypeParameterSymbol => new SymbolTypeParameter(_runtime, new DefaultGeneratorContext(_runtime), (ITypeParameterSymbol)symbol),
+      INamedTypeSymbol     => new SymbolNamedType(_context, (INamedTypeSymbol)symbol),
+      IArrayTypeSymbol     => new SymbolArrayType(_context, (IArrayTypeSymbol)symbol),
+      ITypeParameterSymbol => new SymbolTypeParameter(_context, (ITypeParameterSymbol)symbol),
       _                    => throw new InvalidOperationException()
     };
 

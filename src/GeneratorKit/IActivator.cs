@@ -4,6 +4,6 @@ namespace GeneratorKit;
 
 internal interface IActivator
 {
-  object CreateInstance(SymbolType type, object?[] arguments);
+  object CreateInstance(SymbolNamedType type, object?[] arguments);
   object CreateInstance(SymbolConstructorInfo constructor, object?[] arguments);
 }

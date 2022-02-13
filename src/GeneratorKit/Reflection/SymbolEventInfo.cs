@@ -1,4 +1,5 @@
 ﻿using GeneratorKit.Comparers;
+using GeneratorKit.Reflection.Context;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Diagnostics;
@@ -8,14 +9,12 @@ namespace GeneratorKit.Reflection;
 
 internal sealed class SymbolEventInfo : SymbolEventInfoBase
 {
-  private readonly IReflectionRuntime _runtime;
-  private readonly IGeneratorContext _context;
+  private readonly IReflectionContext _context;
   private readonly SymbolType? _reflectedType;
 
-  public SymbolEventInfo(IReflectionRuntime runtime, IGeneratorContext context, IEventSymbol symbol, SymbolType? reflectedType)
+  public SymbolEventInfo(IReflectionContext context, IEventSymbol symbol, SymbolType? reflectedType)
   {
     throw new NotSupportedException("Events are not supported");
-    _runtime = runtime;
     _context = context;
     OriginalSymbol = symbol;
     _reflectedType = reflectedType;
@@ -53,7 +52,7 @@ internal sealed class SymbolEventInfo : SymbolEventInfoBase
 
   // SymbolEventInfoBase overrides
 
-  protected override SymbolType DeclaringTypeCore => _context.CreateTypeDelegator(OriginalSymbol.ContainingType);
+  protected override SymbolNamedType DeclaringTypeCore => _context.CreateTypeDelegator(OriginalSymbol.ContainingType);
 
   protected override SymbolType EventHandlerTypeCore => throw new NotImplementedException();
 
@@ -110,7 +109,7 @@ internal abstract class SymbolEventInfoBase : EventInfo
   // Abstract members
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  protected abstract SymbolType DeclaringTypeCore { get; }
+  protected abstract SymbolNamedType DeclaringTypeCore { get; }
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   protected abstract SymbolType EventHandlerTypeCore { get; }

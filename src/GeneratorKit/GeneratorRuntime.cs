@@ -2,18 +2,19 @@
 using GeneratorKit.Interpret.Frame;
 using GeneratorKit.Proxy;
 using GeneratorKit.Reflection;
+using GeneratorKit.Reflection.Context;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Reflection;
 using System.Threading;
 
 namespace GeneratorKit;
 
-internal class GeneratorRuntime : IReflectionRuntime, IGeneratorRuntime
+internal class GeneratorRuntime : GeneratorContext, IGeneratorRuntime
 {
-  private readonly IGeneratorContext _context;
   private readonly IActivator _activator;
   private readonly IProxyManager _proxyManager;
   private readonly IInterpreter _interpreter;
@@ -23,62 +24,116 @@ internal class GeneratorRuntime : IReflectionRuntime, IGeneratorRuntime
   public GeneratorRuntime(Compilation compilation, IDependencyFactory dependencyFactory, CancellationToken cancellationToken)
   {
     Compilation = compilation;
+    dependencyFactory.CreateDependencies(this, out _activator, out _proxyManager, out _interpreter);
     _cancellationToken = cancellationToken;
-    dependencyFactory.CreateDependencies(this, out _context, out _activator, out _proxyManager, out _interpreter);
   }
 
-  public Compilation Compilation { get; }
+  public override Compilation Compilation { get; }
 
-  public Assembly CompilationAssembly => _compilationAssembly ??= new SymbolAssembly(_context, Compilation.Assembly, Compilation.GetEntryPoint(_cancellationToken));
-
-  public T CreateInstance<T>(Type type, object?[] arguments)
+  public override object CreateInstance(Type type, object?[] arguments)
   {
-    if (type.IsArray || type.IsPointer || type.IsByRef)
-      throw new NotSupportedException("Arrays, pointers and by ref types are not supported.");
-    if (type is not SymbolType symbolType)
+    if (type.IsArray || type.IsPointer || type.IsGenericParameter || type.IsByRef)
+      throw new NotSupportedException("Arrays, pointers, generic parameters and by ref types are not supported.");
+    if (type is not SymbolNamedType symbolType)
       throw new ArgumentException("The type must be provided by this runtime.", nameof(type));
-    if (!typeof(T).IsAssignableFrom(symbolType.UnderlyingSystemType))
-      throw new ArgumentException($"{type.FullName} is not assignable to {typeof(T).FullName}", nameof(type));
 
-    return (T)_activator.CreateInstance(symbolType, arguments);
+    return _activator.CreateInstance(symbolType, arguments);
   }
 
-  public Assembly CreateAssemblyDelegator(IAssemblySymbol symbol)
+  public override Type GetContextType(ITypeParameterSymbol symbol)
   {
-    return _context.CreateAssemblyDelegator(symbol);
+    return CreateTypeDelegator(symbol);
   }
 
-  public ConstructorInfo CreateConstructorInfoDelegator(IMethodSymbol symbol)
+  public override bool IsGenericTypeDefinition(INamedTypeSymbol symbol)
   {
-    return _context.CreateConstructorInfoDelegator(symbol);
+    if (!symbol.IsGenericType)
+      return false;
+
+    ImmutableArray<ITypeParameterSymbol> typeParameters = symbol.TypeParameters;
+    ImmutableArray<ITypeSymbol> typeArguments = symbol.TypeArguments;
+
+    for (int i = 0; i < typeParameters.Length; i++)
+    {
+      ITypeParameterSymbol typeParameter = typeParameters[i];
+      if (!typeParameter.Equals(typeArguments[i], SymbolEqualityComparer.Default))
+        return false;
+    }
+
+    return true;
   }
 
-  public FieldInfo CreateFieldInfoDelegator(IFieldSymbol symbol)
+  public override bool ContainsGenericParameters(INamedTypeSymbol symbol)
   {
-    return _context.CreateFieldInfoDelegator(symbol);
+    if (!symbol.IsGenericType)
+      return false;
+
+    foreach (ITypeSymbol typeArgument in symbol.TypeArguments)
+    {
+      switch (typeArgument.Kind)
+      {
+        case SymbolKind.TypeParameter:
+          return true;
+        case SymbolKind.NamedType:
+          if (ContainsGenericParameters((INamedTypeSymbol)typeArgument))
+            return true;
+          break;
+        case SymbolKind.ArrayType:
+          if (ContainsGenericParameters((IArrayTypeSymbol)typeArgument))
+            return true;
+          break;
+      }
+    }
+
+    return false;
   }
 
-  public MethodInfo CreateMethodInfoDelegator(IMethodSymbol symbol)
+  public override bool IsGenericMethodDefinition(IMethodSymbol symbol)
   {
-    return _context.CreateMethodInfoDelegator(symbol);
+    if (!symbol.IsGenericMethod)
+      return false;
+
+    ImmutableArray<ITypeParameterSymbol> typeParameters = symbol.TypeParameters;
+    ImmutableArray<ITypeSymbol> typeArguments = symbol.TypeArguments;
+
+    for (int i = 0; i < typeParameters.Length; i++)
+    {
+      ITypeParameterSymbol typeParameter = typeParameters[i];
+      if (!typeParameter.Equals(typeArguments[i], SymbolEqualityComparer.Default))
+        return false;
+    }
+
+    return true;
   }
 
-  public Module CreateModuleDelegator(IModuleSymbol symbol)
+  public override bool ContainsGenericParameters(IMethodSymbol symbol)
   {
-    return _context.CreateModuleDelegator(symbol);
+    if (symbol.ContainingType is not null && ContainsGenericParameters(symbol.ContainingType))
+      return true;
+    if (!symbol.IsGenericMethod)
+      return false;
+
+    foreach (ITypeSymbol typeArgument in symbol.TypeArguments)
+    {
+      switch (typeArgument.Kind)
+      {
+        case SymbolKind.TypeParameter:
+          return true;
+        case SymbolKind.NamedType:
+          if (ContainsGenericParameters((INamedTypeSymbol)typeArgument))
+            return true;
+          break;
+        case SymbolKind.ArrayType:
+          if (ContainsGenericParameters((IArrayTypeSymbol)typeArgument))
+            return true;
+          break;
+      }
+    }
+
+    return false;
   }
 
-  public PropertyInfo CreatePropertyInfoDelegator(IPropertySymbol symbol)
-  {
-    return _context.CreatePropertyInfoDelegator(symbol);
-  }
-
-  public Type CreateTypeDelegator(ITypeSymbol symbol)
-  {
-    return _context.CreateTypeDelegator(symbol);
-  }
-
-  public object InvokeConstructor(SymbolConstructorInfo constructor, object?[] arguments)
+  public override object InvokeConstructor(SymbolConstructorInfo constructor, object?[] arguments)
   {
     if (!constructor.IsSource)
       return constructor.UnderlyingSystemConstructor.Invoke(arguments);
@@ -86,7 +141,7 @@ internal class GeneratorRuntime : IReflectionRuntime, IGeneratorRuntime
     return _activator.CreateInstance(constructor, arguments);
   }
 
-  public object? InvokeMethod(SymbolMethodInfo method, object? instance, object?[] arguments)
+  public override object? InvokeMethod(SymbolMethodInfo method, object? instance, object?[] arguments)
   {
     if (!method.IsSource)
       return method.UnderlyingSystemMethod.Invoke(instance, arguments);
@@ -107,10 +162,10 @@ internal class GeneratorRuntime : IReflectionRuntime, IGeneratorRuntime
       frame = @delegate.InstanceFrame;
     }
 
-    return _interpreter.InterpretMethod(method.OriginalSymbol, frame, method.GetGenericArguments(), arguments);
+    return _interpreter.InterpretMethod(method.Symbol, frame, method.GetGenericArguments(), arguments);
   }
 
-  public object? GetProperty(SymbolPropertyInfo property, object? instance, object?[] arguments)
+  public override object? GetProperty(SymbolPropertyInfo property, object? instance, object?[] arguments)
   {
     if (!property.IsSource)
       return property.UnderlyingSystemProperty.GetValue(instance, arguments);
@@ -131,16 +186,16 @@ internal class GeneratorRuntime : IReflectionRuntime, IGeneratorRuntime
       frame = @delegate.InstanceFrame;
     }
 
-    if (frame.IsDefined(property.OriginalSymbol))
+    if (frame.IsDefined(property.Symbol))
     {
-      return frame.Get(property.OriginalSymbol);
+      return frame.Get(property.Symbol);
     }
 
-    IMethodSymbol getter = property.OriginalSymbol.GetMethod ?? throw new InvalidOperationException($"Property {property} does not have a getter.");
+    IMethodSymbol getter = property.Symbol.GetMethod ?? throw new InvalidOperationException($"Property {property} does not have a getter.");
     return _interpreter.InterpretMethod(getter, frame, Type.EmptyTypes, arguments);
   }
 
-  public void SetProperty(SymbolPropertyInfo property, object? instance, object?[] arguments, object? value)
+  public override void SetProperty(SymbolPropertyInfo property, object? instance, object?[] arguments, object? value)
   {
     if (!property.IsSource)
     {
@@ -164,9 +219,9 @@ internal class GeneratorRuntime : IReflectionRuntime, IGeneratorRuntime
       frame = @delegate.InstanceFrame;
     }
 
-    if (frame.IsDefined(property.OriginalSymbol))
+    if (frame.IsDefined(property.Symbol))
     {
-      frame.Assign(property.OriginalSymbol, value);
+      frame.Assign(property.Symbol, value);
       return;
     }
 
@@ -182,11 +237,11 @@ internal class GeneratorRuntime : IReflectionRuntime, IGeneratorRuntime
       setterArguments[arguments.Length] = value;
     }
 
-    IMethodSymbol setter = property.OriginalSymbol.SetMethod ?? throw new InvalidOperationException($"Property {property} does not have a setter.");
+    IMethodSymbol setter = property.Symbol.SetMethod ?? throw new InvalidOperationException($"Property {property} does not have a setter.");
     _interpreter.InterpretMethod(setter, frame, Type.EmptyTypes, setterArguments);
   }
 
-  public object? GetField(SymbolFieldInfo field, object? instance)
+  public override object? GetField(SymbolFieldInfo field, object? instance)
   {
     if (!field.IsSource)
       return field.UnderlyingSystemField.GetValue(instance);
@@ -207,10 +262,10 @@ internal class GeneratorRuntime : IReflectionRuntime, IGeneratorRuntime
       frame = @delegate.InstanceFrame;
     }
 
-    return frame.Get(field.OriginalSymbol);
+    return frame.Get(field.Symbol);
   }
 
-  public void SetField(SymbolFieldInfo field, object? instance, object? value)
+  public override void SetField(SymbolFieldInfo field, object? instance, object? value)
   {
     if (!field.IsSource)
     {
@@ -234,10 +289,10 @@ internal class GeneratorRuntime : IReflectionRuntime, IGeneratorRuntime
       frame = @delegate.InstanceFrame;
     }
 
-    frame.Assign(field.OriginalSymbol, value);
+    frame.Assign(field.Symbol, value);
   }
 
-  public Type GetRuntimeType(SymbolType type)
+  public override Type GetRuntimeType(SymbolType type)
   {
     if (type.HasElementType)
       return GetRuntimeTypeWithElement(type);
@@ -279,6 +334,7 @@ internal class GeneratorRuntime : IReflectionRuntime, IGeneratorRuntime
 
   private Type GetRuntimeConstructedType(SymbolType typeDefinition, Type[] typeArguments)
   {
+    bool def = typeDefinition.IsGenericTypeDefinition;
     Type runtimeGenericDefinition = typeDefinition.RuntimeType;
     if (runtimeGenericDefinition == typeof(ObjectProxy))
       return runtimeGenericDefinition;
@@ -294,5 +350,31 @@ internal class GeneratorRuntime : IReflectionRuntime, IGeneratorRuntime
   private static Type GetReferencedType(SymbolType type)
   {
     return Type.GetType(type.AssemblyQualifiedName, true, false);
+}
+
+
+
+  T IGeneratorRuntime.CreateInstance<T>(Type type, object?[] arguments)
+  {
+    if (!typeof(T).IsAssignableFrom(type))
+      throw new ArgumentException($"{type.FullName} is not assignable to {typeof(T).FullName}", nameof(type));
+
+    return (T)CreateInstance(type, arguments);
   }
+
+  Assembly IGeneratorRuntime.CompilationAssembly => _compilationAssembly ??= new SymbolAssembly(this, Compilation.Assembly, Compilation.GetEntryPoint(_cancellationToken));
+
+  Assembly IGeneratorRuntime.CreateAssemblyDelegator(IAssemblySymbol symbol) => CreateAssemblyDelegator(symbol);
+
+  ConstructorInfo IGeneratorRuntime.CreateConstructorInfoDelegator(IMethodSymbol symbol) => CreateConstructorInfoDelegator(symbol);
+
+  FieldInfo IGeneratorRuntime.CreateFieldInfoDelegator(IFieldSymbol symbol) => CreateFieldInfoDelegator(symbol);
+
+  MethodInfo IGeneratorRuntime.CreateMethodInfoDelegator(IMethodSymbol symbol) => CreateMethodInfoDelegator(symbol);
+
+  Module IGeneratorRuntime.CreateModuleDelegator(IModuleSymbol symbol) => CreateModuleDelegator(symbol);
+
+  PropertyInfo IGeneratorRuntime.CreatePropertyInfoDelegator(IPropertySymbol symbol) => CreatePropertyInfoDelegator(symbol);
+
+  Type IGeneratorRuntime.CreateTypeDelegator(ITypeSymbol symbol) => CreateTypeDelegator(symbol);
 }

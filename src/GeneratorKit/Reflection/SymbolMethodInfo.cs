@@ -1,5 +1,6 @@
 ﻿using GeneratorKit.Comparers;
 using GeneratorKit.Reflection.Binders;
+using GeneratorKit.Reflection.Context;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
@@ -15,30 +16,28 @@ namespace GeneratorKit.Reflection;
 
 internal class SymbolMethodInfo : SymbolMethodInfoBase
 {
-  private readonly IReflectionRuntime _runtime;
-  private readonly IGeneratorContext _context;
+  private readonly IReflectionContext _context;
   private readonly SymbolType? _reflectedType;
   private MethodInfo? _underlyingSystemMethod;
 
-  public SymbolMethodInfo(IReflectionRuntime runtime, IGeneratorContext context, IMethodSymbol symbol, SymbolType? reflectedType)
+  public SymbolMethodInfo(IReflectionContext context, IMethodSymbol symbol, SymbolType? reflectedType)
   {
-    _runtime = runtime;
     _context = context;
-    OriginalSymbol = symbol;
+    Symbol = symbol;
     _reflectedType = reflectedType;
   }
 
-  public IMethodSymbol OriginalSymbol { get; }
+  public IMethodSymbol Symbol { get; }
 
-  public bool IsSource => OriginalSymbol.IsSource();
+  public bool IsSource => Symbol.IsSource();
 
-  public Type[] ParameterTypes => OriginalSymbol.Parameters.Map(parameter => _context.GetContextType(parameter.Type));
+  public Type[] ParameterTypes => Symbol.Parameters.Map(parameter => _context.GetContextType(parameter.Type));
 
   public MethodInfo UnderlyingSystemMethod
   {
     get
     {
-      Debug.Assert(!OriginalSymbol.IsSource(), "Method must not be source.");
+      Debug.Assert(!Symbol.IsSource(), "Method must not be source.");
       return _underlyingSystemMethod ??= DelegatorBinder.ResolveMethod(ReflectedType.UnderlyingSystemType, this);
     }
   }
@@ -52,7 +51,7 @@ internal class SymbolMethodInfo : SymbolMethodInfoBase
     {
       MethodAttributes result = MethodAttributes.HideBySig;
 
-      switch (OriginalSymbol.DeclaredAccessibility)
+      switch (Symbol.DeclaredAccessibility)
       {
         case Accessibility.Public:
           result |= MethodAttributes.Public;
@@ -76,32 +75,32 @@ internal class SymbolMethodInfo : SymbolMethodInfoBase
 
       if (ImplementsAnyInterfaceMethod)
         result |= MethodAttributes.Final | MethodAttributes.Virtual | MethodAttributes.NewSlot;
-      if (OriginalSymbol.IsStatic)
+      if (Symbol.IsStatic)
         result |= MethodAttributes.Static;
-      if (OriginalSymbol.IsSealed)
+      if (Symbol.IsSealed)
         result |= MethodAttributes.Final | MethodAttributes.Virtual;
-      if (OriginalSymbol.IsOverride || OriginalSymbol.IsVirtual)
+      if (Symbol.IsOverride || Symbol.IsVirtual)
         result |= MethodAttributes.Virtual;
-      if (OriginalSymbol.IsAbstract)
+      if (Symbol.IsAbstract)
         result |= MethodAttributes.Abstract | MethodAttributes.Virtual;
-      if (OriginalSymbol.DeclaredAccessibility is Accessibility.ProtectedAndInternal && (OriginalSymbol.IsAbstract || OriginalSymbol.IsVirtual))
+      if (Symbol.DeclaredAccessibility is Accessibility.ProtectedAndInternal && (Symbol.IsAbstract || Symbol.IsVirtual))
         result |= MethodAttributes.CheckAccessOnOverride;
-      if ((OriginalSymbol.IsVirtual || OriginalSymbol.IsAbstract) && !OriginalSymbol.IsOverride)
+      if ((Symbol.IsVirtual || Symbol.IsAbstract) && !Symbol.IsOverride)
         result |= MethodAttributes.NewSlot;
 
       return result;
     }
   }
 
-  public override CallingConventions CallingConvention => OriginalSymbol.IsStatic
+  public override CallingConventions CallingConvention => Symbol.IsStatic
     ? CallingConventions.Standard
     : CallingConventions.Standard | CallingConventions.HasThis;
 
-  public override bool ContainsGenericParameters => _context.ContainsGenericParameters(OriginalSymbol);
+  public override bool ContainsGenericParameters => _context.ContainsGenericParameters(Symbol);
 
-  public override bool IsGenericMethod => OriginalSymbol.IsGenericMethod;
+  public override bool IsGenericMethod => Symbol.IsGenericMethod;
 
-  public override bool IsGenericMethodDefinition => _context.IsGenericMethodDefinition(OriginalSymbol);
+  public override bool IsGenericMethodDefinition => _context.IsGenericMethodDefinition(Symbol);
 
   public override bool IsSecurityCritical => true;
 
@@ -113,9 +112,9 @@ internal class SymbolMethodInfo : SymbolMethodInfoBase
 
   public override RuntimeMethodHandle MethodHandle => throw new NotSupportedException();
 
-  public override string Name => OriginalSymbol.Name;
+  public override string Name => Symbol.Name;
 
-  public override Type ReturnType => _context.GetContextType(OriginalSymbol.ReturnType);
+  public override Type ReturnType => _context.GetContextType(Symbol.ReturnType);
 
   public override ICustomAttributeProvider ReturnTypeCustomAttributes => throw new NotImplementedException();
 
@@ -146,7 +145,7 @@ internal class SymbolMethodInfo : SymbolMethodInfoBase
 
   public override IList<CustomAttributeData> GetCustomAttributesData()
   {
-    List<CustomAttributeData> result = OriginalSymbol
+    List<CustomAttributeData> result = Symbol
       .GetAttributes()
       .Select(data => CompilationCustomAttributeData.FromAttributeData(_context, data) as CustomAttributeData)
       .ToList();
@@ -156,17 +155,17 @@ internal class SymbolMethodInfo : SymbolMethodInfoBase
 
   public override Type[] GetGenericArguments()
   {
-    return OriginalSymbol.TypeArguments.Map(_context.GetContextType);
+    return Symbol.TypeArguments.Map(_context.GetContextType);
   }
 
   public override MethodImplAttributes GetMethodImplementationFlags()
   {
-    return OriginalSymbol.MethodImplementationFlags;
+    return Symbol.MethodImplementationFlags;
   }
 
   public override object? Invoke(object obj, BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
   {
-    return _runtime.InvokeMethod(this, obj, parameters);
+    return _context.InvokeMethod(this, obj, parameters);
   }
 
   public override bool IsDefined(Type attributeType, bool inherit)
@@ -185,9 +184,9 @@ internal class SymbolMethodInfo : SymbolMethodInfoBase
 
   // SymbolMethodInfoBase overrides
 
-  protected override SymbolType DeclaringTypeCore => _context.GetDeclaringType(this);
+  protected override SymbolNamedType DeclaringTypeCore => _context.GetDeclaringType(this);
 
-  protected override SymbolModule ModuleCore => _context.CreateModuleDelegator(OriginalSymbol.ContainingModule);
+  protected override SymbolModule ModuleCore => _context.CreateModuleDelegator(Symbol.ContainingModule);
 
   protected override SymbolType ReflectedTypeCore => _reflectedType ?? DeclaringTypeCore;
 
@@ -208,7 +207,7 @@ internal class SymbolMethodInfo : SymbolMethodInfoBase
 
   protected override SymbolArgumentParameter[] GetParametersCore()
   {
-    return OriginalSymbol.Parameters.Map(parameter => new SymbolArgumentParameter(_runtime, _context, this, parameter));
+    return Symbol.Parameters.Map(parameter => new SymbolArgumentParameter(_context, this, parameter));
   }
 
 
@@ -265,7 +264,7 @@ internal class SymbolMethodInfo : SymbolMethodInfoBase
   // New members
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  public new SymbolType DeclaringType => DeclaringTypeCore;
+  public new SymbolNamedType DeclaringType => DeclaringTypeCore;
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   public new SymbolModule Module => ModuleCore;
@@ -287,19 +286,19 @@ internal class SymbolMethodInfo : SymbolMethodInfoBase
 
   // Other members
 
-  public bool IsConstructedGenericMethod => OriginalSymbol.IsGenericMethod && OriginalSymbol.TypeArguments.Any(x => x.TypeKind is not TypeKind.TypeParameter);
+  public bool IsConstructedGenericMethod => Symbol.IsGenericMethod && Symbol.TypeArguments.Any(x => x.TypeKind is not TypeKind.TypeParameter);
 
   private bool ImplementsAnyInterfaceMethod
   {
     get
     {
-      if (OriginalSymbol.ExplicitInterfaceImplementations.Length != 0)
+      if (Symbol.ExplicitInterfaceImplementations.Length != 0)
         return true;
 
-      ITypeSymbol containingType = OriginalSymbol.ContainingType;
+      ITypeSymbol containingType = Symbol.ContainingType;
       foreach (INamedTypeSymbol @interface in containingType.AllInterfaces)
       {
-        if (@interface.GetMembers().Any(x => SymbolEqualityComparer.Default.Equals(containingType.FindImplementationForInterfaceMember(x), OriginalSymbol)))
+        if (@interface.GetMembers().Any(x => SymbolEqualityComparer.Default.Equals(containingType.FindImplementationForInterfaceMember(x), Symbol)))
         {
           return true;
         }
@@ -334,7 +333,7 @@ internal abstract class SymbolMethodInfoBase : MethodInfo
   // Abstract members
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  protected abstract SymbolType DeclaringTypeCore { get; }
+  protected abstract SymbolNamedType DeclaringTypeCore { get; }
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   protected abstract SymbolModule ModuleCore { get; }

@@ -1,5 +1,6 @@
 ﻿#pragma warning disable RS1024 // Compare symbols correctly
 
+using GeneratorKit.Interpret.Context;
 using GeneratorKit.Interpret.Frame;
 using GeneratorKit.Reflection;
 using GeneratorKit.Reflection.Context;
@@ -97,8 +98,7 @@ namespace " + Namespace + @"
 ";
 
   private readonly Compilation _compilation;
-  private readonly FakeReflectionRuntime _runtime;
-  private readonly DefaultGeneratorContext _context;
+  private readonly FakeReflectionContext _context;
 
   private readonly INamedTypeSymbol _nonGenericClassSourceSymbol;
   private readonly INamedTypeSymbol _nonGenericClassWithMembersSourceSymbol;
@@ -113,8 +113,7 @@ namespace " + Namespace + @"
     Assert.True(output.IsValid, $"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
 
     _compilation = output.Compilation;
-    _runtime = new FakeReflectionRuntime(_compilation);
-    _context = new DefaultGeneratorContext(_runtime);
+    _context = new FakeReflectionContext(_compilation);
 
     _nonGenericClassSourceSymbol = GetTypeSymbolFromCompilation("NonGenericClassSource");
     _nonGenericClassWithMembersSourceSymbol = GetTypeSymbolFromCompilation("NonGenericClassWithMembersSource");
@@ -124,14 +123,14 @@ namespace " + Namespace + @"
     _interfaceSourceSymbol = GetTypeSymbolFromCompilation("InterfaceSource");
 
     INamedTypeSymbol stringSymbol = _compilation.GetSpecialType(SpecialType.System_String);
-    _runtime.AddType(_nonGenericClassSourceSymbol, typeof(NonGenericClassProxy));
-    _runtime.AddType(_nonGenericClassWithMembersSourceSymbol, typeof(NonGenericClassWithMembersProxy));
-    _runtime.AddType(_genericClassSourceSymbol, typeof(GenericClassProxy<>));
-    _runtime.AddType(_genericClassSourceSymbol.Construct(stringSymbol), typeof(GenericClassProxy<string>));
-    _runtime.AddType(_genericClassWithMembersSourceSymbol, typeof(GenericClassWithMembersProxy<>));
-    _runtime.AddType(_genericClassWithMembersSourceSymbol.Construct(stringSymbol), typeof(GenericClassWithMembersProxy<string>));
-    _runtime.AddType(_nonGenericClassGenericBaseSourceSymbol, typeof(GenericClassWithMembersProxy<string>));
-    _runtime.AddType(_interfaceSourceSymbol, typeof(InterfaceProxy));
+    _context.AddType(_nonGenericClassSourceSymbol, typeof(NonGenericClassProxy));
+    _context.AddType(_nonGenericClassWithMembersSourceSymbol, typeof(NonGenericClassWithMembersProxy));
+    _context.AddType(_genericClassSourceSymbol, typeof(GenericClassProxy<>));
+    _context.AddType(_genericClassSourceSymbol.Construct(stringSymbol), typeof(GenericClassProxy<string>));
+    _context.AddType(_genericClassWithMembersSourceSymbol, typeof(GenericClassWithMembersProxy<>));
+    _context.AddType(_genericClassWithMembersSourceSymbol.Construct(stringSymbol), typeof(GenericClassWithMembersProxy<string>));
+    _context.AddType(_nonGenericClassGenericBaseSourceSymbol, typeof(GenericClassWithMembersProxy<string>));
+    _context.AddType(_interfaceSourceSymbol, typeof(InterfaceProxy));
 
     INamedTypeSymbol GetTypeSymbolFromCompilation(string name)
     {
@@ -141,7 +140,7 @@ namespace " + Namespace + @"
     }
   }
 
-  internal SymbolType GetSourceType(SourceType sourceType)
+  internal SymbolNamedType GetSourceType(SourceType sourceType)
   {
     INamedTypeSymbol symbol = sourceType switch
     {
@@ -154,12 +153,12 @@ namespace " + Namespace + @"
       _                                           => throw Errors.Unreacheable
     };
 
-    return new SymbolNamedType(_runtime, new DefaultGeneratorContext(_runtime), symbol);
+    return new SymbolNamedType(_context, symbol);
   }
 
   internal InterpreterFrame GetTypeFrame(params Type[] typeArguments)
   {
-    InterpreterTypeContext context = new InterpreterTypeContext(_runtime, _context, typeArguments);
+    InterpreterTypeContext context = new InterpreterTypeContext(_context, typeArguments);
     return InterpreterFrame.NewTypeFrame(null, context, new Dictionary<ISymbol, object?>(SymbolEqualityComparer.Default));
   }
 

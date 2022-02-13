@@ -8,7 +8,7 @@ using System.Reflection;
 
 namespace GeneratorKit;
 
-public abstract class RuntimeSourceGenerator : ISourceGenerator
+internal abstract class RuntimeSourceGenerator : ISourceGenerator
 {
   protected virtual IExceptionHandler? ExceptionHandler => null;
 

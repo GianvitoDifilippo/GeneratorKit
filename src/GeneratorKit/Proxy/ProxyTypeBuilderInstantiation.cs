@@ -19,7 +19,7 @@ internal class ProxyTypeBuilderInstantiation : Type
     _positions = positions;
   }
 
-  public override bool ContainsGenericParameters => _genericArguments.Any(t => t.IsGenericParameter); // TODO: Deep search
+  public override bool ContainsGenericParameters => _genericArguments.Any(t => t.ContainsGenericParameters);
 
   public override string? FullName => null;
 

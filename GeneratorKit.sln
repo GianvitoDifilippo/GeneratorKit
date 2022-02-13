@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GeneratorKit", "src\Generat
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{47AEE980-8E75-4BCC-B309-5EC0349D396E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GeneratorKit.Tests", "tests\GeneratorKit.Tests\GeneratorKit.Tests.csproj", "{E1F1C131-B0CA-47D2-B0FD-69D6A3B771AF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GeneratorKit.Tests", "tests\GeneratorKit.Tests\GeneratorKit.Tests.csproj", "{0D907A94-CCD2-47C1-A537-960C839075F6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,16 +19,16 @@ Global
 		{D19A9A50-2EB7-4AB8-A907-7E6728A9334F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D19A9A50-2EB7-4AB8-A907-7E6728A9334F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D19A9A50-2EB7-4AB8-A907-7E6728A9334F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E1F1C131-B0CA-47D2-B0FD-69D6A3B771AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E1F1C131-B0CA-47D2-B0FD-69D6A3B771AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E1F1C131-B0CA-47D2-B0FD-69D6A3B771AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E1F1C131-B0CA-47D2-B0FD-69D6A3B771AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D907A94-CCD2-47C1-A537-960C839075F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D907A94-CCD2-47C1-A537-960C839075F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D907A94-CCD2-47C1-A537-960C839075F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D907A94-CCD2-47C1-A537-960C839075F6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{E1F1C131-B0CA-47D2-B0FD-69D6A3B771AF} = {47AEE980-8E75-4BCC-B309-5EC0349D396E}
+		{0D907A94-CCD2-47C1-A537-960C839075F6} = {47AEE980-8E75-4BCC-B309-5EC0349D396E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {BB27E23A-0A59-4660-8B66-BA363AF4CA8D}

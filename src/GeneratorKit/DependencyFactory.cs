@@ -1,7 +1,6 @@
 ﻿using GeneratorKit.Interpret;
 using GeneratorKit.Interpret.Frame;
 using GeneratorKit.Proxy;
-using GeneratorKit.Reflection.Context;
 using Microsoft.CodeAnalysis;
 using System.Threading;
 
@@ -20,14 +19,12 @@ internal class DependencyFactory : IDependencyFactory
     _cancellationToken = cancellationToken;
   }
 
-  public void CreateDependencies(IReflectionRuntime runtime, out IGeneratorContext context, out IActivator activator, out IProxyManager proxyManager, out IInterpreter interpreter)
+  public void CreateDependencies(GeneratorContext context, out IActivator activator, out IProxyManager proxyManager, out IInterpreter interpreter)
   {
     FrameProvider frameProvider = new FrameProvider();
     OperationManager operationManager = new OperationManager(_compilation, _cancellationToken);
 
-    GeneratorContext generatorContext = new DefaultGeneratorContext(runtime);
-    context = generatorContext;
-    interpreter = new Interpreter(runtime, generatorContext, operationManager, frameProvider);
+    interpreter = new Interpreter(context, operationManager, frameProvider);
     activator = new Activator(interpreter);
     proxyManager = _proxyManager;
   }

@@ -1,5 +1,6 @@
 ﻿using GeneratorKit.Comparers;
 using GeneratorKit.Proxy;
+using GeneratorKit.Reflection.Context;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
@@ -19,19 +20,16 @@ internal abstract class SymbolType : SymbolTypeBase
 
   private Type? _runtimeType;
 
-  protected SymbolType(IReflectionRuntime runtime, IGeneratorContext context)
+  protected SymbolType(IReflectionContext context)
   {
-    Runtime = runtime;
     Context = context;
   }
 
   public ITypeSymbol Symbol => SymbolCore;
   public bool IsSource => Symbol.IsSource();
-  public Type RuntimeType => _runtimeType ??= Runtime.GetRuntimeType(this);
-  public abstract INamedTypeSymbol OriginalSymbol { get; }
+  public Type RuntimeType => _runtimeType ??= Context.GetRuntimeType(this);
 
-  protected IReflectionRuntime Runtime { get; }
-  protected IGeneratorContext Context { get; }
+  protected IReflectionContext Context { get; }
   protected abstract ITypeSymbol SymbolCore { get; }
 
 
@@ -441,7 +439,7 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public new SymbolFieldInfo[] GetFields(BindingFlags bindingAttr) => GetFieldsCore(bindingAttr);
 
-  public new SymbolType GetGenericTypeDefinition() => GetGenericTypeDefinitionCore();
+  public new SymbolNamedType GetGenericTypeDefinition() => GetGenericTypeDefinitionCore();
 
   public new SymbolType GetInterface(string name) => GetInterfaceCore(name, false);
 
@@ -469,7 +467,7 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public new SymbolType MakeByRefType() => MakeByRefTypeCore();
 
-  public new SymbolType MakeGenericType(params Type[] typeArguments) => MakeGenericTypeCore(typeArguments);
+  public new SymbolNamedType MakeGenericType(params Type[] typeArguments) => MakeGenericTypeCore(typeArguments);
 
   public new SymbolType MakePointerType() => MakePointerTypeCore();
 
@@ -489,23 +487,21 @@ internal abstract class SymbolType : SymbolTypeBase
 
   private IEnumerable<SymbolEventInfo> GetEventsEnumerable(BindingFlags bindingAttr)
   {
-    return Symbol.GetMembers(bindingAttr, true)
-      .Where(member => member.Kind is SymbolKind.Event)
-      .Select(member => new SymbolEventInfo(Runtime, Context, (IEventSymbol)member, this));
+    throw new NotSupportedException();
   }
 
   private IEnumerable<SymbolFieldInfo> GetFieldsEnumerable(BindingFlags bindingAttr)
   {
     return Symbol.GetMembers(bindingAttr, true)
       .Where(member => member.Kind is SymbolKind.Field)
-      .Select(member => new SymbolFieldInfo(Runtime, Context, (IFieldSymbol)member, this));
+      .Select(member => Context.CreateFieldInfoDelegator((IFieldSymbol)member, this));
   }
 
   private IEnumerable<SymbolMethodInfo> GetMethodsEnumerable(BindingFlags bindingAttr)
   {
     return Symbol.GetMembers(bindingAttr, true)
       .Where(member => member is IMethodSymbol methodSymbol && methodSymbol.MethodKind is not MethodKind.Constructor and not MethodKind.StaticConstructor)
-      .Select(member => new SymbolMethodInfo(Runtime, Context, (IMethodSymbol)member, this));
+      .Select(member => Context.CreateMethodInfoDelegator((IMethodSymbol)member, this));
   }
 
   private IEnumerable<SymbolType> GetNestedTypesEnumerable(BindingFlags bindingAttr)
@@ -519,7 +515,7 @@ internal abstract class SymbolType : SymbolTypeBase
   {
     return Symbol.GetMembers(bindingAttr, true)
       .Where(member => member.Kind is SymbolKind.Property)
-      .Select(member => new SymbolPropertyInfo(Runtime, Context, (IPropertySymbol)member, this));
+      .Select(member => Context.CreatePropertyInfoDelegator((IPropertySymbol)member, this));
   }
 
   private IEnumerable<MemberInfo> GetMembersEnumerable(BindingFlags bindingAttr)
@@ -528,12 +524,12 @@ internal abstract class SymbolType : SymbolTypeBase
       .Where(member => member.Kind is SymbolKind.Field or SymbolKind.Property or SymbolKind.Method or SymbolKind.NamedType) // TODO: Add events when supported
       .Select<ISymbol, MemberInfo>(x => x switch
       {
-        IFieldSymbol fieldSymbol         => new SymbolFieldInfo(Runtime, Context, fieldSymbol, this),
-        IPropertySymbol propertySymbol   => new SymbolPropertyInfo(Runtime, Context,  propertySymbol, this),
-        IEventSymbol eventSymbol         => new SymbolEventInfo(Runtime, Context,  eventSymbol, this),
+        IFieldSymbol fieldSymbol         => Context.CreateFieldInfoDelegator(fieldSymbol, this),
+        IPropertySymbol propertySymbol   => Context.CreatePropertyInfoDelegator(propertySymbol, this),
+        IEventSymbol eventSymbol         => throw new NotSupportedException(),
         IMethodSymbol methodSymbol       => methodSymbol.MethodKind is MethodKind.Constructor or MethodKind.StaticConstructor
                                             ? Context.CreateConstructorInfoDelegator(methodSymbol)
-                                            : new SymbolMethodInfo(Runtime, Context,  methodSymbol, this),
+                                            : Context.CreateMethodInfoDelegator(methodSymbol, this),
         INamedTypeSymbol namedTypeSymbol => Context.CreateTypeDelegator(namedTypeSymbol),
         _                                => throw Errors.Unreacheable
       });
@@ -632,7 +628,7 @@ internal abstract class SymbolTypeBase : Type
 
   protected abstract SymbolFieldInfo[] GetFieldsCore(BindingFlags bindingAttr);
 
-  protected abstract SymbolType GetGenericTypeDefinitionCore();
+  protected abstract SymbolNamedType GetGenericTypeDefinitionCore();
 
   protected abstract SymbolType GetInterfaceCore(string name, bool ignoreCase);
 
@@ -652,7 +648,7 @@ internal abstract class SymbolTypeBase : Type
 
   protected abstract SymbolType MakeByRefTypeCore();
 
-  protected abstract SymbolType MakeGenericTypeCore(Type[] typeArguments);
+  protected abstract SymbolNamedType MakeGenericTypeCore(Type[] typeArguments);
 
   protected abstract SymbolType MakePointerTypeCore();
 }

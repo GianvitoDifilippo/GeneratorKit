@@ -1,4 +1,5 @@
 ﻿using GeneratorKit.Reflection;
+using GeneratorKit.Reflection.Context;
 using Microsoft.CodeAnalysis;
 using System;
 
@@ -6,12 +7,12 @@ namespace GeneratorKit.Utils;
 
 internal class GetTypeVisitor : SymbolVisitor<SymbolType?>
 {
-  private readonly IGeneratorContext _context;
+  private readonly IReflectionContext _context;
   private readonly string[] _segments;
   private readonly StringComparison _comparison;
   private int _index;
 
-  public GetTypeVisitor(IGeneratorContext context, string name, bool ignoreCase)
+  public GetTypeVisitor(IReflectionContext context, string name, bool ignoreCase)
   {
     _context = context;
     _segments = name.Split('.');

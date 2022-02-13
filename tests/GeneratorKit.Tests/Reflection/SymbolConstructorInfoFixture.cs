@@ -38,7 +38,7 @@ namespace " + Namespace + @"
 
 ";
 
-  private readonly FakeReflectionRuntime _runtime;
+  private readonly FakeReflectionContext _runtime;
   private readonly Type _classType;
   private readonly Type _classWithDefaultCtorType;
   private readonly INamedTypeSymbol _classSymbol;
@@ -49,7 +49,7 @@ namespace " + Namespace + @"
     CompilationOutput output = CompilationOutput.Create(s_source, AssemblyName);
     Assert.True(output.IsValid, $"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
 
-    _runtime = new FakeReflectionRuntime(output.Compilation);
+    _runtime = new FakeReflectionContext(output.Compilation);
 
     _classType = output.Assembly!.GetType(Namespace + ".Class")!;
     _classWithDefaultCtorType = output.Assembly!.GetType(Namespace + ".ClassWithDefaultCtor")!;
@@ -132,7 +132,7 @@ namespace " + Namespace + @"
       _ => throw new InvalidOperationException()
     };
 
-    return new SymbolConstructorInfo(_runtime, new DefaultGeneratorContext(_runtime), symbol);
+    return new SymbolConstructorInfo(_runtime, symbol);
 
     static IMethodSymbol GetConstructorFromType(INamedTypeSymbol symbol, int parameterCount)
     {

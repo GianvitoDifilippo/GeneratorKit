@@ -1,4 +1,5 @@
 ﻿using GeneratorKit.Comparers;
+using GeneratorKit.Reflection.Context;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
@@ -12,15 +13,13 @@ internal sealed class SymbolArrayType : SymbolType
 {
   private SymbolType? _elementType;
 
-  public SymbolArrayType(IReflectionRuntime runtime, IGeneratorContext context, IArrayTypeSymbol symbol)
-    : base(runtime, context)
+  public SymbolArrayType(IReflectionContext context, IArrayTypeSymbol symbol)
+    : base(context)
   {
     Symbol = symbol;
   }
 
   public new IArrayTypeSymbol Symbol { get; }
-
-  public override INamedTypeSymbol OriginalSymbol => throw new InvalidOperationException();
 
   protected override ITypeSymbol SymbolCore => Symbol;
 
@@ -60,7 +59,7 @@ internal sealed class SymbolArrayType : SymbolType
 
   public override IList<CustomAttributeData> GetCustomAttributesData()
   {
-    INamedTypeSymbol serializableAttributeSymbol = Runtime.Compilation.GetTypeByMetadataName("System.SerializableAttribute")!;
+    INamedTypeSymbol serializableAttributeSymbol = Context.Compilation.GetTypeByMetadataName("System.SerializableAttribute")!;
     List<CustomAttributeData> result = new List<CustomAttributeData>
     {
       CompilationCustomAttributeData.FromParameterlessAttribute(Context, serializableAttributeSymbol)
@@ -124,7 +123,7 @@ internal sealed class SymbolArrayType : SymbolType
 
   protected override SymbolAssembly AssemblyCore => ElementType.Assembly;
 
-  protected override SymbolType? BaseTypeCore => Context.CreateTypeDelegator(Runtime.Compilation.GetSpecialType(SpecialType.System_Array));
+  protected override SymbolType? BaseTypeCore => BaseType;
 
   protected override SymbolModule ModuleCore => ElementType.Module;
 
@@ -138,7 +137,7 @@ internal sealed class SymbolArrayType : SymbolType
     throw new InvalidOperationException();
   }
 
-  protected override SymbolType GetGenericTypeDefinitionCore()
+  protected override SymbolNamedType GetGenericTypeDefinitionCore()
   {
     throw new InvalidOperationException("This operation is only valid on generic types.");
   }
@@ -160,7 +159,7 @@ internal sealed class SymbolArrayType : SymbolType
 
   protected override SymbolType MakeArrayTypeCore()
   {
-    return Context.CreateTypeDelegator(Runtime.Compilation.CreateArrayTypeSymbol(Symbol));
+    return Context.CreateTypeDelegator(Context.Compilation.CreateArrayTypeSymbol(Symbol));
   }
 
   protected override SymbolType MakeArrayTypeCore(int rank)
@@ -168,18 +167,26 @@ internal sealed class SymbolArrayType : SymbolType
     if (rank == 1)
       throw new NotSupportedException("MDArrays of rank 1 are currently not supported.");
 
-    return Context.CreateTypeDelegator(Runtime.Compilation.CreateArrayTypeSymbol(Symbol, rank));
+    return Context.CreateTypeDelegator(Context.Compilation.CreateArrayTypeSymbol(Symbol, rank));
   }
 
   protected override SymbolType MakeByRefTypeCore()
   {
-    return new SymbolByRefType(Runtime, Context, this);
+    return new SymbolByRefType(Context, this);
   }
 
-  protected override SymbolType MakeGenericTypeCore(Type[] typeArguments)
+  protected override SymbolNamedType MakeGenericTypeCore(Type[] typeArguments)
   {
     throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
   }
+
+
+  // New members
+
+  public new SymbolNamedType BaseType => Context.CreateTypeDelegator(Context.Compilation.GetSpecialType(SpecialType.System_Array));
+
+
+  // Other members
 
   private string WithArraySuffix(string name)
   {

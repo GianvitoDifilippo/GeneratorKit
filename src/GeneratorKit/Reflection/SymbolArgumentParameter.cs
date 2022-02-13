@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using GeneratorKit.Reflection.Context;
+using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -9,13 +10,11 @@ namespace GeneratorKit.Reflection;
 
 internal sealed class SymbolArgumentParameter : SymbolParameterInfo
 {
-  private readonly IReflectionRuntime _runtime;
   private readonly MemberInfo _member;
 
-  public SymbolArgumentParameter(IReflectionRuntime runtime, IGeneratorContext context, MemberInfo member, IParameterSymbol symbol)
+  public SymbolArgumentParameter(IReflectionContext context, MemberInfo member, IParameterSymbol symbol)
     : base(context)
   {
-    _runtime = runtime;
     _member = member;
     Symbol = symbol;
   }
@@ -56,28 +55,28 @@ internal sealed class SymbolArgumentParameter : SymbolParameterInfo
 
     if (Symbol.IsParams)
     {
-      INamedTypeSymbol paramArrayAttributeSymbol = _runtime.Compilation.GetTypeByMetadataName("System.ParamArrayAttribute")!;
+      INamedTypeSymbol paramArrayAttributeSymbol = Context.Compilation.GetTypeByMetadataName("System.ParamArrayAttribute")!;
       result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(Context, paramArrayAttributeSymbol));
     }
 
     if (Symbol.IsOptional)
     {
-      INamedTypeSymbol optionalAttributeSymbol = _runtime.Compilation.GetTypeByMetadataName("System.Runtime.InteropServices.OptionalAttribute")!;
+      INamedTypeSymbol optionalAttributeSymbol = Context.Compilation.GetTypeByMetadataName("System.Runtime.InteropServices.OptionalAttribute")!;
       result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(Context, optionalAttributeSymbol));
     }
 
     if (Symbol.RefKind is RefKind.In)
     {
-      INamedTypeSymbol inAttributeSymbol = _runtime.Compilation.GetTypeByMetadataName("System.Runtime.InteropServices.InAttribute")!;
+      INamedTypeSymbol inAttributeSymbol = Context.Compilation.GetTypeByMetadataName("System.Runtime.InteropServices.InAttribute")!;
       result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(Context, inAttributeSymbol));
 
-      INamedTypeSymbol isReadOnlyAttributeSymbol = _runtime.Compilation.GetTypeByMetadataName("System.Runtime.CompilerServices.IsReadOnlyAttribute")!;
+      INamedTypeSymbol isReadOnlyAttributeSymbol = Context.Compilation.GetTypeByMetadataName("System.Runtime.CompilerServices.IsReadOnlyAttribute")!;
       result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(Context, isReadOnlyAttributeSymbol));
     }
 
     if (Symbol.RefKind is RefKind.Out)
     {
-      INamedTypeSymbol outAttributeSymbol = _runtime.Compilation.GetTypeByMetadataName("System.Runtime.InteropServices.OutAttribute")!;
+      INamedTypeSymbol outAttributeSymbol = Context.Compilation.GetTypeByMetadataName("System.Runtime.InteropServices.OutAttribute")!;
       result.Add(CompilationCustomAttributeData.FromParameterlessAttribute(Context, outAttributeSymbol));
     }
 

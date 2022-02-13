@@ -1,4 +1,5 @@
-﻿using GeneratorKit.Interpret.Frame;
+﻿using GeneratorKit.Interpret.Context;
+using GeneratorKit.Interpret.Frame;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Operations;
@@ -8,7 +9,7 @@ namespace GeneratorKit.Interpret;
 
 internal class ConstructorInitializerVisitor : InterpreterVisitor
 {
-  public ConstructorInitializerVisitor(IGeneratorContext context, InterpreterFrame constructorFrame)
+  public ConstructorInitializerVisitor(IInterpreterContext context, InterpreterFrame constructorFrame)
     : base(context, constructorFrame)
   {
   }

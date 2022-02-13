@@ -1,4 +1,5 @@
 ﻿using GeneratorKit.Comparers;
+using GeneratorKit.Reflection.Context;
 using System;
 using System.Reflection;
 
@@ -6,12 +7,12 @@ namespace GeneratorKit.Reflection;
 
 internal abstract class SymbolParameterInfo : SymbolParameterInfoBase
 {
-  public SymbolParameterInfo(IGeneratorContext runtime)
+  public SymbolParameterInfo(IReflectionContext runtime)
   {
     Context = runtime;
   }
 
-  protected IGeneratorContext Context { get; }
+  protected IReflectionContext Context { get; }
 
 
   // System.Object overrides

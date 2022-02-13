@@ -1,4 +1,5 @@
 ﻿using GeneratorKit.Comparers;
+using GeneratorKit.Reflection.Context;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Reflection;
@@ -9,13 +10,11 @@ internal class SymbolByRefType : SymbolType
 {
   private readonly SymbolType _elementType;
 
-  public SymbolByRefType(IReflectionRuntime runtime, IGeneratorContext context, SymbolType elementType)
-    : base(runtime, context)
+  public SymbolByRefType(IReflectionContext context, SymbolType elementType)
+    : base(context)
   {
     _elementType = elementType;
   }
-
-  public override INamedTypeSymbol OriginalSymbol => throw new InvalidOperationException();
 
   protected override ITypeSymbol SymbolCore => _elementType.Symbol;
 
@@ -98,7 +97,7 @@ internal class SymbolByRefType : SymbolType
     throw new InvalidOperationException();
   }
 
-  protected override SymbolType GetGenericTypeDefinitionCore()
+  protected override SymbolNamedType GetGenericTypeDefinitionCore()
   {
     throw new InvalidOperationException("This operation is only valid on generic types.");
   }
@@ -133,7 +132,7 @@ internal class SymbolByRefType : SymbolType
     throw new TypeLoadException();
   }
 
-  protected override SymbolType MakeGenericTypeCore(Type[] typeArguments)
+  protected override SymbolNamedType MakeGenericTypeCore(Type[] typeArguments)
   {
     throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
   }

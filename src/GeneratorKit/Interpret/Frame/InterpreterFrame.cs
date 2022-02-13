@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using GeneratorKit.Interpret.Context;
+using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 
@@ -13,7 +14,7 @@ internal abstract class InterpreterFrame
     _values = values;
   }
 
-  public abstract GeneratorContext TypeContext { get; }
+  public abstract InterpreterContext TypeContext { get; }
 
   public abstract object? Instance { get; }
 
@@ -95,7 +96,7 @@ internal abstract class InterpreterFrame
     return TryAssignToParent(symbol, value);
   }
 
-  public static InterpreterFrame NewTypeFrame(InterpreterFrame? parent, GeneratorContext typeContext, IDictionary<ISymbol, object?> values)
+  public static InterpreterFrame NewTypeFrame(InterpreterFrame? parent, InterpreterContext typeContext, IDictionary<ISymbol, object?> values)
   {
     return new TypeFrame(parent, typeContext, values);
   }
@@ -119,14 +120,14 @@ internal abstract class InterpreterFrame
   {
     private readonly InterpreterFrame? _parent;
 
-    public TypeFrame(InterpreterFrame? parent, GeneratorContext typeContext, IDictionary<ISymbol, object?> values)
+    public TypeFrame(InterpreterFrame? parent, InterpreterContext typeContext, IDictionary<ISymbol, object?> values)
       : base(values)
     {
       _parent = parent;
       TypeContext = typeContext;
     }
 
-    public override GeneratorContext TypeContext { get; }
+    public override InterpreterContext TypeContext { get; }
 
     public override object? Instance => null;
 
@@ -161,7 +162,7 @@ internal abstract class InterpreterFrame
       Instance = instance;
     }
 
-    public override GeneratorContext TypeContext => _parent.TypeContext;
+    public override InterpreterContext TypeContext => _parent.TypeContext;
 
     public override object? Instance { get; }
 
@@ -192,7 +193,7 @@ internal abstract class InterpreterFrame
       Instance = parent.Instance;
     }
 
-    public override GeneratorContext TypeContext => throw new NotSupportedException();
+    public override InterpreterContext TypeContext => throw new NotSupportedException();
 
     public override object? Instance { get; }
 
@@ -223,7 +224,7 @@ internal abstract class InterpreterFrame
       Instance = parent.Instance;
     }
 
-    public override GeneratorContext TypeContext => throw new NotSupportedException();
+    public override InterpreterContext TypeContext => throw new NotSupportedException();
 
     public override object? Instance { get; }
 

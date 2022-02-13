@@ -1,4 +1,5 @@
 ﻿using GeneratorKit.Comparers;
+using GeneratorKit.Reflection.Context;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
@@ -12,15 +13,13 @@ namespace GeneratorKit.Reflection;
 
 internal sealed class SymbolNamedType : SymbolType
 {
-  public SymbolNamedType(IReflectionRuntime runtime, IGeneratorContext context, INamedTypeSymbol symbol)
-    : base(runtime, context)
+  public SymbolNamedType(IReflectionContext context, INamedTypeSymbol symbol)
+    : base(context)
   {
     Symbol = symbol;
   }
 
   public new INamedTypeSymbol Symbol { get; }
-
-  public override INamedTypeSymbol OriginalSymbol => Symbol;
 
   protected override ITypeSymbol SymbolCore => Symbol;
 
@@ -125,7 +124,7 @@ internal sealed class SymbolNamedType : SymbolType
 
     if (Symbol.MemberNames.Any(x => x is "this[]"))
     {
-      INamedTypeSymbol defaultMemberAttributeSymbol = Runtime.Compilation.GetTypeByMetadataName("System.Reflection.DefaultMemberAttribute")!;
+      INamedTypeSymbol defaultMemberAttributeSymbol = Context.Compilation.GetTypeByMetadataName("System.Reflection.DefaultMemberAttribute")!;
       IMethodSymbol constructor = defaultMemberAttributeSymbol.InstanceConstructors[0];
       CustomAttributeTypedArgument[] arguments = new[] { new CustomAttributeTypedArgument(typeof(string), "Item") };
       result.Add(CompilationCustomAttributeData.FromSymbol(Context, constructor, arguments, Array.Empty<CustomAttributeNamedArgument>()));
@@ -335,9 +334,7 @@ internal sealed class SymbolNamedType : SymbolType
 
   protected override SymbolAssembly AssemblyCore => Context.CreateAssemblyDelegator(Symbol.ContainingAssembly);
 
-  protected override SymbolType? BaseTypeCore => Symbol.BaseType is { } baseType
-    ? Context.CreateTypeDelegator(baseType)
-    : null;
+  protected override SymbolType? BaseTypeCore => BaseType;
 
   protected override SymbolModule ModuleCore => Context.CreateModuleDelegator(Symbol.ContainingModule);
 
@@ -354,7 +351,7 @@ internal sealed class SymbolNamedType : SymbolType
     return Context.CreateTypeDelegator(Symbol.EnumUnderlyingType!);
   }
 
-  protected override SymbolType GetGenericTypeDefinitionCore()
+  protected override SymbolNamedType GetGenericTypeDefinitionCore()
   {
     if (!IsGenericType)
       throw new InvalidOperationException("This operation is only valid on generic types.");
@@ -389,7 +386,7 @@ internal sealed class SymbolNamedType : SymbolType
 
   protected override SymbolType MakeArrayTypeCore()
   {
-    return Context.CreateTypeDelegator(Runtime.Compilation.CreateArrayTypeSymbol(Symbol));
+    return Context.CreateTypeDelegator(Context.Compilation.CreateArrayTypeSymbol(Symbol));
   }
 
   protected override SymbolType MakeArrayTypeCore(int rank)
@@ -397,21 +394,31 @@ internal sealed class SymbolNamedType : SymbolType
     if (rank == 1)
       throw new NotSupportedException("MDArrays of rank 1 are currently not supported.");
 
-    return Context.CreateTypeDelegator(Runtime.Compilation.CreateArrayTypeSymbol(Symbol, rank));
+    return Context.CreateTypeDelegator(Context.Compilation.CreateArrayTypeSymbol(Symbol, rank));
   }
 
   protected override SymbolType MakeByRefTypeCore()
   {
-    return new SymbolByRefType(Runtime, Context, this);
+    return new SymbolByRefType(Context, this);
   }
 
-  protected override SymbolType MakeGenericTypeCore(Type[] typeArguments)
+  protected override SymbolNamedType MakeGenericTypeCore(Type[] typeArguments)
   {
     if (!IsGenericTypeDefinition)
       throw new InvalidOperationException("Method may only be called on a Type for which Type.IsGenericTypeDefinition is true.");
 
     return Context.MakeGenericType(this, typeArguments);
   }
+
+
+  // New members
+
+  public new SymbolNamedType? BaseType => Symbol.BaseType is { } baseType
+    ? Context.CreateTypeDelegator(baseType)
+    : null;
+
+
+  // Other members
 
   private static bool IsIntegerType(Type t)
   {

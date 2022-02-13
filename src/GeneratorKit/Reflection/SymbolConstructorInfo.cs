@@ -1,5 +1,6 @@
 ﻿using GeneratorKit.Comparers;
 using GeneratorKit.Reflection.Binders;
+using GeneratorKit.Reflection.Context;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
@@ -15,28 +16,26 @@ namespace GeneratorKit.Reflection;
 
 internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
 {
-  private readonly IReflectionRuntime _runtime;
-  private readonly IGeneratorContext _context;
+  private readonly IReflectionContext _context;
   private ConstructorInfo? _underlyingSystemConstructor;
 
-  public SymbolConstructorInfo(IReflectionRuntime runtime, IGeneratorContext context, IMethodSymbol symbol)
+  public SymbolConstructorInfo(IReflectionContext context, IMethodSymbol symbol)
   {
-    _runtime = runtime;
     _context = context;
-    OriginalSymbol = symbol;
+    Symbol = symbol;
   }
 
-  public IMethodSymbol OriginalSymbol { get; }
+  public IMethodSymbol Symbol { get; }
 
-  public bool IsSource => OriginalSymbol.IsSource();
+  public bool IsSource => Symbol.IsSource();
 
-  public Type[] ParameterTypes => OriginalSymbol.Parameters.Map(parameter => _context.GetContextType(parameter.Type));
+  public Type[] ParameterTypes => Symbol.Parameters.Map(parameter => _context.GetContextType(parameter.Type));
 
   public ConstructorInfo UnderlyingSystemConstructor
   {
     get
     {
-      Debug.Assert(!OriginalSymbol.IsSource(), "Constructor must not be source.");
+      Debug.Assert(!Symbol.IsSource(), "Constructor must not be source.");
       return _underlyingSystemConstructor ??= DelegatorBinder.ResolveConstructor(DeclaringType.UnderlyingSystemType, this);
     }
   }
@@ -49,7 +48,7 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
     get
     {
       MethodAttributes result = MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName;
-      switch (OriginalSymbol.DeclaredAccessibility)
+      switch (Symbol.DeclaredAccessibility)
       {
         case Accessibility.Private:
           result |= MethodAttributes.Private;
@@ -70,14 +69,14 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
           result |= MethodAttributes.Public;
           break;
       }
-      if (OriginalSymbol.IsStatic)
+      if (Symbol.IsStatic)
         result |= MethodAttributes.Static;
 
       return result;
     }
   }
 
-  public override CallingConventions CallingConvention => OriginalSymbol.IsStatic
+  public override CallingConventions CallingConvention => Symbol.IsStatic
     ? CallingConventions.Standard
     : CallingConventions.Standard | CallingConventions.HasThis;
 
@@ -103,7 +102,7 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
 
   public override IList<CustomAttributeData> GetCustomAttributesData()
   {
-    List<CustomAttributeData> result = OriginalSymbol
+    List<CustomAttributeData> result = Symbol
       .GetAttributes()
       .Select(data => CompilationCustomAttributeData.FromAttributeData(_context, data) as CustomAttributeData)
       .ToList();
@@ -118,17 +117,17 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
 
   public override MethodImplAttributes GetMethodImplementationFlags()
   {
-    return OriginalSymbol.MethodImplementationFlags;
+    return Symbol.MethodImplementationFlags;
   }
 
   public override object Invoke(BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
   {
-    return _runtime.InvokeConstructor(this, parameters);
+    return _context.InvokeConstructor(this, parameters);
   }
 
   public override object Invoke(object obj, BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
   {
-    return _runtime.InvokeConstructor(this, parameters);
+    return _context.InvokeConstructor(this, parameters);
   }
 
   public override bool IsDefined(Type attributeType, bool inherit)
@@ -139,15 +138,15 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
 
   // SymbolConstructorInfoBase overrides
 
-  protected override SymbolType DeclaringTypeCore => _context.CreateTypeDelegator(OriginalSymbol.ContainingType);
+  protected override SymbolNamedType DeclaringTypeCore => _context.CreateTypeDelegator(Symbol.ContainingType);
 
-  protected override SymbolModule ModuleCore => _context.CreateModuleDelegator(OriginalSymbol.ContainingModule);
+  protected override SymbolModule ModuleCore => _context.CreateModuleDelegator(Symbol.ContainingModule);
 
   protected override SymbolType ReflectedTypeCore => DeclaringTypeCore;
 
   protected override SymbolArgumentParameter[] GetParametersCore()
   {
-    return OriginalSymbol.Parameters.Map(parameter => new SymbolArgumentParameter(_runtime, _context, this, parameter));
+    return Symbol.Parameters.Map(parameter => new SymbolArgumentParameter(_context, this, parameter));
   }
 
 
@@ -168,7 +167,7 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
 
   public override string ToString()
   {
-    if (OriginalSymbol.IsStatic)
+    if (Symbol.IsStatic)
     {
       return "Void .cctor()";
     }
@@ -192,7 +191,7 @@ internal sealed class SymbolConstructorInfo : SymbolConstructorInfoBase
   // New members
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  public new SymbolType DeclaringType => DeclaringTypeCore;
+  public new SymbolNamedType DeclaringType => DeclaringTypeCore;
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   public new SymbolModule Module => ModuleCore;
@@ -219,7 +218,7 @@ internal abstract class SymbolConstructorInfoBase : ConstructorInfo
   // Abstract members
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-  protected abstract SymbolType DeclaringTypeCore { get; }
+  protected abstract SymbolNamedType DeclaringTypeCore { get; }
 
   [DebuggerBrowsable(DebuggerBrowsableState.Never)]
   protected abstract SymbolModule ModuleCore { get; }

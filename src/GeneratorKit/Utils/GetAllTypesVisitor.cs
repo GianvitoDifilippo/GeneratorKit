@@ -1,4 +1,5 @@
 ﻿using GeneratorKit.Reflection;
+using GeneratorKit.Reflection.Context;
 using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
 
@@ -6,10 +7,10 @@ namespace GeneratorKit.Utils;
 
 internal class GetAllTypesVisitor : SymbolVisitor
 {
-  private readonly IGeneratorContext _context;
+  private readonly IReflectionContext _context;
   private readonly ICollection<SymbolType> _types;
 
-  public GetAllTypesVisitor(IGeneratorContext context, ICollection<SymbolType> types)
+  public GetAllTypesVisitor(IReflectionContext context, ICollection<SymbolType> types)
   {
     _context = context;
     _types = types;

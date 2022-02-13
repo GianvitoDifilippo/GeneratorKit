@@ -1,41 +1,138 @@
 ﻿using GeneratorKit.Reflection;
+using GeneratorKit.Reflection.Context;
+using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Immutable;
+using System.Diagnostics;
 
 namespace GeneratorKit;
 
-internal abstract class GeneratorContext : IGeneratorContext
+internal abstract class GeneratorContext : IReflectionContext
 {
-  public GeneratorContext(IReflectionRuntime runtime)
+  public abstract Compilation Compilation { get; }
+
+  public abstract object CreateInstance(Type type, object?[] arguments);
+
+  public abstract Type GetRuntimeType(SymbolType type);
+  public abstract object InvokeConstructor(SymbolConstructorInfo constructor, object?[] arguments);
+  public abstract object? InvokeMethod(SymbolMethodInfo method, object? instance, object?[] arguments);
+  public abstract object? GetProperty(SymbolPropertyInfo property, object? instance, object?[] arguments);
+  public abstract void SetProperty(SymbolPropertyInfo property, object? instance, object?[] arguments, object? value);
+  public abstract object? GetField(SymbolFieldInfo field, object? instance);
+  public abstract void SetField(SymbolFieldInfo field, object? instance, object? value);
+
+  public virtual SymbolAssembly CreateAssemblyDelegator(IAssemblySymbol symbol)
   {
-    Runtime = runtime;
+    return new SymbolAssembly(this, symbol, null);
   }
 
-  protected IReflectionRuntime Runtime { get; }
-
-  public virtual Type GetContextType(ITypeSymbol symbol)
+  public virtual SymbolConstructorInfo CreateConstructorInfoDelegator(IMethodSymbol symbol)
   {
-    return symbol.Kind is SymbolKind.TypeParameter
-      ? GetContextType((ITypeParameterSymbol)symbol)
-      : CreateTypeDelegator(symbol);
+    return new SymbolConstructorInfo(this, symbol);
   }
 
-  public virtual void BeginLambdaContext() => throw new NotSupportedException();
+  public virtual SymbolFieldInfo CreateFieldInfoDelegator(IFieldSymbol symbol, SymbolType? reflectedType = null)
+  {
+    return new SymbolFieldInfo(this, symbol, reflectedType);
+  }
 
-  public virtual void EndLambdaContext() => throw new NotSupportedException();
+  public virtual SymbolMethodInfo CreateMethodInfoDelegator(IMethodSymbol symbol, SymbolType? reflectedType = null)
+  {
+    return new SymbolMethodInfo(this, symbol, reflectedType);
+  }
 
-  public virtual bool IsAssignableFrom(SymbolType type, Type other) => false;
+  public virtual SymbolModule CreateModuleDelegator(IModuleSymbol symbol)
+  {
+    return new SymbolModule(this, symbol);
+  }
 
-  public abstract Type GetContextType(ITypeParameterSymbol symbol);
-  public abstract SymbolType GetGenericTypeDefinition(SymbolNamedType type);
-  public abstract SymbolType MakeGenericType(SymbolNamedType type, Type[] typeArguments);
-  public abstract SymbolMethodInfo GetGenericMethodDefinition(SymbolMethodInfo method);
-  public abstract SymbolMethodInfo MakeGenericMethod(SymbolMethodInfo method, Type[] typeArguments, SymbolType? reflectedType);
-  public abstract SymbolType GetDeclaringType(SymbolMethodInfo method);
-  public abstract SymbolMethodInfo GetBaseDefinition(SymbolMethodInfo method, SymbolType? reflectedType);
+  public virtual SymbolPropertyInfo CreatePropertyInfoDelegator(IPropertySymbol symbol, SymbolType? reflectedType = null)
+  {
+    return new SymbolPropertyInfo(this, symbol, reflectedType);
+  }
 
-  public virtual bool IsGenericTypeDefinition(INamedTypeSymbol symbol)
+  public virtual SymbolType CreateTypeDelegator(ITypeSymbol symbol)
+  {
+    return symbol.Kind switch
+    {
+      SymbolKind.NamedType     => CreateTypeDelegator((INamedTypeSymbol)symbol),
+      SymbolKind.ArrayType     => CreateTypeDelegator((IArrayTypeSymbol)symbol),
+      SymbolKind.TypeParameter => CreateTypeDelegator((ITypeParameterSymbol)symbol),
+      _                        => throw new NotSupportedException($"Symbol of kind {symbol.Kind} is not supported.")
+    };
+  }
+
+  public SymbolNamedType CreateTypeDelegator(INamedTypeSymbol symbol)
+  {
+    return new SymbolNamedType(this, symbol);
+  }
+
+  public SymbolArrayType CreateTypeDelegator(IArrayTypeSymbol symbol)
+  {
+    return new SymbolArrayType(this, symbol);
+  }
+
+  public SymbolTypeParameter CreateTypeDelegator(ITypeParameterSymbol symbol)
+  {
+    return new SymbolTypeParameter(this, symbol);
+  }
+
+  public virtual SymbolNamedType GetGenericTypeDefinition(SymbolNamedType type)
+  {
+    SymbolNamedType result = CreateTypeDelegator(type.Symbol.ConstructedFrom);
+    Debug.Assert(result.IsGenericTypeDefinition, "Failed to create a generic type definition for the current context.");
+    return result;
+  }
+
+  public virtual SymbolNamedType MakeGenericType(SymbolNamedType type, Type[] typeArguments)
+  {
+    GenericTypeContext context = new GenericTypeContext(this, typeArguments);
+    return context.CreateTypeDelegator(type.Symbol);
+  }
+
+  public virtual SymbolMethodInfo GetGenericMethodDefinition(SymbolMethodInfo method)
+  {
+    SymbolMethodInfo result = CreateMethodInfoDelegator(method.Symbol.ConstructedFrom, null);
+    Debug.Assert(result.IsGenericMethodDefinition, "Failed to create a generic method definition for the current context.");
+    return result;
+  }
+
+  public virtual SymbolMethodInfo MakeGenericMethod(SymbolMethodInfo method, Type[] typeArguments, SymbolType? reflectedType)
+  {
+    GenericMethodContext context = new GenericMethodContext(this, typeArguments);
+    return context.CreateMethodInfoDelegator(method.Symbol, reflectedType);
+  }
+
+  public virtual SymbolMethodInfo GetBaseDefinition(SymbolMethodInfo method, SymbolType? reflectedType)
+  {
+    IMethodSymbol symbol = method.Symbol;
+    if (symbol.IsOverride)
+    {
+      IMethodSymbol overriddenMethod = method.IsGenericMethod && !method.IsGenericMethodDefinition
+        ? symbol.ConstructedFrom.OverriddenMethod!
+        : symbol.OverriddenMethod!;
+      INamedTypeSymbol containingType = overriddenMethod.ContainingType;
+      GeneratorContext context = containingType.IsGenericType
+        ? new GenericTypeContext(this, containingType.TypeArguments.Map(GetContextType))
+        : this;
+
+      return context.CreateMethodInfoDelegator(overriddenMethod);
+    }
+    else
+    {
+      return symbol.IsVirtual && reflectedType is not null
+        ? CreateMethodInfoDelegator(symbol)
+        : method;
+    }
+  }
+
+  public virtual SymbolNamedType GetDeclaringType(SymbolMethodInfo method)
+  {
+    return CreateTypeDelegator(method.Symbol.ContainingType);
+  }
+
+  public virtual bool IsGenericTypeDefinition(INamedTypeSymbol symbol) // TODO: Override in GeneratorRuntime
   {
     if (!symbol.IsGenericType)
       return false;
@@ -56,7 +153,7 @@ internal abstract class GeneratorContext : IGeneratorContext
     return true;
   }
 
-  public virtual bool ContainsGenericParameters(INamedTypeSymbol symbol)
+  public virtual bool ContainsGenericParameters(INamedTypeSymbol symbol) // TODO: Override in GeneratorRuntime
   {
     if (!symbol.IsGenericType)
       return false;
@@ -83,7 +180,7 @@ internal abstract class GeneratorContext : IGeneratorContext
     return false;
   }
 
-  public virtual bool IsGenericMethodDefinition(IMethodSymbol symbol)
+  public virtual bool IsGenericMethodDefinition(IMethodSymbol symbol) // TODO: Override in GeneratorRuntime
   {
     if (!symbol.IsGenericMethod)
       return false;
@@ -104,7 +201,7 @@ internal abstract class GeneratorContext : IGeneratorContext
     return true;
   }
 
-  public virtual bool ContainsGenericParameters(IMethodSymbol symbol)
+  public virtual bool ContainsGenericParameters(IMethodSymbol symbol) // TODO: Override in GeneratorRuntime
   {
     if (symbol.ContainingType is not null && ContainsGenericParameters(symbol.ContainingType))
       return true;
@@ -145,64 +242,20 @@ internal abstract class GeneratorContext : IGeneratorContext
     };
   }
 
-  public virtual SymbolAssembly CreateAssemblyDelegator(IAssemblySymbol symbol)
+  public virtual bool IsAssignableFrom(SymbolType type, Type other) // TODO: Check virtuals are overridden somewhere
   {
-    return new SymbolAssembly(this, symbol, null);
+    return false;
   }
 
-  public virtual SymbolConstructorInfo CreateConstructorInfoDelegator(IMethodSymbol symbol)
+  public virtual Type GetContextType(ITypeSymbol symbol)
   {
-    return new SymbolConstructorInfo(Runtime, this, symbol);
+    return symbol.Kind is SymbolKind.TypeParameter
+      ? GetContextType((ITypeParameterSymbol)symbol)
+      : CreateTypeDelegator(symbol);
   }
 
-  public virtual SymbolEventInfo CreateEventInfoDelegator(IEventSymbol symbol, SymbolType? reflectedType = null)
+  public virtual Type GetContextType(ITypeParameterSymbol symbol)
   {
-    return new SymbolEventInfo(Runtime, this, symbol, reflectedType);
-  }
-
-  public virtual SymbolFieldInfo CreateFieldInfoDelegator(IFieldSymbol symbol, SymbolType? reflectedType = null)
-  {
-    return new SymbolFieldInfo(Runtime, this, symbol, reflectedType);
-  }
-
-  public virtual SymbolMethodInfo CreateMethodInfoDelegator(IMethodSymbol symbol, SymbolType? reflectedType = null)
-  {
-    return new SymbolMethodInfo(Runtime, this, symbol, reflectedType);
-  }
-
-  public virtual SymbolModule CreateModuleDelegator(IModuleSymbol symbol)
-  {
-    return new SymbolModule(this, symbol);
-  }
-
-  public virtual SymbolPropertyInfo CreatePropertyInfoDelegator(IPropertySymbol symbol, SymbolType? reflectedType = null)
-  {
-    return new SymbolPropertyInfo(Runtime, this, symbol, reflectedType);
-  }
-
-  public virtual SymbolType CreateTypeDelegator(ITypeSymbol symbol)
-  {
-    return symbol.Kind switch
-    {
-      SymbolKind.NamedType     => CreateTypeDelegator((INamedTypeSymbol)symbol),
-      SymbolKind.ArrayType     => CreateTypeDelegator((IArrayTypeSymbol)symbol),
-      SymbolKind.TypeParameter => CreateTypeDelegator((ITypeParameterSymbol)symbol),
-      _                        => throw new NotSupportedException($"Symbol of kind {symbol.Kind} is not supported.")
-    };
-  }
-
-  protected SymbolNamedType CreateTypeDelegator(INamedTypeSymbol symbol)
-  {
-    return new SymbolNamedType(Runtime, this, symbol);
-  }
-
-  protected SymbolArrayType CreateTypeDelegator(IArrayTypeSymbol symbol)
-  {
-    return new SymbolArrayType(Runtime, this, symbol);
-  }
-
-  protected SymbolTypeParameter CreateTypeDelegator(ITypeParameterSymbol symbol)
-  {
-    return new SymbolTypeParameter(Runtime, this, symbol);
+    return CreateTypeDelegator(symbol);
   }
 }
