@@ -480,8 +480,7 @@ internal abstract class SymbolType : SymbolTypeBase
 
   private IEnumerable<SymbolConstructorInfo> GetConstructorsEnumerable(BindingFlags bindingAttr)
   {
-    return Symbol.GetMembers(bindingAttr, true)
-      .Where(x => x is IMethodSymbol methodSymbol && methodSymbol.MethodKind is MethodKind.Constructor or MethodKind.StaticConstructor)
+    return Symbol.GetMembers(bindingAttr, MemberFlags.Constructors, true)
       .Select(x => Context.CreateConstructorInfoDelegator((IMethodSymbol)x));
   }
 
@@ -492,37 +491,33 @@ internal abstract class SymbolType : SymbolTypeBase
 
   private IEnumerable<SymbolFieldInfo> GetFieldsEnumerable(BindingFlags bindingAttr)
   {
-    return Symbol.GetMembers(bindingAttr, true)
-      .Where(member => member.Kind is SymbolKind.Field)
+    return Symbol.GetMembers(bindingAttr, MemberFlags.Fields, true)
       .Select(member => Context.CreateFieldInfoDelegator((IFieldSymbol)member, this));
   }
 
   private IEnumerable<SymbolMethodInfo> GetMethodsEnumerable(BindingFlags bindingAttr)
   {
-    return Symbol.GetMembers(bindingAttr, true)
-      .Where(member => member is IMethodSymbol methodSymbol && methodSymbol.MethodKind is not MethodKind.Constructor and not MethodKind.StaticConstructor)
+    return Symbol.GetMembers(bindingAttr, MemberFlags.Methods, true)
       .Select(member => Context.CreateMethodInfoDelegator((IMethodSymbol)member, this));
   }
 
   private IEnumerable<SymbolType> GetNestedTypesEnumerable(BindingFlags bindingAttr)
   {
-    return Symbol.GetMembers(bindingAttr, true)
-      .Where(member => member.Kind is SymbolKind.NamedType)
+    return Symbol.GetMembers(bindingAttr, MemberFlags.NestedTypes, true)
       .Select(member => Context.CreateTypeDelegator((ITypeSymbol)member));
   }
 
   private IEnumerable<SymbolPropertyInfo> GetPropertiesEnumerable(BindingFlags bindingAttr)
   {
-    return Symbol.GetMembers(bindingAttr, true)
-      .Where(member => member.Kind is SymbolKind.Property)
+    return Symbol.GetMembers(bindingAttr, MemberFlags.Properties, true)
       .Select(member => Context.CreatePropertyInfoDelegator((IPropertySymbol)member, this));
   }
 
   private IEnumerable<MemberInfo> GetMembersEnumerable(BindingFlags bindingAttr)
   {
-    return Symbol.GetMembers(bindingAttr, true)
+    return Symbol.GetMembers(bindingAttr, MemberFlags.AllMembers, true)
       .Where(member => member.Kind is SymbolKind.Field or SymbolKind.Property or SymbolKind.Method or SymbolKind.NamedType) // TODO: Add events when supported
-      .Select<ISymbol, MemberInfo>(x => x switch
+      .Select<ISymbol, MemberInfo>(member => member switch
       {
         IFieldSymbol fieldSymbol         => Context.CreateFieldInfoDelegator(fieldSymbol, this),
         IPropertySymbol propertySymbol   => Context.CreatePropertyInfoDelegator(propertySymbol, this),

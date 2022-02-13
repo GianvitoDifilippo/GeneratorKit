@@ -29,7 +29,7 @@ internal class ProxyManager : IProxyManager, IProxyTypeSetup
     }
     else
     {
-      if (!baseTypeDefinition.Equals(typeof(object)))
+      if (!baseTypeDefinition.Equals(typeof(object)) && !baseTypeDefinition.IsSource)
         throw ProxyMatchException.NotFound(type);
     }
 

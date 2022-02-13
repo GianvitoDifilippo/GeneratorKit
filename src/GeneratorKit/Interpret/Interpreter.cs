@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 
 namespace GeneratorKit.Interpret;
 
@@ -62,28 +63,20 @@ internal class Interpreter : IInterpreter
 
   private void InitField(IFieldSymbol field, IInterpreterContext context, InterpreterFrame frame)
   {
-    if (_operationManager.TryGetOperation(field, out IOperation? operation))
-    {
-      object? value = new InterpreterVisitor(context, frame).Visit(operation, default);
-      frame.Define(field, value);
-    }
-    else
-    {
-      frame.Declare(field);
-    }
+    object? value = _operationManager.TryGetOperation(field, out IOperation? operation)
+      ? new InterpreterVisitor(context, frame).Visit(operation, default)
+      : _context.CreateTypeDelegator(field.Type).GetDefaultValue();
+
+    frame.Define(field, value);
   }
 
   private void InitProperty(IPropertySymbol property, IInterpreterContext context, InterpreterFrame frame)
   {
-    if (_operationManager.TryGetOperation(property, out IOperation? operation))
-    {
-      object? value = new InterpreterVisitor(context, frame).Visit(operation, default);
-      frame.Define(property, value);
-    }
-    else
-    {
-      frame.Declare(property);
-    }
+    object? value = _operationManager.TryGetOperation(property, out IOperation? operation)
+      ? new InterpreterVisitor(context, frame).Visit(operation, default)
+      : _context.CreateTypeDelegator(property.Type).GetDefaultValue();
+
+    frame.Define(property, value);
   }
 
   public InterpreterFrame GetTypeFrame(SymbolNamedType type)
@@ -96,7 +89,7 @@ internal class Interpreter : IInterpreter
 
     InterpreterFrame? parentFrame = null;
     SymbolNamedType? baseType = type.BaseType;
-    if (baseType is not null && baseType.Symbol.IsSource())
+    if (baseType is not null && baseType.IsSource)
     {
       parentFrame = GetTypeFrame(baseType);
     }
@@ -138,7 +131,7 @@ internal class Interpreter : IInterpreter
   {
     InterpreterFrame instanceFrame = InterpreterFrame.NewInstanceFrame(typeFrame, _frameProvider.GetValues(), instance);
 
-    IEnumerable<ISymbol> fields = type.Symbol.GetMembers().Where(m => m.Kind is SymbolKind.Field && !m.IsStatic);
+    IEnumerable<ISymbol> fields = type.Symbol.GetMembers(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, MemberFlags.Fields | MemberFlags.DeepSearch, true);
     foreach (IFieldSymbol field in fields)
     {
       if (!field.IsImplicitlyDeclared)

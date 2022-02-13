@@ -45,7 +45,11 @@ internal class Activator : IActivator
     SymbolNamedType type = constructor.DeclaringType;
     InterpreterFrame typeFrame = _interpreter.GetTypeFrame(type);
 
-    return CreateInstance(constructor.Symbol, type, typeFrame, arguments);
+    return constructor.Symbol.IsImplicitlyDeclared
+      ? type.IsAnonymousType
+        ? CreateAnonymousTypeInstance(type, typeFrame)
+        : CreateWithDefaultConstructor(type, typeFrame)
+      : CreateInstance(constructor.Symbol, type, typeFrame, arguments);
   }
 
   private object CreateWithDefaultConstructor(SymbolNamedType type, InterpreterFrame typeFrame)

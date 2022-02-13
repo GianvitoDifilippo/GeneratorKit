@@ -1,6 +1,7 @@
 ﻿using GeneratorKit.Exceptions;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.FlowAnalysis;
 using Microsoft.CodeAnalysis.Operations;
 using System;
 using System.Collections;
@@ -373,6 +374,11 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
     return operation.Operation.Accept(this, default);
   }
 
+  public override object? VisitFieldInitializer(IFieldInitializerOperation operation, Optional<object?> argument)
+  {
+    throw new InvalidOperationException($"Operation of type {operation.Kind} can be interpreted in a constructor interpreter only.");
+  }
+
   public override object? VisitFieldReference(IFieldReferenceOperation operation, Optional<object?> argument)
   {
     object? instance = operation.Field.IsStatic ? null : operation.Instance!.Accept(this, default);
@@ -468,7 +474,7 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
     {
       InstanceReferenceKind.ContainingTypeInstance => Frame.Instance,
       InstanceReferenceKind.ImplicitReceiver       => ImplicitReceiver,
-      _                                            => throw new NotImplementedException()
+      _                                            => throw new NotSupportedException($"Instance reference of kind {operation.ReferenceKind} is not supported.")
     };
   }
 
@@ -530,6 +536,12 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
     return method.Invoke(instance, arguments);
   }
 
+  public override object? VisitIsNull(IIsNullOperation operation, Optional<object?> argument)
+  {
+    object? operand = operation.Operand.Accept(this, default);
+    return operand is null;
+  }
+
   public override object? VisitIsType(IIsTypeOperation operation, Optional<object?> argument)
   {
     object? valueOperand = operation.ValueOperand.Accept(this, default);
@@ -563,6 +575,19 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
     {
       return Frame.Get(operation.Local);
     }
+  }
+
+  public override object? VisitMemberInitializer(IMemberInitializerOperation operation, Optional<object?> argument)
+  {
+    object? member = operation.InitializedMember.Accept(this, default);
+    if (member is null)
+      throw new NullReferenceException();
+
+    BeginReceiver(member);
+    VisitObjectOrCollectionInitializer(operation.Initializer, default);
+    EndReceiver();
+
+    return null;
   }
 
   public override object? VisitMethodBodyOperation(IMethodBodyOperation operation, Optional<object?> argument)
@@ -692,6 +717,21 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
     {
       return operation.Elements.Map(el => el.Accept(this, default));
     }
+  }
+
+  public override object? VisitTypeParameterObjectCreation(ITypeParameterObjectCreationOperation operation, Optional<object?> argument)
+  {
+    Type type = _context.GetType(operation.Type!);
+    object instance = _context.CreateInstance(type, Array.Empty<object>());
+
+    if (operation.Initializer is { } initializer)
+    {
+      BeginReceiver(instance);
+      VisitObjectOrCollectionInitializer(initializer, default);
+      EndReceiver();
+    }
+
+    return instance;
   }
 
   public override object? VisitUnaryOperator(IUnaryOperation operation, Optional<object?> argument)

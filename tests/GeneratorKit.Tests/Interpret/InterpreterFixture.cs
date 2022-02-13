@@ -1,7 +1,6 @@
 ﻿using GeneratorKit.Interpret.Frame;
 using GeneratorKit.Proxy;
 using GeneratorKit.Reflection;
-using GeneratorKit.Reflection.Context;
 using GeneratorKit.TestHelpers;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
@@ -294,6 +293,38 @@ namespace " + Namespace + @"
       var prop2 = obj.Prop2;
     }
 
+    public void MemberInitializer()
+    {
+      OtherGenericClass<string, int> obj = new OtherGenericClass<string, int>(""arg1"", 2)
+      {
+        Obj =
+        {
+          Prop1 = 3,
+          Prop2 = ""prop""
+        }
+      };
+      var prop1 = obj.Obj.Prop1;
+      var prop2 = obj.Obj.Prop2;
+    }
+
+    public void ParameterInitializer()
+    {
+      bool v1 = Method_ParameterInitializer();
+      bool v2 = Method_ParameterInitializer(5);
+    }
+
+    public class C : OtherClass
+    {
+      public C() { Prop2 = ""default""; }
+    }
+
+    public void TypeParameterObjectCreation()
+    {
+      C obj = Method_TypeParameterObjectCreation<C>();
+      var prop1 = obj.Prop1;
+      var prop2 = obj.Prop2;
+    }
+
     public void Coalesce()
     {
       string? i1 = null;
@@ -356,6 +387,23 @@ namespace " + Namespace + @"
       };
       int prop1 = obj.Prop1;
       string prop2 = obj.Prop2;
+    }
+
+    public bool IsNull(object arg)
+    {
+      return arg is null;
+    }
+
+
+    private bool Method_ParameterInitializer(int arg = 4)
+    {
+      return arg == 4;
+    }
+
+    public T Method_TypeParameterObjectCreation<T>()
+      where T : OtherClass, new()
+    {
+      return new T() { Prop1 = 5 };
     }
   }
 
@@ -450,6 +498,7 @@ namespace " + Namespace + @"
 
     public T1 Arg1 { get; }
     public T2 Arg2 { get; }
+    public OtherClass Obj { get; } = new OtherClass();
   }
 }
 ";
@@ -565,6 +614,9 @@ namespace " + Namespace + @"
     For,
     ForEach,
     ObjectInitializer,
+    MemberInitializer,
+    ParameterInitializer,
+    TypeParameterObjectCreation,
     Coalesce,
     CoalesceAssignment,
     ConditionalAccess,
@@ -583,6 +635,7 @@ namespace " + Namespace + @"
     IsType,
     Array,
     AnonymousObjectCreation,
+    IsNull,
 
     Invocation_NonGenericMethod_GenericType = 4096,
     Invocation_GenericMethod_GenericType1,
