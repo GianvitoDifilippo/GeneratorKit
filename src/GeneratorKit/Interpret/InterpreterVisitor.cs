@@ -34,6 +34,69 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
     return operation.Value.Accept(this, argument);
   }
 
+  public override object? VisitArrayCreation(IArrayCreationOperation operation, Optional<object?> argument)
+  {
+    int rank = operation.DimensionSizes.Length;
+    int[] dimensionSizes = operation.DimensionSizes.Map(x => (int)x.Accept(this, default)!);
+    Type elementType = _context.CreateTypeDelegator(operation.Type!).GetElementType()!.UnderlyingSystemType;
+    Array array = Array.CreateInstance(elementType, dimensionSizes);
+    int[] indices = new int[rank];
+
+    if (operation.Initializer is IArrayInitializerOperation initializerOperation)
+    {
+      BeginArrayInitializerContext(array, indices, 0);
+      VisitArrayInitializer(initializerOperation, default);
+      EndArrayInitializerContext();
+    }
+
+    return array;
+  }
+
+  public override object? VisitArrayElementReference(IArrayElementReferenceOperation operation, Optional<object?> argument)
+  {
+    Array array = (Array)operation.ArrayReference.Accept(this, default)!;
+
+    if (operation.Indices.Length == 1)
+    {
+      object index = operation.Indices[0].Accept(this, default)!;
+      if (index is int intIndex)
+      {
+        return array.GetValue(intIndex);
+      }
+
+      return array.GetSubArray((Range)index);
+    }
+
+    int[] indices = operation.Indices.Map(index => (int)index.Accept(this, default)!);
+    return array.GetValue(indices);
+  }
+
+  public override object? VisitArrayInitializer(IArrayInitializerOperation operation, Optional<object?> argument)
+  {
+    ArrayInitializerContext context = ArrayContext;
+    (Array array, int[] indices, int dimension) = context;
+    if (dimension == indices.Length - 1)
+    {
+      for (int i = 0; i < operation.ElementValues.Length; i++)
+      {
+        indices[dimension] = i;
+        object? value = operation.ElementValues[i].Accept(this, default);
+        array.SetValue(value, indices);
+      }
+    }
+    else
+    {
+      for (int i = 0; i < operation.ElementValues.Length; i++)
+      {
+        indices[dimension] = i;
+        context.Dimension++;
+        operation.ElementValues[i].Accept(this, default);
+        context.Dimension--;
+      }
+    }
+    return null;
+  }
+
   public override object? VisitBinaryOperator(IBinaryOperation operation, Optional<object?> argument)
   {
     object? leftOperand = operation.LeftOperand.Accept(this, default);
@@ -285,6 +348,11 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
       : null;
   }
 
+  public override object? VisitDelegateCreation(IDelegateCreationOperation operation, Optional<object?> argument)
+  {
+    return operation.Target.Accept(this, default);
+  }
+
   public override object? VisitDiscardOperation(IDiscardOperation operation, Optional<object?> argument)
   {
     return null;
@@ -455,9 +523,6 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
   public override object? VisitIsType(IIsTypeOperation operation, Optional<object?> argument)
   {
     object? valueOperand = operation.ValueOperand.Accept(this, default);
-    if (valueOperand is null)
-      return false;
-
     SymbolType typeOperand = _context.CreateTypeDelegator(operation.TypeOperand);
 
     return typeOperand.IsInstanceOfType(valueOperand);
@@ -499,11 +564,10 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
 
   public override object? VisitMethodReference(IMethodReferenceOperation operation, Optional<object?> argument)
   {
-    throw new NotImplementedException();
-    // object? instance = operation.Method.IsStatic ? null : operation.Instance!.Accept(this, default);
-    // MethodInfo method = _context.CreateMethodInfoDelegator(operation.Method).UnderlyingSystemMethod;
-    // 
-    // return Delegate.CreateDelegate(DelegateHelper.GetDelegateType(_runtime, operation.Method), instance, method);
+    object? instance = operation.Method.IsStatic ? null : operation.Instance!.Accept(this, default);
+    SymbolMethodInfo method = _context.CreateMethodInfoDelegator(operation.Method);
+
+    return Delegate.CreateDelegate(DelegateHelper.GetDelegateType(_context, operation.Method), instance, method);
   }
 
   public override object? VisitNameOf(INameOfOperation operation, Optional<object?> argument)
@@ -551,11 +615,6 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
     {
       return Frame.Get(operation.Parameter);
     }
-  }
-
-  public override object? VisitParenthesized(IParenthesizedOperation operation, Optional<object?> argument)
-  {
-    return operation.Operand.Accept(this, default);
   }
 
   public override object? VisitPropertyReference(IPropertyReferenceOperation operation, Optional<object?> argument)

@@ -76,6 +76,8 @@ namespace " + Namespace + @"
   {
     private int _field = 4;
 
+    public NonGenericClass_Interpret A { get; }
+
     public void SimpleAssignment()
     {
       int v1;
@@ -327,12 +329,23 @@ namespace " + Namespace + @"
     {
       OtherClass obj1 = null;
       OtherClass obj2 = new OtherClass();
+      int i1 = 3;
       bool b1 = obj1 is OtherClass;
       bool b2 = obj1 is object;
       bool b3 = obj2 is OtherClass;
       bool b4 = obj2 is object;
       bool b5 = obj2 is int;
+      bool b6 = i1 is int;
+      bool b7 = i1 is object;
+      bool b8 = i1 is string;
     }
+
+  public void Array()
+  {
+    int[] arr1 = new int[4] { 1, 2, 3, 4 };
+    int[][] arr2 = new int[][] { new[] { 1, 2 }, new[] { 3, 4 }, new[] { 5, 6 } };
+    int[,,] arr3 = new int[2, 3, 4] { { { 1, 2, 3, 4 }, { 5, 6, 7, 8 }, { 9, 10, 11, 12 } }, { { 13, 14, 15, 16 }, { 17, 18, 19, 20 }, { 21, 22, 23, 24 } } };
+  }
   }
 
   public class GenericClass_Interpret<T>
@@ -378,6 +391,12 @@ namespace " + Namespace + @"
     {
       GenericClassWithMembersProxy<T> obj = new GenericClassWithMembersProxy<T>(arg1);
       return obj.Field;
+    }
+
+    public T MethodReference_Ref<T1>(T1 arg)
+    {
+      System.Func<T1, T> func = MethodReference_Ref;
+      return default(T);
     }
 
 
@@ -499,7 +518,7 @@ namespace " + Namespace + @"
       : sut.GetTypeFrame(type);
     ObjectProxy instance = new ObjectProxy();
     InterpreterFrame instanceFrame = sut.GetInstanceFrame(typeFrame, type, instance);
-    instance.Delegate = new OperationDelegate(sut, instanceFrame, new Dictionary<int, IMethodSymbol>());
+    instance.Delegate = new OperationDelegate(sut, type, instanceFrame, new Dictionary<int, IMethodSymbol>());
     return instanceFrame;
   }
 
@@ -551,6 +570,7 @@ namespace " + Namespace + @"
     StringInterpolation,
     FieldReference_Source,
     IsType,
+    Array,
 
     Invocation_NonGenericMethod_GenericType = 4096,
     Invocation_GenericMethod_GenericType1,
@@ -560,5 +580,6 @@ namespace " + Namespace + @"
     Property_StaticProperty,
     GenericObjectCreation,
     FieldReference_Ref,
+    MethodReference_Ref
   }
 }

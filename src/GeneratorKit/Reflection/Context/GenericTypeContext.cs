@@ -16,13 +16,6 @@ internal class GenericTypeContext : GeneratorContext
     _typeArguments = typeArguments;
   }
 
-  public override Type GetContextType(ITypeSymbol symbol)
-  {
-    return symbol.Kind is SymbolKind.TypeParameter
-      ? GetContextType((ITypeParameterSymbol)symbol)
-      : CreateTypeDelegator(symbol);
-  }
-
   public override Type GetContextType(ITypeParameterSymbol symbol)
   {
     return symbol.TypeParameterKind is TypeParameterKind.Type

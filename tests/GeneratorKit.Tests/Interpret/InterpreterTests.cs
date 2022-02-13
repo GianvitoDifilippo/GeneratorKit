@@ -4,6 +4,10 @@ using GeneratorKit.Reflection;
 using GeneratorKit.TestHelpers;
 using Microsoft.CodeAnalysis;
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq.Expressions;
+using System.Reflection;
 using Xunit;
 using static GeneratorKit.Interpret.InterpreterFixture;
 
@@ -49,7 +53,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
 
     // Act
     _sut.InterpretMethod(method, instanceFrame, Type.EmptyTypes, arguments);
-
+    
     // Assert
     _frameProvider[2].Should().HaveCount(2);
     _frameProvider[2].Should().Contain("v1", 2);
@@ -97,10 +101,10 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.Default);
 
     // Act
-    object? actual = _sut.InterpretMethod(method, instanceFrame, Type.EmptyTypes, arguments);
+    object? result = _sut.InterpretMethod(method, instanceFrame, Type.EmptyTypes, arguments);
 
     // Assert
-    actual.Should().Be(expected);
+    result.Should().Be(expected);
   }
 
   [Theory]
@@ -115,10 +119,10 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.DefaultGeneric);
 
     // Act
-    object? actual = _sut.InterpretMethod(method, instanceFrame, new[] { typeArgument }, arguments);
+    object? result = _sut.InterpretMethod(method, instanceFrame, new[] { typeArgument }, arguments);
 
     // Assert
-    actual.Should().Be(expected);
+    result.Should().Be(expected);
   }
 
   [Theory]
@@ -437,12 +441,40 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     _sut.InterpretMethod(method, instanceFrame, Type.EmptyTypes, arguments);
 
     // Assert
-    _frameProvider[2].Should().HaveCount(7);
+    _frameProvider[2].Should().HaveCount(11);
     _frameProvider[2].Should().Contain("b1", false);
     _frameProvider[2].Should().Contain("b2", false);
     _frameProvider[2].Should().Contain("b3", true);
     _frameProvider[2].Should().Contain("b4", true);
     _frameProvider[2].Should().Contain("b5", false);
+    _frameProvider[2].Should().Contain("b6", true);
+    _frameProvider[2].Should().Contain("b7", true);
+    _frameProvider[2].Should().Contain("b8", false);
+  }
+
+  [Fact]
+  public void InterpretMethod_ShouldInterpret_Array()
+  {
+    // Arrange
+    object?[] arguments = Array.Empty<object?>();
+    IMethodSymbol method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.Array);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.Array);
+    int[] arr1 = new int[4] { 1, 2, 3, 4 };
+    int[][] arr2 = new int[][] { new[] { 1, 2 }, new[] { 3, 4 }, new[] { 5, 6 } };
+    int[,,] arr3 = new int[2, 3, 4] { { { 1, 2, 3, 4 }, { 5, 6, 7, 8 }, { 9, 10, 11, 12 } }, { { 13, 14, 15, 16 }, { 17, 18, 19, 20 }, { 21, 22, 23, 24 } } };
+    
+    // Act
+    _sut.InterpretMethod(method, instanceFrame, Type.EmptyTypes, arguments);
+
+    // Assert
+    IReadOnlyDictionary<string, object?> frame = _frameProvider[2];
+    frame.Should().HaveCount(3);
+    frame.Should().ContainKey("arr1");
+    frame.Should().ContainKey("arr2");
+    frame.Should().ContainKey("arr3");
+    frame["arr1"].Should().BeOfType<int[]>().Which.Should().Equal(arr1);
+    frame["arr2"].Should().BeOfType<int[][]>().Which.As<object>().Should().Equal(arr2, new ArrayArrayEqualityComparer<int>());
+    frame["arr3"].Should().BeOfType<int[,,]>().Which.Should().Equal(arr3, new Array3EqualityComparer<int>());
   }
 
   [Theory]
@@ -576,6 +608,23 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
   }
 
   [Fact]
+  public void InterpretMethod_ShouldInterpret_MethodReference_Ref()
+  {
+    // Arrange
+    const string arg1 = "argument1";
+    object?[] arguments = new object?[] { arg1 };
+    IMethodSymbol method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.MethodReference_Ref);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.MethodReference_Ref, typeof(string));
+
+    // Act
+    _sut.InterpretMethod(method, instanceFrame, new[] { typeof(int) }, arguments);
+
+    // Assert
+    _frameProvider[2].Should().Contain("value1", arg1);
+    _frameProvider[2].Should().Contain("value2", 4);
+  }
+
+  [Fact]
   public void GetProxyArguments_ShouldReturnProxyArgumentsForNonGenericType_WhenFirstCtor()
   {
     // Arrange
@@ -588,10 +637,10 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     object?[] expected = new object?[] { value1 };
 
     // Act
-    object?[] actual = _sut.GetProxyArguments(constructor.OriginalSymbol, typeFrame, arguments);
+    object?[] result = _sut.GetProxyArguments(constructor.OriginalSymbol, typeFrame, arguments);
 
     // Assert
-    actual.Should().Equal(expected);
+    result.Should().Equal(expected);
   }
 
   [Fact]
@@ -607,10 +656,10 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     object?[] expected = new object?[] { value1 };
 
     // Act
-    object?[] actual = _sut.GetProxyArguments(constructor.OriginalSymbol, typeFrame, arguments);
+    object?[] result = _sut.GetProxyArguments(constructor.OriginalSymbol, typeFrame, arguments);
 
     // Assert
-    actual.Should().Equal(expected);
+    result.Should().Equal(expected);
   }
 
   [Fact]
@@ -627,10 +676,10 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     object?[] expected = new object?[] { value2 };
 
     // Act
-    object?[] actual = _sut.GetProxyArguments(constructor.OriginalSymbol, typeFrame, arguments);
+    object?[] result = _sut.GetProxyArguments(constructor.OriginalSymbol, typeFrame, arguments);
 
     // Assert
-    actual.Should().Equal(expected);
+    result.Should().Equal(expected);
   }
 
   [Fact]
@@ -647,10 +696,10 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     object?[] expected = new object?[] { value2 };
 
     // Act
-    object?[] actual = _sut.GetProxyArguments(constructor.OriginalSymbol, typeFrame, arguments);
+    object?[] result = _sut.GetProxyArguments(constructor.OriginalSymbol, typeFrame, arguments);
 
     // Assert
-    actual.Should().Equal(expected);
+    result.Should().Equal(expected);
   }
 
   [Fact]
@@ -666,10 +715,10 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     object?[] expected = Array.Empty<object?>();
 
     // Act
-    object?[] actual = _sut.GetProxyArguments(constructor.OriginalSymbol, typeFrame, arguments);
+    object?[] result = _sut.GetProxyArguments(constructor.OriginalSymbol, typeFrame, arguments);
 
     // Assert
-    actual.Should().Equal(expected);
+    result.Should().Equal(expected);
   }
 
   [Fact]

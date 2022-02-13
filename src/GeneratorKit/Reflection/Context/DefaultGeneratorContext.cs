@@ -13,11 +13,6 @@ internal class DefaultGeneratorContext : GeneratorContext
   {
   }
 
-  public override Type GetContextType(ITypeSymbol symbol)
-  {
-    return CreateTypeDelegator(symbol);
-  }
-
   public override Type GetContextType(ITypeParameterSymbol symbol)
   {
     return CreateTypeDelegator(symbol);

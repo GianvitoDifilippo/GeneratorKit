@@ -14,7 +14,19 @@ internal abstract class GeneratorContext : IGeneratorContext
 
   protected IReflectionRuntime Runtime { get; }
 
-  public abstract Type GetContextType(ITypeSymbol symbol);
+  public virtual Type GetContextType(ITypeSymbol symbol)
+  {
+    return symbol.Kind is SymbolKind.TypeParameter
+      ? GetContextType((ITypeParameterSymbol)symbol)
+      : CreateTypeDelegator(symbol);
+  }
+
+  public virtual void BeginLambdaContext() => throw new NotSupportedException();
+
+  public virtual void EndLambdaContext() => throw new NotSupportedException();
+
+  public virtual bool IsAssignableFrom(SymbolType type, Type other) => false;
+
   public abstract Type GetContextType(ITypeParameterSymbol symbol);
   public abstract SymbolType GetGenericTypeDefinition(SymbolNamedType type);
   public abstract SymbolType MakeGenericType(SymbolNamedType type, Type[] typeArguments);

@@ -203,7 +203,7 @@ internal sealed class SymbolNamedType : SymbolType
     return false;
   }
 
-  public override bool IsAssignableFrom(Type c)
+  protected override bool IsAssignableFromCore(Type? c)
   {
     if (c is null)
       return false;
@@ -211,7 +211,7 @@ internal sealed class SymbolNamedType : SymbolType
     if (TypeEqualityComparer.Default.Equals(this, c))
       return true;
 
-    if (c.IsSubclassOf(this))
+    if (IsSuperclassOf(c))
       return true;
 
     if (IsInterface)
@@ -305,8 +305,11 @@ internal sealed class SymbolNamedType : SymbolType
       "UIntPtr";
   }
 
-  public override bool IsSubclassOf(Type c)
+  public override bool IsSubclassOf(Type? c)
   {
+    if (c is null)
+      return false;
+
     if (TypeEqualityComparer.Default.Equals(this, c))
       return false;
 
@@ -362,6 +365,26 @@ internal sealed class SymbolNamedType : SymbolType
   protected override SymbolType[] GetInterfacesCore()
   {
     return Symbol.AllInterfaces.Map(Context.CreateTypeDelegator);
+  }
+
+  public override bool IsSuperclassOf(Type? c)
+  {
+    if (c is null)
+      return false;
+
+    if (TypeEqualityComparer.Default.Equals(c, this))
+      return false;
+
+    Type? type = c.BaseType;
+    while (type is not null)
+    {
+      if (TypeEqualityComparer.Default.Equals(type, this))
+        return true;
+
+      type = type.BaseType;
+    }
+
+    return false;
   }
 
   protected override SymbolType MakeArrayTypeCore()

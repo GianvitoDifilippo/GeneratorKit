@@ -53,7 +53,7 @@ internal class Activator : IActivator
     IProxied instance = (IProxied)proxyConstructor.Invoke(proxyArguments);
     InterpreterFrame instanceFrame = _interpreter.GetInstanceFrame(typeFrame, type, instance);
     IReadOnlyDictionary<int, IMethodSymbol> methods = GetMethods(type.OriginalSymbol);
-    instance.Delegate = new OperationDelegate(_interpreter, instanceFrame, methods);
+    instance.Delegate = new OperationDelegate(_interpreter, type, instanceFrame, methods);
     if (!constructor.IsImplicitlyDeclared)
     {
       _interpreter.InterpretConstructor(constructor, instanceFrame, arguments);

@@ -1,6 +1,7 @@
 ﻿using GeneratorKit.Reflection;
 using Microsoft.CodeAnalysis;
 using System;
+using System.Diagnostics;
 
 namespace GeneratorKit.Interpret.Frame;
 
@@ -8,6 +9,7 @@ internal class InterpreterMethodContext : GeneratorContext
 {
   private readonly GeneratorContext _parent;
   private readonly Type[] _typeArguments;
+  private bool _constructingLambda;
 
   public InterpreterMethodContext(IReflectionRuntime runtime, GeneratorContext parent, Type[] typeArguments)
     : base(runtime)
@@ -16,11 +18,26 @@ internal class InterpreterMethodContext : GeneratorContext
     _typeArguments = typeArguments;
   }
 
+  public override void BeginLambdaContext()
+  {
+    Debug.Assert(!_constructingLambda, "Lambda context already began.");
+    _constructingLambda = true;
+  }
+
+  public override void EndLambdaContext()
+  {
+    Debug.Assert(_constructingLambda, "Lambda context already ended.");
+    _constructingLambda = false;
+  }
+
+  public override bool IsAssignableFrom(SymbolType type, Type other)
+  {
+    return _constructingLambda && typeof(Unit).Equals(other);
+  }
+
   public override Type GetContextType(ITypeSymbol symbol)
   {
-    return symbol.Kind is SymbolKind.TypeParameter
-      ? GetContextType((ITypeParameterSymbol)symbol)
-      : CreateTypeDelegator(symbol);
+    return _constructingLambda ? typeof(Unit) : base.GetContextType(symbol);
   }
 
   public override Type GetContextType(ITypeParameterSymbol symbol)

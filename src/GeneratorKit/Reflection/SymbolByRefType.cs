@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using GeneratorKit.Comparers;
+using Microsoft.CodeAnalysis;
 using System;
 using System.Reflection;
 
@@ -105,6 +106,16 @@ internal class SymbolByRefType : SymbolType
   protected override SymbolType[] GetInterfacesCore()
   {
     return Array.Empty<SymbolType>();
+  }
+
+  protected override bool IsAssignableFromCore(Type c)
+  {
+    return TypeEqualityComparer.Default.Equals(this, c);
+  }
+
+  public override bool IsSuperclassOf(Type? c)
+  {
+    return false;
   }
 
   protected override SymbolType MakeArrayTypeCore()

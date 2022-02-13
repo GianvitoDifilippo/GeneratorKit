@@ -7,6 +7,8 @@ namespace GeneratorKit;
 internal interface IGeneratorContext
 {
   Type GetContextType(ITypeSymbol symbol);
+  void BeginLambdaContext();
+  void EndLambdaContext();
 
   SymbolAssembly CreateAssemblyDelegator(IAssemblySymbol symbol);
   SymbolConstructorInfo CreateConstructorInfoDelegator(IMethodSymbol symbol);
@@ -23,6 +25,7 @@ internal interface IGeneratorContext
   SymbolMethodInfo MakeGenericMethod(SymbolMethodInfo method, Type[] typeArguments, SymbolType? reflectedType);
   SymbolType GetDeclaringType(SymbolMethodInfo method);
   SymbolMethodInfo GetBaseDefinition(SymbolMethodInfo method, SymbolType? reflectedType);
+  bool IsAssignableFrom(SymbolType type, Type other);
   bool IsGenericTypeDefinition(INamedTypeSymbol symbol);
   bool ContainsGenericParameters(INamedTypeSymbol symbol);
   bool ContainsGenericParameters(IArrayTypeSymbol symbol);

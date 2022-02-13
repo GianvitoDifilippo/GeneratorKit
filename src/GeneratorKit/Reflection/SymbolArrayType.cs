@@ -1,4 +1,5 @@
-﻿using GeneratorKit.Utils;
+﻿using GeneratorKit.Comparers;
+using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -145,6 +146,16 @@ internal sealed class SymbolArrayType : SymbolType
   protected override SymbolType[] GetInterfacesCore()
   {
     return Symbol.AllInterfaces.Map(x => Context.CreateTypeDelegator(x));
+  }
+
+  public override bool IsSuperclassOf(Type? c)
+  {
+    return false;
+  }
+
+  protected override bool IsAssignableFromCore(Type c)
+  {
+    return TypeEqualityComparer.Default.Equals(this, c);
   }
 
   protected override SymbolType MakeArrayTypeCore()

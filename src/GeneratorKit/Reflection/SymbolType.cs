@@ -1,4 +1,5 @@
 ﻿using GeneratorKit.Comparers;
+using GeneratorKit.Proxy;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
@@ -275,12 +276,33 @@ internal abstract class SymbolType : SymbolTypeBase
 
   public sealed override object InvokeMember(string name, BindingFlags invokeAttr, Binder binder, object target, object[] args, ParameterModifier[] modifiers, CultureInfo culture, string[] namedParameters)
   {
-    return UnderlyingSystemType.InvokeMember(name, invokeAttr, binder, target, args, modifiers, culture, namedParameters);
+    throw new NotSupportedException();
+  }
+
+  public sealed override bool IsAssignableFrom(Type? c)
+  {
+    if (c is null)
+      return false;
+
+    return Context.IsAssignableFrom(this, c) ||  IsAssignableFromCore(c);
   }
 
   protected sealed override bool IsCOMObjectImpl()
   {
     return false;
+  }
+
+  public sealed override bool IsInstanceOfType(object? o)
+  {
+    if (o is null)
+      return false;
+
+    if (o is IProxied proxied && proxied.Delegate is OperationDelegate @delegate)
+    {
+      return IsAssignableFrom(@delegate.Type);
+    }
+
+    return IsAssignableFrom(o.GetType());
   }
 
   public sealed override bool IsDefined(Type attributeType, bool inherit)
@@ -454,6 +476,10 @@ internal abstract class SymbolType : SymbolTypeBase
 
   // Other members
 
+  public abstract bool IsSuperclassOf(Type? c);
+
+  protected abstract bool IsAssignableFromCore(Type c);
+
   private IEnumerable<SymbolConstructorInfo> GetConstructorsEnumerable(BindingFlags bindingAttr)
   {
     return Symbol.GetMembers(bindingAttr, true)
@@ -512,8 +538,6 @@ internal abstract class SymbolType : SymbolTypeBase
         _                                => throw Errors.Unreacheable
       });
   }
-
-  
 }
 
 internal abstract class SymbolTypeBase : Type

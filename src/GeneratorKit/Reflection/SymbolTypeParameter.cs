@@ -1,4 +1,5 @@
-﻿using GeneratorKit.Utils;
+﻿using GeneratorKit.Comparers;
+using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -175,6 +176,16 @@ internal sealed class SymbolTypeParameter : SymbolType
         }
       }
     }
+  }
+
+  protected override bool IsAssignableFromCore(Type c)
+  {
+    return TypeEqualityComparer.Default.Equals(c, this);
+  }
+
+  public override bool IsSuperclassOf(Type? c)
+  {
+    return false;
   }
 
   protected override SymbolType MakeArrayTypeCore()
