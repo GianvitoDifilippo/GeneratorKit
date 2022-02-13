@@ -8,6 +8,7 @@ using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 
@@ -16,7 +17,8 @@ namespace GeneratorKit;
 internal class Activator : IActivator
 {
   private const BindingFlags s_allDeclared = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
-  
+  private static readonly IReadOnlyDictionary<int, IMethodSymbol> s_noMethods = new Dictionary<int, IMethodSymbol>();
+
   private readonly IInterpreter _interpreter;
   private readonly Dictionary<ITypeSymbol, IReadOnlyDictionary<int, IMethodSymbol>> _methods;
 
@@ -31,7 +33,11 @@ internal class Activator : IActivator
     InterpreterFrame typeFrame = _interpreter.GetTypeFrame(type);
     SymbolConstructorInfo constructor = FindConstructor(type, arguments);
 
-    return CreateInstance(constructor.Symbol, type, typeFrame, arguments);
+    return constructor.Symbol.IsImplicitlyDeclared
+      ? type.IsAnonymousType
+        ? CreateAnonymousTypeInstance(type, typeFrame)
+        : CreateWithDefaultConstructor(type, typeFrame)
+      : CreateInstance(constructor.Symbol, type, typeFrame, arguments);
   }
 
   public object CreateInstance(SymbolConstructorInfo constructor, object?[] arguments)
@@ -42,22 +48,44 @@ internal class Activator : IActivator
     return CreateInstance(constructor.Symbol, type, typeFrame, arguments);
   }
 
+  private object CreateWithDefaultConstructor(SymbolNamedType type, InterpreterFrame typeFrame)
+  {
+    Type proxyType = type.RuntimeType.UnderlyingSystemType;
+    ConstructorInfo proxyConstructor = FindConstructor(proxyType, Array.Empty<object>());
+
+    IProxied instance = (IProxied)proxyConstructor.Invoke(Array.Empty<object>());
+    InterpreterFrame instanceFrame = _interpreter.GetInstanceFrame(typeFrame, type, instance);
+    IReadOnlyDictionary<int, IMethodSymbol> methods = GetMethods(type.Symbol);
+    instance.Delegate = new OperationDelegate(_interpreter, type, instanceFrame, methods);
+
+    return instance;
+  }
+
+  private object CreateAnonymousTypeInstance(SymbolNamedType type, InterpreterFrame typeFrame)
+  {
+    ObjectProxy instance = new ObjectProxy();
+    InterpreterFrame instanceFrame = _interpreter.GetInstanceFrame(typeFrame, type, instance);
+    instance.Delegate = new OperationDelegate(_interpreter, type, instanceFrame, s_noMethods);
+
+    foreach (IPropertySymbol property in type.Symbol.GetMembers().Where(member => member.Kind is SymbolKind.Property))
+    {
+      instanceFrame.Declare(property);
+    }
+
+    return instance;
+  }
+
   private object CreateInstance(IMethodSymbol constructor, SymbolNamedType type, InterpreterFrame typeFrame, object?[] arguments)
   {
     Type proxyType = type.RuntimeType.UnderlyingSystemType;
-    object?[] proxyArguments = constructor.IsImplicitlyDeclared
-      ? arguments
-      : _interpreter.GetProxyArguments(constructor, typeFrame, arguments);
+    object?[] proxyArguments = _interpreter.GetProxyArguments(constructor, typeFrame, arguments);
     ConstructorInfo proxyConstructor = FindConstructor(proxyType, proxyArguments);
 
     IProxied instance = (IProxied)proxyConstructor.Invoke(proxyArguments);
     InterpreterFrame instanceFrame = _interpreter.GetInstanceFrame(typeFrame, type, instance);
     IReadOnlyDictionary<int, IMethodSymbol> methods = GetMethods(type.Symbol);
     instance.Delegate = new OperationDelegate(_interpreter, type, instanceFrame, methods);
-    if (!constructor.IsImplicitlyDeclared)
-    {
-      _interpreter.InterpretConstructor(constructor, instanceFrame, arguments);
-    }
+    _interpreter.InterpretConstructor(constructor, instanceFrame, arguments);
 
     return instance;
   }
@@ -100,9 +128,15 @@ internal class Activator : IActivator
     return result;
   }
 
-  private static SymbolConstructorInfo FindConstructor(SymbolType type, object?[] arguments)
+  private static SymbolConstructorInfo FindConstructor(SymbolNamedType type, object?[] arguments)
   {
     SymbolConstructorInfo[] constructors = type.GetConstructors(s_allDeclared);
+    if (type.IsAnonymousType)
+    {
+      Debug.Assert(constructors.Length == 1, $"Expected anonymous type to have a single constructor, but found {constructors.Length} of them.");
+      return constructors[0];
+    }
+
     SymbolConstructorInfo? match = null;
     int length = arguments.Length;
 

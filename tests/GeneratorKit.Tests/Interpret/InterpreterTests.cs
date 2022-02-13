@@ -490,7 +490,7 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
 
     // Assert
     _frameProvider[2].Should().HaveCount(3);
-    _frameProvider[2].Should().Contain("prop1", 3);
+    _frameProvider[2].Should().Contain("prop1", 1);
     _frameProvider[2].Should().Contain("prop2", "str");
   }
 

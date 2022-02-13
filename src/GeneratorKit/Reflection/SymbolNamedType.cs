@@ -21,6 +21,8 @@ internal sealed class SymbolNamedType : SymbolType
 
   public new INamedTypeSymbol Symbol { get; }
 
+  public bool IsAnonymousType => Symbol.IsAnonymousType;
+
   protected override ITypeSymbol SymbolCore => Symbol;
 
 

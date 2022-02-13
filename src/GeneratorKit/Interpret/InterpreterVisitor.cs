@@ -27,9 +27,13 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
 
   public override object? VisitAnonymousObjectCreation(IAnonymousObjectCreationOperation operation, Optional<object?> argument)
   {
-    object?[] initializers = operation.Initializers.Map(operation => operation.Accept(this, default));
+    Type type = _context.GetType(operation.Type!);
+    object instance = _context.CreateInstance(type, Array.Empty<object>());
+    BeginReceiver(instance);
+    object?[] initializers = operation.Initializers.Map(initializer => initializer.Accept(this, default));
+    EndReceiver();
 
-    throw new NotImplementedException();
+    return instance;
   }
 
   public override object? VisitArgument(IArgumentOperation operation, Optional<object?> argument)
@@ -351,9 +355,7 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
       return null;
 
     Type type = _context.GetType(operation.Type);
-    return type.IsValueType
-      ? System.Activator.CreateInstance(type)
-      : null;
+    return type.GetDefaultValue();
   }
 
   public override object? VisitDelegateCreation(IDelegateCreationOperation operation, Optional<object?> argument)

@@ -105,14 +105,7 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
 
   public override object? GetValue(object obj, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
   {
-    if (Symbol.IsSource())
-    {
-      return _context.GetProperty(this, obj, index);
-    }
-    else
-    {
-      return UnderlyingSystemProperty.GetValue(obj, invokeAttr, binder, index, culture);
-    }
+    return _context.GetProperty(this, obj, index);
   }
 
   public override bool IsDefined(Type attributeType, bool inherit)
@@ -122,14 +115,7 @@ internal sealed class SymbolPropertyInfo : SymbolPropertyInfoBase
 
   public override void SetValue(object obj, object value, BindingFlags invokeAttr, Binder binder, object[] index, CultureInfo culture)
   {
-    if (Symbol.IsSource())
-    {
-      _context.SetProperty(this, obj, index, value);
-    }
-    else
-    {
-      UnderlyingSystemProperty.SetValue(obj, value, invokeAttr, binder, index, culture);
-    }
+    _context.SetProperty(this, obj, index, value);
   }
 
 
