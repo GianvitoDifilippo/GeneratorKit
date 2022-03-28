@@ -1,4 +1,5 @@
 ﻿using GeneratorKit.Reflection;
+using GeneratorKit.Reflection.Context;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Diagnostics;
@@ -9,7 +10,6 @@ internal class InterpreterMethodContext : InterpreterContext
 {
   private readonly GeneratorContext _parent;
   private readonly Type[] _typeArguments;
-  private bool _constructingLambda;
 
   public InterpreterMethodContext(GeneratorContext parent, Type[] typeArguments)
   {
@@ -17,28 +17,7 @@ internal class InterpreterMethodContext : InterpreterContext
     _typeArguments = typeArguments;
   }
 
-
-  // IInterpreterContext
-
-  public override void BeginLambdaContext()
-  {
-    Debug.Assert(!_constructingLambda, "Lambda context already began.");
-    _constructingLambda = true;
-  }
-
-  public override void EndLambdaContext()
-  {
-    Debug.Assert(_constructingLambda, "Lambda context already ended.");
-    _constructingLambda = false;
-  }
-
-
-  // GeneratorContext
-
-  public override object CreateInstance(Type type, object?[] arguments)
-  {
-    return _parent.CreateInstance(type, arguments);
-  }
+  public override GeneratorContext Root => _parent.Root;
 
   public override Type GetContextType(ITypeParameterSymbol symbol)
   {
@@ -49,7 +28,7 @@ internal class InterpreterMethodContext : InterpreterContext
 
   public override SymbolNamedType GetGenericTypeDefinition(SymbolNamedType type)
   {
-    SymbolNamedType result = _parent.GetGenericTypeDefinition(type);
+    SymbolNamedType result = Root.CreateTypeDelegator(type.Symbol.ConstructedFrom);
     Debug.Assert(result.IsGenericTypeDefinition, "Failed to create a generic type definition for the current context.");
     return result;
   }
@@ -61,7 +40,13 @@ internal class InterpreterMethodContext : InterpreterContext
 
   public override SymbolMethodInfo GetGenericMethodDefinition(SymbolMethodInfo method)
   {
-    throw new NotSupportedException();
+    SymbolType declaringType = method.DeclaringType;
+    GeneratorContext context = declaringType.IsGenericType
+      ? new GenericTypeContext(Root, declaringType.GetGenericArguments())
+      : Root;
+    SymbolMethodInfo result = context.CreateMethodInfoDelegator(method.Symbol.ConstructedFrom);
+    Debug.Assert(result.IsGenericMethodDefinition, "Failed to create a generic method definition for the current context.");
+    return result;
   }
 
   public override SymbolMethodInfo MakeGenericMethod(SymbolMethodInfo method, Type[] typeArguments, SymbolType? reflectedType)
@@ -81,6 +66,11 @@ internal class InterpreterMethodContext : InterpreterContext
   public override Type GetRuntimeType(SymbolType type)
   {
     return _parent.GetRuntimeType(type);
+  }
+
+  public override object CreateInstance(Type type, object?[] arguments)
+  {
+    return _parent.CreateInstance(type, arguments);
   }
 
   public override object InvokeConstructor(SymbolConstructorInfo constructor, object?[] arguments)

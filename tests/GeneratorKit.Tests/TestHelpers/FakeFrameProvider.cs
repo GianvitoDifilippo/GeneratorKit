@@ -19,7 +19,7 @@ internal class FakeFrameProvider : IFrameProvider
 
   public IReadOnlyDictionary<string, object?> this[int index] => _values[index];
 
-  public IDictionary<ISymbol, object?> GetValues(int capacity = 0)
+  public IDictionary<ISymbol, object?> GetFrame(int capacity = 0)
   {
     var dictionary = new Dictionary<ISymbol, object?>(capacity, SymbolDefinitionEqualityComparer.Default);
     var values = new Dictionary<string, object?>(capacity);

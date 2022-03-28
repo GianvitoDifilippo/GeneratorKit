@@ -12,6 +12,7 @@ namespace GeneratorKit.Interpret;
 internal partial class InterpreterVisitor
 {
   private readonly IInterpreterContext _context;
+  private readonly IFrameProvider _frameProvider;
   private readonly Stack<InterpreterFrame> _frames;
   private readonly Stack<object> _implicitReceivers;
   private readonly Stack<object> _conditionalAccessInstances;
@@ -19,9 +20,10 @@ internal partial class InterpreterVisitor
   private Optional<object?> _returnValue;
   private BranchKind _branchState;
 
-  public InterpreterVisitor(IInterpreterContext context, InterpreterFrame frame)
+  public InterpreterVisitor(IInterpreterContext context, IFrameProvider frameProvider, InterpreterFrame frame)
   {
     _context = context;
+    _frameProvider = frameProvider;
     _frames = new Stack<InterpreterFrame>(1);
     _frames.Push(frame);
     _implicitReceivers = new Stack<object>();

@@ -6,6 +6,8 @@ using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using System.Threading;
 using Xunit;
 using static GeneratorKit.TestHelpers.ProxyTypes;
@@ -19,6 +21,9 @@ public class InterpreterFixture
 
   private const string s_source = @"
 
+using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
 using static GeneratorKit.TestHelpers.ProxyTypes;
 
 namespace " + Namespace + @"
@@ -394,6 +399,13 @@ namespace " + Namespace + @"
       return arg is null;
     }
 
+    public void GenericsWithSourceTypeArguments()
+    {
+      List<OtherClass> list = new();
+      list.Add(new OtherClass());
+      OtherClass element = list[0];
+    }
+
 
     private bool Method_ParameterInitializer(int arg = 4)
     {
@@ -458,6 +470,22 @@ namespace " + Namespace + @"
       return default(T);
     }
 
+    public void LambdaExpr<T1>(T1 arg)
+    {
+      // ParameterExpression x = Expression.Parameter(typeof(int).UnderlyingSystemType, ""x"");
+      // Expression body = Expression.Add(x, Expression.Constant(1, typeof(int).UnderlyingSystemType));
+      // Expression<Func<int, int>> constructed = Expression.Lambda<Func<int, int>>(body, x);
+      // Expression<Func<OtherClass, int>> expr1 = x => x.Prop1;
+      // Expression<Func<int, int>> expr2 = x => x + 1;
+      // Expression<Func<object, OtherClass>> expr3 = x => (OtherClass)x;
+      // Expression<Func<int[], int>> expr4 = x => x[0];
+      // Expression<Func<int[]>> expr5 = () => new int[4];
+      // Expression<Func<int[]>> expr6 = () => new int[4] { 1, 2, 3, 4 };
+      // Expression<Func<bool, int>> expr7 = b => b ? 4 : 5;
+      // Expression<Func<object>> expr8 = () => new { Prop2 = ""prop"", Field = 40 };
+      // Expression<Func<bool>> expr9 = () => ""string"" is int;
+    }
+
 
     private int NonGenericMethod_GenericType()
     {
@@ -484,6 +512,8 @@ namespace " + Namespace + @"
     public int Prop1 { get; set; }
     public string Prop2 { get; set; }
     public int Field = 50;
+
+    public int MethodForExpr<T>(OtherClass arg1, T arg2) => throw null;
   }
 
   public class OtherGenericClass<T1, T2>
@@ -500,6 +530,9 @@ namespace " + Namespace + @"
     public T2 Arg2 { get; }
     public OtherClass Obj { get; } = new OtherClass();
   }
+
+  public class BaseException : Exception { }
+  public class DerivedException: BaseException { }
 }
 ";
 
@@ -515,8 +548,8 @@ namespace " + Namespace + @"
 
   public InterpreterFixture()
   {
-    CompilationOutput output = CompilationOutput.Create(s_source, AssemblyName, referencedAssemblies: new[] { typeof(ProxyTypes).Assembly });
-    Assert.True(output.IsValid, $"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics)}");
+    CompilationOutput output = CompilationOutput.Create(s_source, AssemblyName, referencedAssemblies: new[] { typeof(ProxyTypes).Assembly, Assembly.Load("System.Linq.Expressions") });
+    Assert.True(output.IsValid, $"Could not compile the source code.\n\nDiagnostics:\n{string.Join('\n', output.Diagnostics.Where(x => x.Severity is DiagnosticSeverity.Error))}");
 
     _compilation = output.Compilation;
 
@@ -636,6 +669,7 @@ namespace " + Namespace + @"
     Array,
     AnonymousObjectCreation,
     IsNull,
+    GenericsWithSourceTypeArguments,
 
     Invocation_NonGenericMethod_GenericType = 4096,
     Invocation_GenericMethod_GenericType1,
@@ -645,6 +679,7 @@ namespace " + Namespace + @"
     Property_StaticProperty,
     GenericObjectCreation,
     FieldReference_Ref,
-    MethodReference_Ref
+    MethodReference_Ref,
+    LambdaExpr
   }
 }

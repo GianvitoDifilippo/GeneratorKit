@@ -1,13 +1,14 @@
-﻿using GeneratorKit.Interpret;
+﻿using GeneratorKit.Expressions;
+using GeneratorKit.Interpret;
 using GeneratorKit.Interpret.Frame;
 using GeneratorKit.Proxy;
 using GeneratorKit.Reflection;
-using GeneratorKit.Reflection.Context;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
 
@@ -30,6 +31,8 @@ internal class GeneratorRuntime : GeneratorContext, IGeneratorRuntime
 
   public override Compilation Compilation { get; }
 
+  public override GeneratorContext Root => this;
+
   public override object CreateInstance(Type type, object?[] arguments)
   {
     if (type.IsArray || type.IsPointer || type.IsGenericParameter || type.IsByRef)
@@ -38,6 +41,13 @@ internal class GeneratorRuntime : GeneratorContext, IGeneratorRuntime
       throw new ArgumentException("The type must be provided by this runtime.", nameof(type));
 
     return _activator.CreateInstance(symbolType, arguments);
+  }
+
+  public ILambdaExpression GetLambdaExpression<TDelegate>(Expression<TDelegate> expression)
+  {
+    return expression.Body is LambdaExpressionWrapper wrapper
+      ? wrapper.Expression
+      : throw new ArgumentException("The expression must be produced from the generator runtime.", nameof(expression));
   }
 
   public override Type GetContextType(ITypeParameterSymbol symbol)

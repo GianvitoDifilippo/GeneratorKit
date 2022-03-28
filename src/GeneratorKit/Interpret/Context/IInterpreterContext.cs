@@ -6,10 +6,8 @@ namespace GeneratorKit.Interpret.Context;
 
 internal interface IInterpreterContext
 {
+  Compilation Compilation { get; }
   object CreateInstance(Type type, object?[] arguments);
-
-  void BeginLambdaContext();
-  void EndLambdaContext();
 
   Assembly GetAssembly(IAssemblySymbol symbol);
   ConstructorInfo GetConstructorInfo(IMethodSymbol symbol);

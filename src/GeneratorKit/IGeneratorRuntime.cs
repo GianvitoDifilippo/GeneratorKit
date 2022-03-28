@@ -1,5 +1,7 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using GeneratorKit.Expressions;
+using Microsoft.CodeAnalysis;
 using System;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace GeneratorKit;
@@ -9,6 +11,7 @@ public interface IGeneratorRuntime
   Assembly CompilationAssembly { get; }
 
   T CreateInstance<T>(Type type, object?[] arguments);
+  ILambdaExpression GetLambdaExpression<TDelegate>(Expression<TDelegate> expression);
 
   Assembly CreateAssemblyDelegator(IAssemblySymbol symbol);
   ConstructorInfo CreateConstructorInfoDelegator(IMethodSymbol symbol);

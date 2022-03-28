@@ -18,6 +18,8 @@ internal class FakeReflectionContext : GeneratorContext
 
   public override Compilation Compilation { get; }
 
+  public override GeneratorContext Root => this;
+
   public void AddType(Type key, Type value)
   {
     _typeMap[key] = value;

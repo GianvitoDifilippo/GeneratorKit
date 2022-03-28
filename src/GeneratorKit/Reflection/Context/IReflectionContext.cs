@@ -22,7 +22,6 @@ internal interface IReflectionContext
   SymbolMethodInfo MakeGenericMethod(SymbolMethodInfo method, Type[] typeArguments, SymbolType? reflectedType);
   SymbolNamedType GetDeclaringType(SymbolMethodInfo method);
   SymbolMethodInfo GetBaseDefinition(SymbolMethodInfo method, SymbolType? reflectedType);
-  bool IsAssignableFrom(SymbolType type, Type other);
   bool IsGenericTypeDefinition(INamedTypeSymbol symbol);
   bool ContainsGenericParameters(INamedTypeSymbol symbol);
   bool ContainsGenericParameters(IArrayTypeSymbol symbol);

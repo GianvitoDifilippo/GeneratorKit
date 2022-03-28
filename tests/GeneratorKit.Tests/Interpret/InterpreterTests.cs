@@ -1,13 +1,12 @@
 ﻿using FluentAssertions;
 using GeneratorKit.Interpret.Frame;
+using GeneratorKit.Proxy;
 using GeneratorKit.Reflection;
 using GeneratorKit.TestHelpers;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq.Expressions;
-using System.Reflection;
 using Xunit;
 using static GeneratorKit.Interpret.InterpreterFixture;
 
@@ -546,6 +545,22 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
     _frameProvider[2].Should().Contain("prop2", "str");
   }
 
+  [Fact]
+  public void InterpretMethod_ShouldInterpret_GenericsWithSourceTypeArguments()
+  {
+    // Arrange
+    object?[] arguments = Array.Empty<object?>();
+    IMethodSymbol method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.GenericsWithSourceTypeArguments);
+    InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.GenericsWithSourceTypeArguments);
+
+    // Act
+    _sut.InterpretMethod(method, instanceFrame, Type.EmptyTypes, arguments);
+
+    // Assert
+    _frameProvider[2].Should().ContainKey("list").WhoseValue.As<List<ObjectProxy>>().Should().HaveCount(1);
+    _frameProvider[2].Should().ContainKey("element").WhoseValue.Should().BeOfType<ObjectProxy>();
+  }
+
   // [Theory]
   // [InlineData((object?)null, true)]
   // [InlineData("str", false)]
@@ -708,6 +723,21 @@ public class InterpreterTests : IClassFixture<InterpreterFixture>
   //   // Assert
   //   _frameProvider[2].Should().Contain("value1", arg1);
   //   _frameProvider[2].Should().Contain("value2", 4);
+  // }
+
+  // [Fact]
+  // public void InterpretMethod_ShouldInterpret_LambdaExpr()
+  // {
+  //   // Arrange
+  //   const int arg1 = 4;
+  //   object?[] arguments = new object?[] { arg1 };
+  //   IMethodSymbol method = _fixture.GetInterpretedOperationMethod(_runtime, InterpretedOperationType.LambdaExpr);
+  //   InterpreterFrame instanceFrame = _fixture.GetInstanceFrame(_runtime, _sut, InterpretedOperationType.LambdaExpr, typeof(string));
+  // 
+  //   // Act
+  //   _sut.InterpretMethod(method, instanceFrame, new[] { typeof(int) }, arguments);
+  // 
+  //   // Assert
   // }
 
   [Fact]

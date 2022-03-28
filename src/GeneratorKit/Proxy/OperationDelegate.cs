@@ -1,6 +1,5 @@
 ﻿using GeneratorKit.Interpret;
 using GeneratorKit.Interpret.Frame;
-using GeneratorKit.Reflection;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -12,7 +11,7 @@ internal class OperationDelegate : IOperationDelegate
   private readonly IInterpreter _interpreter;
   private readonly IReadOnlyDictionary<int, IMethodSymbol> _methods;
 
-  public OperationDelegate(IInterpreter interpreter, SymbolType type, InterpreterFrame instanceFrame, IReadOnlyDictionary<int, IMethodSymbol> methods)
+  public OperationDelegate(IInterpreter interpreter, Type type, InterpreterFrame instanceFrame, IReadOnlyDictionary<int, IMethodSymbol> methods)
   {
     _interpreter = interpreter;
     Type = type;
@@ -20,7 +19,7 @@ internal class OperationDelegate : IOperationDelegate
     _methods = methods;
   }
 
-  public SymbolType Type { get; }
+  public Type Type { get; }
 
   public InterpreterFrame InstanceFrame { get; }
 

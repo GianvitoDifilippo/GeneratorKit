@@ -32,7 +32,9 @@ internal abstract partial class DelegatorBinder : Binder
 
     for (int i = 0; i < _parameterTypes.Length; i++)
     {
-      if (!TypeEqualityComparer.Default.Equals(_parameterTypes[i], parameters[i].ParameterType))
+      Type t1 = _parameterTypes[i];
+      Type t2 = parameters[i].ParameterType;
+      if (!TypeEqualityComparer.Default.Equals(t1, t2) && (t1.IsGenericParameter || !t1.UnderlyingSystemType.Equals(t2.UnderlyingSystemType)))
         return false;
     }
 

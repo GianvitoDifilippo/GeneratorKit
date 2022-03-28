@@ -36,7 +36,7 @@ internal class Interpreter : IInterpreter
     InterpreterFrame constructorFrame = GetConstructorFrame(typeFrame, constructor, arguments);
     InterpreterMethodContext context = new InterpreterMethodContext(typeFrame.TypeContext, Type.EmptyTypes);
 
-    return (object?[])new ConstructorInitializerVisitor(context, constructorFrame).Visit(operation, default)!;
+    return (object?[])new ConstructorInitializerVisitor(context, _frameProvider, constructorFrame).Visit(operation, default)!;
   }
 
   public object? InterpretMethod(IMethodSymbol method, InterpreterFrame frame, Type[] typeArguments, object?[] arguments)
@@ -47,7 +47,7 @@ internal class Interpreter : IInterpreter
     InterpreterFrame methodFrame = GetMethodFrame(frame, method, arguments);
     InterpreterMethodContext context = new InterpreterMethodContext(frame.TypeContext, typeArguments);
 
-    return new InterpreterVisitor(context, methodFrame).Visit(operation, default);
+    return new InterpreterVisitor(context, _frameProvider, methodFrame).Visit(operation, default);
   }
 
   public void InterpretConstructor(IMethodSymbol constructor, InterpreterFrame frame, object?[] arguments)
@@ -58,13 +58,13 @@ internal class Interpreter : IInterpreter
     InterpreterFrame methodFrame = GetConstructorFrame(frame, constructor, arguments);
     InterpreterMethodContext context = new InterpreterMethodContext(frame.TypeContext, Type.EmptyTypes);
 
-    new InterpreterVisitor(context, methodFrame).Visit(operation, default);
+    new InterpreterVisitor(context, _frameProvider, methodFrame).Visit(operation, default);
   }
 
   private void InitField(IFieldSymbol field, IInterpreterContext context, InterpreterFrame frame)
   {
     object? value = _operationManager.TryGetOperation(field, out IOperation? operation)
-      ? new InterpreterVisitor(context, frame).Visit(operation, default)
+      ? new InterpreterVisitor(context, _frameProvider, frame).Visit(operation, default)
       : _context.CreateTypeDelegator(field.Type).GetDefaultValue();
 
     frame.Define(field, value);
@@ -73,7 +73,7 @@ internal class Interpreter : IInterpreter
   private void InitProperty(IPropertySymbol property, IInterpreterContext context, InterpreterFrame frame)
   {
     object? value = _operationManager.TryGetOperation(property, out IOperation? operation)
-      ? new InterpreterVisitor(context, frame).Visit(operation, default)
+      ? new InterpreterVisitor(context, _frameProvider, frame).Visit(operation, default)
       : _context.CreateTypeDelegator(property.Type).GetDefaultValue();
 
     frame.Define(property, value);
@@ -95,7 +95,7 @@ internal class Interpreter : IInterpreter
     }
 
     InterpreterTypeContext typeContext = new InterpreterTypeContext(_context, type.GetGenericArguments());
-    typeFrame = InterpreterFrame.NewTypeFrame(parentFrame, typeContext, _frameProvider.GetValues());
+    typeFrame = InterpreterFrame.NewTypeFrame(parentFrame, typeContext, _frameProvider.GetFrame());
     _typeFrames.Add(type, typeFrame);
 
     INamedTypeSymbol symbol = type.Symbol;
@@ -119,9 +119,9 @@ internal class Interpreter : IInterpreter
         throw new InvalidUserCodeException(); // TODO: Message
 
       InterpreterMethodContext methodContext = new InterpreterMethodContext(typeContext, Type.EmptyTypes);
-      InterpreterFrame methodFrame = InterpreterFrame.NewMethodFrame(typeFrame, _frameProvider.GetValues());
+      InterpreterFrame methodFrame = InterpreterFrame.NewMethodFrame(typeFrame, _frameProvider.GetFrame());
 
-      new InterpreterVisitor(methodContext, methodFrame).Visit(operation, default);
+      new InterpreterVisitor(methodContext, _frameProvider, methodFrame).Visit(operation, default);
     }
 
     return typeFrame;
@@ -129,7 +129,7 @@ internal class Interpreter : IInterpreter
 
   public InterpreterFrame GetInstanceFrame(InterpreterFrame typeFrame, SymbolNamedType type, object instance)
   {
-    InterpreterFrame instanceFrame = InterpreterFrame.NewInstanceFrame(typeFrame, _frameProvider.GetValues(), instance);
+    InterpreterFrame instanceFrame = InterpreterFrame.NewInstanceFrame(typeFrame, _frameProvider.GetFrame(), instance);
 
     IEnumerable<ISymbol> fields = type.Symbol.GetMembers(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, MemberFlags.Fields | MemberFlags.DeepSearch, true);
     foreach (IFieldSymbol field in fields)
@@ -156,7 +156,7 @@ internal class Interpreter : IInterpreter
     if (arguments.Length != length)
       throw new ArgumentException($"Wrong number of arguments supplied to method {method}.", nameof(arguments));
 
-    IDictionary<ISymbol, object?> values = _frameProvider.GetValues(arguments.Length);
+    IDictionary<ISymbol, object?> values = _frameProvider.GetFrame(arguments.Length);
     InterpreterFrame methodFrame = InterpreterFrame.NewMethodFrame(parent, values);
     for (int i = 0; i < length; i++)
     {
@@ -175,7 +175,7 @@ internal class Interpreter : IInterpreter
     if (arguments.Length != length)
       throw new ArgumentException($"Wrong number of arguments supplied to method {constructor}.", nameof(arguments));
 
-    IDictionary<ISymbol, object?> values = _frameProvider.GetValues(arguments.Length);
+    IDictionary<ISymbol, object?> values = _frameProvider.GetFrame(arguments.Length);
     InterpreterFrame constructorFrame = InterpreterFrame.NewMethodFrame(typeFrame, values);
     for (int i = 0; i < length; i++)
     {

@@ -11,6 +11,7 @@ namespace GeneratorKit;
 internal abstract class GeneratorContext : IReflectionContext
 {
   public abstract Compilation Compilation { get; }
+  public abstract GeneratorContext Root { get; }
 
   public abstract object CreateInstance(Type type, object?[] arguments);
 
@@ -240,11 +241,6 @@ internal abstract class GeneratorContext : IReflectionContext
       SymbolKind.TypeParameter => true,
       _                        => throw new NotSupportedException()
     };
-  }
-
-  public virtual bool IsAssignableFrom(SymbolType type, Type other) // TODO: Check virtuals are overridden somewhere
-  {
-    return false;
   }
 
   public virtual Type GetContextType(ITypeSymbol symbol)

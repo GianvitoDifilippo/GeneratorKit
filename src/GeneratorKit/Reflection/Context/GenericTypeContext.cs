@@ -16,6 +16,8 @@ internal class GenericTypeContext : GeneratorContext
     _typeArguments = typeArguments;
   }
 
+  public override GeneratorContext Root => _parent;
+
   public override object CreateInstance(Type type, object?[] arguments)
   {
     throw new NotSupportedException();
@@ -43,7 +45,7 @@ internal class GenericTypeContext : GeneratorContext
 
   public override SymbolMethodInfo GetGenericMethodDefinition(SymbolMethodInfo method)
   {
-    SymbolMethodInfo result = CreateMethodInfoDelegator(method.Symbol.ConstructedFrom, null);
+    SymbolMethodInfo result = CreateMethodInfoDelegator(method.Symbol.ConstructedFrom);
     Debug.Assert(result.IsGenericMethodDefinition, "Failed to create a generic method definition for the current context.");
     return result;
   }

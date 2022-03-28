@@ -16,26 +16,7 @@ internal class InterpreterTypeContext : InterpreterContext
     _typeArguments = typeArguments;
   }
 
-
-  // IInterpreterContext
-
-  public override void BeginLambdaContext()
-  {
-    throw new NotSupportedException();
-  }
-
-  public override void EndLambdaContext()
-  {
-    throw new NotSupportedException();
-  }
-
-
-  // GeneratorContext
-
-  public override object CreateInstance(Type type, object?[] arguments)
-  {
-    return _parent.CreateInstance(type, arguments);
-  }
+  public override GeneratorContext Root => _parent;
 
   public override Type GetContextType(ITypeParameterSymbol symbol)
   {
@@ -51,9 +32,7 @@ internal class InterpreterTypeContext : InterpreterContext
 
   public override SymbolNamedType GetGenericTypeDefinition(SymbolNamedType type)
   {
-    SymbolNamedType result = _parent.CreateTypeDelegator(type.Symbol.ConstructedFrom);
-    Debug.Assert(result.IsGenericTypeDefinition, "Failed to create a generic type definition for the current context.");
-    return result;
+    throw new NotSupportedException();
   }
 
   public override SymbolNamedType MakeGenericType(SymbolNamedType type, Type[] typeArguments)
@@ -79,6 +58,11 @@ internal class InterpreterTypeContext : InterpreterContext
   #region Implemented through parent
 
   public override Compilation Compilation => _parent.Compilation;
+
+  public override object CreateInstance(Type type, object?[] arguments)
+  {
+    return _parent.CreateInstance(type, arguments);
+  }
 
   public override Type GetRuntimeType(SymbolType type)
   {

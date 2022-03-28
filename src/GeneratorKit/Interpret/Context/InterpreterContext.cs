@@ -6,9 +6,6 @@ namespace GeneratorKit.Interpret.Context;
 
 internal abstract class InterpreterContext : GeneratorContext, IInterpreterContext
 {
-  public abstract void BeginLambdaContext();
-  public abstract void EndLambdaContext();
-  
   public Assembly GetAssembly(IAssemblySymbol symbol)
   {
     return CreateAssemblyDelegator(symbol);
@@ -42,5 +39,10 @@ internal abstract class InterpreterContext : GeneratorContext, IInterpreterConte
   public Type GetType(ITypeSymbol symbol)
   {
     return GetContextType(symbol);
+  }
+
+  public INamedTypeSymbol? GetTypeSymbol(string fullyQualifiedMetadataName)
+  {
+    return Compilation.GetTypeByMetadataName(fullyQualifiedMetadataName);
   }
 }

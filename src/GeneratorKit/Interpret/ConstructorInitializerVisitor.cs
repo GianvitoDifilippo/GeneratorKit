@@ -9,8 +9,8 @@ namespace GeneratorKit.Interpret;
 
 internal class ConstructorInitializerVisitor : InterpreterVisitor
 {
-  public ConstructorInitializerVisitor(IInterpreterContext context, InterpreterFrame constructorFrame)
-    : base(context, constructorFrame)
+  public ConstructorInitializerVisitor(IInterpreterContext context, IFrameProvider frameProvider, InterpreterFrame constructorFrame)
+    : base(context, frameProvider, constructorFrame)
   {
   }
 

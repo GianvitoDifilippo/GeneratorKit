@@ -1,7 +1,7 @@
 ﻿using GeneratorKit.Exceptions;
+using GeneratorKit.Interpret.Context;
 using GeneratorKit.Utils;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.FlowAnalysis;
 using Microsoft.CodeAnalysis.Operations;
 using System;
 using System.Collections;
@@ -25,6 +25,19 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
     throw new NotSupportedException($"Operation of kind {operation.Kind} cannot be interpreted.");
   }
 
+
+  public override object? VisitAnonymousFunction(IAnonymousFunctionOperation operation, Optional<object?> argument)
+  {
+    if (operation.Parent is IDelegateCreationOperation)
+    {
+      return InterpretedMethodInvoker.CreateDelegate(_context, Frame, _frameProvider, operation);
+    }
+    else
+    {
+      ExpressionContext context = new ExpressionContext(_context, Frame, operation);
+      return context.Expression;
+    }
+  }
 
   public override object? VisitAnonymousObjectCreation(IAnonymousObjectCreationOperation operation, Optional<object?> argument)
   {
@@ -189,24 +202,6 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
     return target;
   }
 
-  public override object? VisitConditionalAccess(IConditionalAccessOperation operation, Optional<object?> argument)
-  {
-    object? instance = operation.Operation.Accept(this, default);
-    if (instance is null)
-      return null;
-
-    BeginConditionalAccess(instance);
-    object? whenNotNull = operation.WhenNotNull.Accept(this, default);
-    EndConditionalAccess();
-
-    return whenNotNull;
-  }
-
-  public override object? VisitConditionalAccessInstance(IConditionalAccessInstanceOperation operation, Optional<object?> argument)
-  {
-    return ConditionalAccessInstance;
-  }
-
   public override object? VisitCompoundAssignment(ICompoundAssignmentOperation operation, Optional<object?> argument)
   {
     object? target = operation.Target.Accept(this, default);
@@ -270,6 +265,24 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
     return result;
   }
 
+  public override object? VisitConditionalAccess(IConditionalAccessOperation operation, Optional<object?> argument)
+  {
+    object? instance = operation.Operation.Accept(this, default);
+    if (instance is null)
+      return null;
+
+    BeginConditionalAccess(instance);
+    object? whenNotNull = operation.WhenNotNull.Accept(this, default);
+    EndConditionalAccess();
+
+    return whenNotNull;
+  }
+
+  public override object? VisitConditionalAccessInstance(IConditionalAccessInstanceOperation operation, Optional<object?> argument)
+  {
+    return ConditionalAccessInstance;
+  }
+
   public override object? VisitConstructorBodyOperation(IConstructorBodyOperation operation, Optional<object?> argument)
   {
     IBlockOperation body = operation.BlockBody ?? operation.ExpressionBody ?? throw new InvalidUserCodeException(); // TODO: Message
@@ -329,10 +342,8 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
       return null;
 
     Type type = _context.GetType(operation.Type!);
-    Type operandType = operand.GetType();
-
-    if (!type.IsAssignableFrom(operandType))
-      throw new InvalidCastException($"Unable to cast object of type '{operandType}' to type '{type}'.");
+    // _context.CheckIsInstanceOfType(type, operand);
+      // throw new InvalidCastException($"Unable to cast object of type '{operandType}' to type '{type}'.");
 
     return operand;
   }
@@ -534,12 +545,6 @@ internal partial class InterpreterVisitor : OperationVisitor<Optional<object?>, 
     MethodInfo method = _context.GetMethodInfo(operation.TargetMethod);
 
     return method.Invoke(instance, arguments);
-  }
-
-  public override object? VisitIsNull(IIsNullOperation operation, Optional<object?> argument)
-  {
-    object? operand = operation.Operand.Accept(this, default);
-    return operand is null;
   }
 
   public override object? VisitIsType(IIsTypeOperation operation, Optional<object?> argument)

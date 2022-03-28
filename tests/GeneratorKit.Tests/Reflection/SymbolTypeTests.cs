@@ -1163,6 +1163,23 @@ public class SymbolTypeTests : IClassFixture<SymbolTypeFixture>
 
   [Theory]
   [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
+  public void GetTypeCode_ShouldBeCorrect(TypeCategory category)
+  {
+    // Arrange
+    SymbolType sut = _fixture.GetDelegator(category);
+    Type reference = _fixture.GetReference(category);
+
+    TypeCode expected = Type.GetTypeCode(reference);
+
+    // Act
+    TypeCode actual = Type.GetTypeCode(sut);
+
+    // Assert
+    actual.Should().Be(expected);
+  }
+
+  [Theory]
+  [NamedTypesData, SpecialTypesData, ArrayTypesData, TypeParametersData]
   public void HasElementType_ShouldBeCorrect(TypeCategory category)
   {
     // Arrange

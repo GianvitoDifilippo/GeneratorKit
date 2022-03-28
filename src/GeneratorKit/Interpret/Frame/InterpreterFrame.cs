@@ -193,7 +193,7 @@ internal abstract class InterpreterFrame
       Instance = parent.Instance;
     }
 
-    public override InterpreterContext TypeContext => throw new NotSupportedException();
+    public override InterpreterContext TypeContext => _parent.TypeContext;
 
     public override object? Instance { get; }
 
@@ -224,7 +224,7 @@ internal abstract class InterpreterFrame
       Instance = parent.Instance;
     }
 
-    public override InterpreterContext TypeContext => throw new NotSupportedException();
+    public override InterpreterContext TypeContext => _parent.TypeContext;
 
     public override object? Instance { get; }
 
